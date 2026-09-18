@@ -26,7 +26,7 @@
       <img src="../assets/logo.png" alt="InternBoot Logo" class="h-8">
     </div>
     <nav class="p-4 space-y-1">
-      <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-intern-blue font-medium text-white transition"><i data-lucide="layout-dashboard" class="h-5 w-5"></i> Dashboard</a>
+      <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"><i data-lucide="layout-dashboard" class="h-5 w-5"></i> Dashboard</a>
       <a href="candidates.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"><i data-lucide="users" class="h-5 w-5"></i> Candidates</a>
       <a href="results.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"><i data-lucide="file-check-2" class="h-5 w-5"></i> Results</a>
       <a href="certificates.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"><i data-lucide="award" class="h-5 w-5"></i> Certificates</a>
@@ -80,82 +80,63 @@
 
       <div class="p-6">
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-semibold text-slate-800">Dashboard Overview</h2>
-            <div class="flex items-center gap-4">
-                <span id="currentDate" class="text-sm text-slate-500"></span>
-                <button id="refreshDashboard" class="text-slate-500 hover:text-intern-blue"><i data-lucide="refresh-cw" class="h-5 w-5"></i></button>
-            </div>
+            <h2 class="text-2xl font-semibold text-slate-800">Assessment Results</h2>
+            <button id="generateCertificateButton" class="bg-intern-blue hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2">
+                <i data-lucide="award" class="h-4 w-4"></i> Generate Certificate
+            </button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-sm text-slate-500 mb-1">Total Registrations</p>
-                <h3 class="text-3xl font-bold text-slate-800" id="totalRegistrations">0</h3>
+                <p class="text-sm text-slate-500 mb-1">Total Attempts</p>
+                <h3 class="text-3xl font-bold text-slate-800" id="totalResults">0</h3>
             </div>
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-sm text-slate-500 mb-1">Paid Candidates</p>
-                <h3 class="text-3xl font-bold text-slate-800" id="paidCandidates">0</h3>
+                <p class="text-sm text-slate-500 mb-1">Completed Evaluations</p>
+                <h3 class="text-3xl font-bold text-slate-800" id="completedResults">0</h3>
             </div>
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-sm text-slate-500 mb-1">Eligible Candidates</p>
-                <h3 class="text-3xl font-bold text-slate-800" id="eligibleCandidates">0</h3>
+                <p class="text-sm text-slate-500 mb-1">Pending Evaluations</p>
+                <h3 class="text-3xl font-bold text-slate-800" id="pendingResults">0</h3>
             </div>
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-sm text-slate-500 mb-1">Upcoming Batches</p>
-                <h3 class="text-3xl font-bold text-slate-800" id="upcomingBatches">0</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-sm text-slate-500 mb-1">Available Slots</p>
-                <h3 class="text-3xl font-bold text-slate-800" id="availableSlots">0</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-sm text-slate-500 mb-1">Completed Assessments</p>
-                <h3 class="text-3xl font-bold text-slate-800" id="completedAssessments">0</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-sm text-slate-500 mb-1">Certificates</p>
-                <h3 class="text-3xl font-bold text-slate-800" id="certificates">0</h3>
+                <p class="text-sm text-slate-500 mb-1">Average Score</p>
+                <h3 class="text-3xl font-bold text-slate-800" id="averageScore">0%</h3>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-               <h3 class="font-medium text-slate-800 mb-4">Assessments</h3>
-               <div class="flex justify-between text-sm mb-2"><span id="completedAssessmentCount">0</span><span>Completed</span></div>
-               <div class="w-full bg-slate-100 rounded-full h-2 mb-4"><div id="completedAssessmentBar" class="bg-intern-blue h-2 rounded-full" style="width:0%"></div></div>
-               <div class="flex justify-between text-sm mb-2"><span id="pendingAssessmentCount">0</span><span>Pending</span></div>
-               <div class="w-full bg-slate-100 rounded-full h-2"><div id="pendingAssessmentBar" class="bg-amber-400 h-2 rounded-full" style="width:0%"></div></div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex flex-wrap gap-4 items-center bg-slate-50/50">
+                <div class="flex-1 min-w-[200px] relative">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4"></i>
+                    <input type="text" id="resultSearch" placeholder="Search results..." class="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-intern-blue/20">
+                </div>
+                <select id="resultLevelFilter" class="px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white min-w-[140px]">
+                    <option value="">All Levels</option>
+                    <option value="level 1">Level 1</option>
+                    <option value="level 2">Level 2</option>
+                    <option value="level 3">Level 3</option>
+                    <option value="level 4">Level 4</option>
+                    <option value="level 5">Level 5</option>
+                </select>
+                <select id="resultStatusFilter" class="px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white min-w-[140px]">
+                    <option value="">All Statuses</option>
+                    <option value="completed">Completed</option>
+                    <option value="pending">Pending</option>
+                </select>
             </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-               <h3 class="font-medium text-slate-800 mb-4">Levels</h3>
-               <!-- Level 1 -->
-               <div class="flex justify-between text-sm mb-2"><span id="level1Count">0</span><span>Level 1</span></div>
-               <div class="w-full bg-slate-100 rounded-full h-2 mb-2"><div id="level1Bar" class="bg-intern-blue h-2 rounded-full" style="width:0%"></div></div>
-               <!-- Level 2 -->
-               <div class="flex justify-between text-sm mb-2"><span id="level2Count">0</span><span>Level 2</span></div>
-               <div class="w-full bg-slate-100 rounded-full h-2 mb-2"><div id="level2Bar" class="bg-intern-blue h-2 rounded-full" style="width:0%"></div></div>
-               <!-- Level 3 -->
-               <div class="flex justify-between text-sm mb-2"><span id="level3Count">0</span><span>Level 3</span></div>
-               <div class="w-full bg-slate-100 rounded-full h-2 mb-2"><div id="level3Bar" class="bg-intern-blue h-2 rounded-full" style="width:0%"></div></div>
-               <!-- Level 4 -->
-               <div class="flex justify-between text-sm mb-2"><span id="level4Count">0</span><span>Level 4</span></div>
-               <div class="w-full bg-slate-100 rounded-full h-2 mb-2"><div id="level4Bar" class="bg-intern-blue h-2 rounded-full" style="width:0%"></div></div>
-               <!-- Level 5 -->
-               <div class="flex justify-between text-sm mb-2"><span id="level5Count">0</span><span>Level 5</span></div>
-               <div class="w-full bg-slate-100 rounded-full h-2"><div id="level5Bar" class="bg-intern-blue h-2 rounded-full" style="width:0%"></div></div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+                        <tr><th class="px-6 py-3 font-medium">Candidate</th><th class="px-6 py-3 font-medium">Score</th><th class="px-6 py-3 font-medium">Level</th><th class="px-6 py-3 font-medium">Status</th><th class="px-6 py-3 font-medium">Date</th><th class="px-6 py-3 font-medium w-24">Action</th></tr>
+                    </thead>
+                    <tbody id="resultsTableBody" class="divide-y divide-slate-100"></tbody>
+                </table>
             </div>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-8">
-            <h3 class="font-medium text-slate-800 mb-4">Recent Candidates</h3>
-            <table class="w-full"><tbody id="recentCandidates"></tbody></table>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-8">
-            <h3 class="font-medium text-slate-800 mb-4">Upcoming Batches</h3>
-            <table class="w-full"><tbody id="upcomingBatchesTable"></tbody></table>
         </div>
       </div>
+
     </main>
   </div>
 

@@ -1,8 +1,7 @@
 (() => {
   "use strict";
 
-  const API = new URL("../public/api/admin/evaluate.php", window.location.href)
-    .href;
+  const API = "/api/admin/evaluate.php";
   let csrfToken = null;
 
   async function getCsrfToken() {
@@ -12,8 +11,13 @@
       headers: { Accept: "application/json" },
     });
     const payload = await response.json();
-    if (!response.ok || payload.status === "error")
+    if (!response.ok || payload.status === "error") {
+      if (response.status === 401 || response.status === 403) {
+        window.location.href = "/login.php";
+        return;
+      }
       throw new Error(payload.message || "Security token could not be loaded.");
+    }
     csrfToken = payload.data?.token || null;
     if (!csrfToken) throw new Error("Security token could not be loaded.");
     return csrfToken;
@@ -139,6 +143,10 @@
       throw new Error(text || `Request failed (${response.status})`);
     }
     if (!response.ok || payload.status === "error") {
+      if (response.status === 401 || response.status === 403) {
+        window.location.href = "/login.php";
+        return;
+      }
       throw new Error(payload.message || `Request failed (${response.status})`);
     }
     return payload.data;

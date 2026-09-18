@@ -20,7 +20,7 @@ InternBoot manages the candidate assessment lifecycle from user registration and
 - **Backend:** Core PHP (PHP 8.x)
 - **Database:** MySQL 8.0 (Railway.app Cloud Instance)
 - **Frontend:** HTML5, Vanilla JavaScript (ES6+), Vanilla CSS / Bootstrap 5, Lucide Icons
-- **PDF Generation:** Core PHP FPDF / Native PDF Stream Handler
+- **PDF Generation:** Native PDF Stream Handler
 - **Deployment:** Railway.app Cloud Hosting
 
 ---
@@ -131,7 +131,6 @@ MYSQLUSER=root
 | Module ID | Module Name | Primary Responsibility & Core Scope | Directory Path |
 | :--- | :--- | :--- | :--- |
 | **M1** | **Database & AI QBank** | Schema governance, DB connection bootstrap, AI question bank generation & approval endpoints | `/src/core/`, `/src/modules/m1_ai_qbank/` |
-| **M2** | **Landing Page** | Public landing page, course assessment summaries, marketing overview | `/src/modules/m2_landing/` |
 | **M3** | **Authentication & Profile** | User registration, bcrypt hashing, candidate profile creation, login session management | `/src/modules/m3_auth/`, `/public/api/auth/` |
 | **M4** | **Payment & Dashboard** | Payment verification, candidate dashboard, enrollment state tracking | `/src/modules/m4_payment_dashboard/`, `/public/api/payment/` |
 | **M5** | **Batches & Slots** | Batch threshold grouping (default 100), weekend exam date math, atomic slot booking | `/src/modules/m5_batch_slots/`, `/public/api/slots/` |
@@ -142,7 +141,7 @@ MYSQLUSER=root
 
 ## 6. Database Schema Summary
 
-The platform uses 19 relational tables defined in `schema.sql`:
+The platform uses 20 relational tables defined in `schema.sql`:
 
 | Table | Purpose | Key Foreign Keys & Constraints |
 | :--- | :--- | :--- |
@@ -155,7 +154,7 @@ The platform uses 19 relational tables defined in `schema.sql`:
 | `exam_schedules` | Weekend exam dates | FK `batch_id`, Saturday/Sunday date validation |
 | `exam_slots` | Time slots & seat inventory | FK `exam_schedule_id`, `seats_remaining >= 0` check trigger |
 | `question_banks` | Question bank collections | FK `assessment_id` |
-| `questions` | Multiple-choice questions | FK `question_bank_id`, `difficulty_level` |
+| `questions` | Multiple-choice questions | FK `question_bank_id` |
 | `options` | Choice options per question | FK `question_id`, `is_correct` (1/0) |
 | `attempts` | Candidate test attempt sessions | FK `candidate_id`, `exam_slot_id`, status (`in_progress`, `submitted`, `expired`) |
 | `answers` | Candidate answer selections | FK `attempt_id`, `question_id`, `selected_option_id` |
@@ -177,7 +176,6 @@ The platform uses 19 relational tables defined in `schema.sql`:
   - `POST /api/payment/payment.php` (`{"action":"verify", "payment_id":1, "token":"..."}`) — Performs server-side token verification, marks `payments.status = 'success'`, and updates `enrollments.eligibility_status = 'eligible'`.
   - `GET  /api/dashboard.php?candidate_id=1` — Returns complete dashboard status metrics.
   - `GET  /api/enrollment.php?candidate_id=1` — Returns candidate enrollment records.
-- **Sample Seed Data:** Standalone M4 test data (demo candidate ID 1001, test assessment 1001) has been preserved under `database/seeds/m4_seed.sql`.
 
 ---
 

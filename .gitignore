@@ -8,3 +8,6 @@ scratch/
 vendor/
 composer.phar
 
+
+public/uploads/*
+!public/uploads/.gitkeep

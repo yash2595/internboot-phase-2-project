@@ -83,11 +83,22 @@ if (str_starts_with((string)$password, 'MYSQL_') && str_contains((string)$passwo
 $port = (int)$port;
 if ($port < 1 || $port > 65535) $port = 3306;
 
+if ($isRailway && str_contains((string)$host, '.proxy.rlwy.net')) {
+    $privateHost = env_value('MYSQLHOST', 'mysql.railway.internal');
+    if ($privateHost !== '') {
+        $host = $privateHost;
+        error_log("db.php: overriding public proxy host with Railway private network host for in-cluster connection.");
+    }
+}
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
+$__db_connect_start = microtime(true);
 try {
     $conn = new mysqli($host, $user, $password, $dbname, $port);
     $conn->set_charset('utf8mb4');
+    // TEMP DIAGNOSTIC — remove after confirming fix
+    error_log('DB connected to ' . $host . ':' . $port . ' in ' . round((microtime(true) - $__db_connect_start) * 1000, 1) . 'ms');
 } catch (mysqli_sql_exception $e) {
     $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
     $prefersHtml = str_contains($accept, 'text/html') || str_contains($accept, 'application/pdf');

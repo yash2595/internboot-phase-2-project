@@ -111,11 +111,6 @@ function renderDetails(data) {
     setText('[data-payment="totalFee"]', formattedFee);
     setText("#assessment-fee-display", formattedFee);
 
-    const btnPayAmount = document.getElementById("btn-pay-amount");
-    if (btnPayAmount) {
-        btnPayAmount.textContent = formattedFee;
-    }
-
     // 4. Payment & Enrollment Status
     if (payment && payment.status === "success") {
         isPaymentCompleted = true;

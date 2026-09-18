@@ -49,6 +49,7 @@ function m7_handle_request(mysqli $conn): void
             case 'placements': send_json_response('success','Placement records loaded',['placements'=>m7_placements($conn)]);
             case 'questions': send_json_response('success','Questions loaded',['questions'=>m7_questions($conn)]);
             case 'batches': send_json_response('success','Batches loaded',m7_batches($conn));
+            case 'question-banks': send_json_response('success','Question banks loaded',['question_banks'=>m7_question_banks($conn)]);
             case 'settings': send_json_response('success','Settings loaded',m7_settings($conn));
             case 'health':
                 $required=['users','candidates','payments','assessments','batches','enrollments','exam_schedules','exam_slots','question_banks','questions','options','attempts','answers','results','levels','certificates','placement_records','admin_logs','settings'];
@@ -101,7 +102,7 @@ function m7_handle_request(mysqli $conn): void
         $destination = $uploadDir . '/' . $filename;
         if (!move_uploaded_file($tmp, $destination)) throw new RuntimeException('Could not save the uploaded image.');
 
-        $avatarUrl = '../public/uploads/' . $filename;
+        $avatarUrl = '/uploads/' . $filename;
         update_setting($conn, 'admin_avatar_url', $avatarUrl);
         create_admin_log($conn, $adminUserId, 'avatar_update', json_encode(['avatar_url'=>$avatarUrl]));
         send_json_response('success','Profile photo updated successfully.', ['avatar_url'=>$avatarUrl]);

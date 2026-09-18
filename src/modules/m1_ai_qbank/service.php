@@ -6,11 +6,15 @@ require_once __DIR__ . '/queries.php';
 /**
  * Service logic to manually add an approved question and its 4 options inside a transaction.
  */
-function add_manual_question(int $qbankId, string $questionText, string $difficulty, array $options, mysqli $conn): array {
-    // 1. Validate exactly 4 options provided
-    if (count($options) !== 4) {
-        throw new Exception("Exactly 4 options must be provided for a question.");
+function add_manual_question(int $qbankId, string $questionText, string $difficulty, array $options, mysqli $conn, string $approvalStatus = 'pending'): array {
+    // 1. Validate Question Bank exists
+    $stmt = $conn->prepare("SELECT id FROM question_banks WHERE id = ?");
+    $stmt->bind_param("i", $qbankId);
+    $stmt->execute();
+    if (!$stmt->get_result()->fetch_assoc()) {
+        throw new Exception("Question Bank not found.");
     }
+    $stmt->close();
 
     // 2. Validate exactly 1 correct option exists
     $correctCount = 0;
@@ -31,8 +35,8 @@ function add_manual_question(int $qbankId, string $questionText, string $difficu
     $conn->begin_transaction();
 
     try {
-        // Insert question record (automatically sets approval_status = 'approved')
-        $questionId = insert_question($qbankId, $questionText, $difficulty, $conn);
+        // Insert question record
+        $questionId = insert_question($qbankId, $questionText, $difficulty, $conn, $approvalStatus);
 
         // Insert 4 option records
         foreach ($options as $opt) {
@@ -48,7 +52,7 @@ function add_manual_question(int $qbankId, string $questionText, string $difficu
             'question_bank_id' => $qbankId,
             'question_text' => $questionText,
             'difficulty' => $difficulty,
-            'approval_status' => 'approved'
+            'approval_status' => $approvalStatus,
         ];
     } catch (Exception $e) {
         $conn->rollback();

@@ -119,6 +119,40 @@
     return "blue";
   };
 
+  
+  async function apiQbank(action, options = {}) {
+    const url = `/api/qbank/${action}.php`;
+    const config = {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+      ...options,
+    };
+    config.headers = { Accept: "application/json", ...(options.headers || {}) };
+    if ((config.method || "GET").toUpperCase() === "POST") {
+      config.headers["X-CSRF-Token"] = await getCsrfToken();
+    }
+    if (config.body && typeof config.body !== "string" && !(config.body instanceof FormData)) {
+      config.headers["Content-Type"] = "application/json";
+      config.body = JSON.stringify(config.body);
+    }
+    const response = await fetch(url, config);
+    const text = await response.text();
+    let payload;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      throw new Error(text || `Request failed (${response.status})`);
+    }
+    if (!response.ok || payload.status === "error") {
+      if (response.status === 401 || response.status === 403) {
+        window.location.href = "/login.php";
+        return;
+      }
+      throw new Error(payload.message || `Request failed (${response.status})`);
+    }
+    return payload.data;
+  }
+
   async function api(action, options = {}) {
     const url = `${API}?action=${encodeURIComponent(action)}`;
     const config = {
@@ -791,7 +825,7 @@
     $$(".download-certificate-btn").forEach((btn) =>
       btn.addEventListener("click", () =>
         window.open(
-          `../public/api/admin/certificate_pdf.php?result_id=${encodeURIComponent(btn.dataset.id)}`,
+          `/api/admin/certificate_pdf.php?result_id=${encodeURIComponent(btn.dataset.id)}`,
           "_blank",
         ),
       ),
@@ -799,7 +833,7 @@
     $$(".view-certificate-btn").forEach((btn) =>
       btn.addEventListener("click", () =>
         window.open(
-          `../public/api/admin/certificate_pdf.php?result_id=${encodeURIComponent(btn.dataset.id)}`,
+          `/api/admin/certificate_pdf.php?result_id=${encodeURIComponent(btn.dataset.id)}`,
           "_blank",
         ),
       ),
@@ -1335,6 +1369,113 @@
   }
 
   function bindGenerateButtons() {
+    
+    const aBtn = $("#addQuestionButton");
+    if (aBtn && !aBtn.dataset.bound) {
+      aBtn.dataset.bound = "1";
+      aBtn.onclick = async () => {
+        try {
+          const res = await api("question-banks");
+          const banks = res.question_banks || [];
+          
+          let bankOptions = banks.map(b => `<option value="${b.id}">${escapeHtml(b.name)} (${escapeHtml(b.assessment_title)})</option>`).join('');
+          if (!bankOptions) bankOptions = '<option value="">No Question Banks available</option>';
+
+          const html = `
+            <form id="addQuestionForm" class="p-6 space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Question Bank</label>
+                <select id="qf_bank" class="w-full rounded-lg border-slate-300 p-2.5 text-sm outline-none focus:border-intern-blue focus:ring-1 focus:ring-intern-blue">${bankOptions}</select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Question Text <span class="text-red-500">*</span></label>
+                <textarea id="qf_text" rows="3" class="w-full rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-intern-blue focus:ring-1 focus:ring-intern-blue" required></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Difficulty</label>
+                <select id="qf_diff" class="w-full rounded-lg border-slate-300 p-2.5 text-sm outline-none focus:border-intern-blue focus:ring-1 focus:ring-intern-blue">
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+              
+              <div class="space-y-3">
+                <label class="block text-sm font-medium text-slate-700">Options <span class="text-red-500">*</span></label>
+                ${[1, 2, 3, 4].map(i => `
+                  <div class="flex items-center gap-3">
+                    <input type="radio" name="qf_correct" value="${i}" class="h-4 w-4 text-intern-blue focus:ring-intern-blue" ${i===1 ? 'checked' : ''}>
+                    <input type="text" id="qf_opt${i}" class="w-full rounded-lg border border-slate-300 p-2 text-sm outline-none focus:border-intern-blue focus:ring-1 focus:ring-intern-blue" placeholder="Option ${i}" required>
+                  </div>
+                `).join('')}
+              </div>
+
+              <div class="flex items-center gap-2 mt-4">
+                <input type="checkbox" id="qf_publish" class="rounded border-slate-300 text-intern-blue focus:ring-intern-blue" checked>
+                <label for="qf_publish" class="text-sm text-slate-700">Publish immediately (approved)</label>
+              </div>
+
+              <div id="qf_error" class="hidden text-sm text-red-600 font-medium"></div>
+
+              <div class="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-5">
+                <button type="button" onclick="document.getElementById('m7Modal').remove()" class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">Cancel</button>
+                <button type="submit" class="rounded-lg bg-intern-blue px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">Save Question</button>
+              </div>
+            </form>
+          `;
+
+          modal("Add New Question", html);
+
+          const form = $("#addQuestionForm");
+          form.onsubmit = async (e) => {
+            e.preventDefault();
+            const errBox = $("#qf_error");
+            errBox.classList.add("hidden");
+
+            const qbankId = $("#qf_bank").value;
+            const qtext = $("#qf_text").value.trim();
+            if (!qbankId || !qtext) {
+              errBox.textContent = "Question text and bank are required.";
+              errBox.classList.remove("hidden");
+              return;
+            }
+
+            const options = [];
+            const correctVal = document.querySelector('input[name="qf_correct"]:checked')?.value;
+            for (let i = 1; i <= 4; i++) {
+              const optText = $(`#qf_opt${i}`).value.trim();
+              if (!optText) {
+                errBox.textContent = `Option ${i} is required.`;
+                errBox.classList.remove("hidden");
+                return;
+              }
+              options.push({ option_text: optText, is_correct: (correctVal == i ? 1 : 0) });
+            }
+
+            const payload = {
+              question_bank_id: parseInt(qbankId),
+              question_text: qtext,
+              difficulty: $("#qf_diff").value,
+              approval_status: $("#qf_publish").checked ? "approved" : "pending",
+              options: options
+            };
+
+            try {
+              await apiQbank("add_question", { method: "POST", body: payload });
+              notify("Question added.");
+              $("#m7Modal").remove();
+              await loadQuestions();
+            } catch (err) {
+              notify(err.message, true);
+            }
+          };
+
+        } catch (e) {
+          notify(e.message, true);
+        }
+      };
+    }
+
     const qBtn = $("#generateQuestionsButton");
     if (qBtn && !qBtn.dataset.bound) {
       qBtn.dataset.bound = "1";
@@ -1342,7 +1483,7 @@
         try {
           const data = await api("questions");
           notify(
-            `Question bank loaded: ${(data.questions || []).length} questions. AI generation remains owned by M1.`,
+            `Question bank refreshed: ${(data.questions || []).length} questions. AI generation remains owned by M1.`,
           );
           await loadQuestions();
         } catch (e) {

@@ -8,6 +8,7 @@ function m7_pending_attempts(mysqli $conn): array { return get_pending_attempts(
 function m7_certificates(mysqli $conn): array { return get_certificates($conn); }
 function m7_placements(mysqli $conn): array { sync_placement_records($conn); return get_placement_records($conn); }
 function m7_questions(mysqli $conn): array { return get_questions($conn); }
+function m7_question_banks(mysqli $conn): array { return get_all_question_banks($conn); }
 function m7_batches(mysqli $conn): array { return get_batches($conn); }
 function m7_settings(mysqli $conn): array { return get_settings($conn); }
 

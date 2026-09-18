@@ -194,6 +194,14 @@ function get_placement_records(mysqli $conn): array
       ORDER BY pr.updated_at DESC");
 }
 
+function get_all_question_banks(mysqli $conn): array
+{
+    return q_all($conn, "SELECT qb.id, qb.name, a.title AS assessment_title 
+        FROM question_banks qb 
+        LEFT JOIN assessments a ON a.id = qb.assessment_id 
+        ORDER BY qb.name ASC");
+}
+
 function get_questions(mysqli $conn): array
 {
     return q_all($conn, "SELECT q.id, q.question_text, q.difficulty, q.approval_status,
@@ -273,6 +281,9 @@ function get_settings(mysqli $conn): array
         ];
     }
     $profile['avatar_url'] = $map['admin_avatar_url'] ?? '';
+    if (strpos($profile['avatar_url'], '../public/') === 0) {
+        $profile['avatar_url'] = substr($profile['avatar_url'], 9);
+    }
 
     return ['settings'=>$settings,'profile'=>$profile];
 }

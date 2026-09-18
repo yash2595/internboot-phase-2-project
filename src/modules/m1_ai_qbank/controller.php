@@ -30,8 +30,16 @@ function handle_add_question_request(array $input, mysqli $conn): void {
         send_json_response('error', 'Exactly 4 options must be provided in an array', null, 400);
     }
 
+    $approvalStatus = $input['approval_status'] ?? 'pending';
+    if ($approvalStatus === 'rejected') {
+        send_json_response('error', "Cannot create a question with 'rejected' status", null, 400);
+    }
+    if (!in_array($approvalStatus, ['pending', 'approved'], true)) {
+        $approvalStatus = 'pending';
+    }
+
     try {
-        $result = add_manual_question($qbankId, $questionText, $difficulty, $options, $conn);
+        $result = add_manual_question($qbankId, $questionText, $difficulty, $options, $conn, $approvalStatus);
         send_json_response('success', 'Question added successfully', $result, 201);
     } catch (Exception $e) {
         send_json_response('error', $e->getMessage(), null, 400);

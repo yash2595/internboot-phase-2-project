@@ -14,7 +14,7 @@ function request_body(): array {
 }
 
 function demo_mode(): bool {
-    return ($_ENV['M4_DEMO_MODE'] ?? '1') === '1';
+    return ($_ENV['M4_DEMO_MODE'] ?? '0') === '1';
 }
 
 function resolve_candidate_id(array $input = []): int {
@@ -223,6 +223,17 @@ try {
         }
 
         unset($_SESSION['m4_demo_payment']);
+
+        require_once __DIR__ . '/../../../src/modules/m5_batch_slots/service.php';
+        try {
+            $batchesFormed = create_all_eligible_batches($assessmentId, $conn);
+            if (!empty($batchesFormed)) {
+                error_log('Auto-batch formation triggered after payment verify: ' . count($batchesFormed) . ' batch(es) formed for assessment ' . $assessmentId);
+            }
+        } catch (Throwable $e) {
+            error_log('Auto-batch formation failed after payment verify (non-fatal): ' . $e->getMessage());
+        }
+
         send_json_response('success', 'Payment verified server-side and enrollment marked eligible.', [
             'payment' => [
                 'id' => $paymentId,

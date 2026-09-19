@@ -139,6 +139,40 @@ try {
     }
 
     /*
+     * 5b. Scheduled Date and Time-Window Gate (First Start Only)
+     * Restrict exam access to the assigned candidate, date, and slot window.
+     */
+    if (empty($attempt['start_time'])) {
+        $now = new DateTime();
+        $today = $now->format('Y-m-d');
+
+        $examDate = !empty($attempt['exam_date']) ? $attempt['exam_date'] : null;
+        $slotStartTime = !empty($attempt['slot_start_time']) ? $attempt['slot_start_time'] : null;
+        $slotEndTime = !empty($attempt['slot_end_time']) ? $attempt['slot_end_time'] : null;
+
+        if ($examDate !== null) {
+            if ($examDate > $today) {
+                send_json_response('error', "Your exam is scheduled for {$examDate}. This assessment is not yet active.", null, 403);
+            }
+            if ($examDate < $today) {
+                send_json_response('error', "Your scheduled exam window has passed.", null, 403);
+            }
+
+            if ($slotStartTime !== null && $slotEndTime !== null) {
+                $slotStart = new DateTime($examDate . ' ' . $slotStartTime);
+                $slotEnd = new DateTime($examDate . ' ' . $slotEndTime);
+
+                if ($now < $slotStart) {
+                    send_json_response('error', "Your exam slot opens at {$slotStartTime}.", null, 403);
+                }
+                if ($now > $slotEnd) {
+                    send_json_response('error', "Your exam slot has closed.", null, 403);
+                }
+            }
+        }
+    }
+
+    /*
      * 6. If attempt has not started yet,
      *    M6 starts it using SERVER time.
      *

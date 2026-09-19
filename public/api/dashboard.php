@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 function demo_mode(): bool {
-    return ($_ENV['M4_DEMO_MODE'] ?? '1') === '1';
+    return ($_ENV['M4_DEMO_MODE'] ?? '0') === '1';
 }
 
 function resolve_candidate_id(array $input = []): int {

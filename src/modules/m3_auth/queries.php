@@ -99,6 +99,43 @@ function insert_user_and_candidate(mysqli $conn, string $email, string $password
     }
 }
 
+/**
+ * Creates an admin/staff user account without creating a candidate profile.
+ * Returns ['success' => bool, 'user_id' => int, 'message' => string, 'code' => int]
+ */
+function insert_admin_user(mysqli $conn, string $email, string $passwordHash, string $fullName, string $phone, string $role): array {
+    if (!in_array($role, ['admin', 'staff'], true)) {
+        return ['success' => false, 'code' => 422, 'message' => 'Invalid staff role specified.'];
+    }
+
+    try {
+        $stmt = $conn->prepare("INSERT INTO users (email, password, role) VALUES (?, ?, ?)");
+        $stmt->bind_param('sss', $email, $passwordHash, $role);
+        $stmt->execute();
+
+        if ($conn->errno) {
+            throw new mysqli_sql_exception($conn->error, $conn->errno);
+        }
+
+        $userId = (int) $stmt->insert_id;
+        $stmt->close();
+
+        return ['success' => true, 'user_id' => $userId];
+    } catch (Throwable $e) {
+        $isDuplicate = (method_exists($e, 'getCode') && (int) $e->getCode() === 1062) || $conn->errno === 1062;
+        if ($isDuplicate) {
+            return [
+                'success' => false,
+                'code' => 409,
+                'message' => 'An account with this email already exists.',
+            ];
+        }
+
+        return ['success' => false, 'code' => 500, 'message' => 'Could not create staff account. Please try again.'];
+    }
+}
+
+
 function save_pending_registration(mysqli $conn, string $email, string $otp, string $fullName, string $phone, string $passwordHash, string $role): bool {
     // Clear any old pending entries for this email first
     $del = $conn->prepare('DELETE FROM email_verifications WHERE email = ?');

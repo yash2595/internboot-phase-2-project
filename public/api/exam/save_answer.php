@@ -127,6 +127,8 @@ try {
 
     /*
      * 5. Server-side expiry check.
+     * Note: Initial start timing (start_time & end_time) is set exclusively
+     * by start_exam.php after passing the scheduled date/window gate.
      */
     if (empty($attempt['end_time'])) {
         send_json_response('error', 'Attempt timing is not initialized', null, 500);

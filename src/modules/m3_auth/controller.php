@@ -12,11 +12,7 @@ function handle_register_request(array $data, mysqli $conn): void {
     $phone    = sanitize_string($data['phone'] ?? '');
     $password = (string) ($data['password'] ?? '');
     $confirm  = (string) ($data['confirm_password'] ?? '');
-    $role     = sanitize_string($data['role'] ?? 'candidate');
-
-    if (!in_array($role, ['candidate', 'admin'], true)) {
-        $role = 'candidate';
-    }
+    $role     = 'candidate';
 
     if ($fullName === '' || $email === '' || $phone === '' || $password === '') {
         send_json_response('error', 'All fields are required.', null, 422);
@@ -34,7 +30,7 @@ function handle_register_request(array $data, mysqli $conn): void {
         send_json_response('error', 'Passwords do not match.', null, 422);
     }
 
-    $result = initiate_registration($conn, $fullName, $email, $phone, $password, $role);
+    $result = initiate_registration($conn, $fullName, $email, $phone, $password, 'candidate');
 
     if (!$result['success']) {
         send_json_response('error', $result['message'], null, $result['code'] ?? 409);
@@ -166,4 +162,72 @@ function handle_logout_request(): void {
     session_destroy();
     send_json_response('success', 'Logged out.', null, 200);
 }
+
+/**
+ * Handles POST /api/admin/create-staff.php
+ * Admin-authenticated staff creation path.
+ */
+function handle_create_staff_request(array $data, mysqli $conn): void {
+    require_admin_access($conn);
+    require_csrf();
+
+    $fullName = sanitize_string($data['full_name'] ?? '');
+    $email    = sanitize_string($data['email'] ?? '');
+    $phone    = sanitize_string($data['phone'] ?? '');
+    $password = (string) ($data['password'] ?? '');
+    $confirm  = (string) ($data['confirm_password'] ?? '');
+    $role     = sanitize_string($data['role'] ?? 'staff');
+
+    if (!in_array($role, ['admin', 'staff'], true)) {
+        send_json_response('error', 'Role must be either admin or staff.', null, 422);
+        return;
+    }
+
+    if ($fullName === '' || $email === '' || $password === '' || $confirm === '') {
+        send_json_response('error', 'All fields are required.', null, 422);
+        return;
+    }
+    if (!is_valid_email($email)) {
+        send_json_response('error', 'Enter a valid email address.', null, 422);
+        return;
+    }
+    if ($phone !== '' && !preg_match('/^[6-9]\d{9}$/', $phone)) {
+        send_json_response('error', 'Enter a valid 10-digit phone number.', null, 422);
+        return;
+    }
+    if (strlen($password) < 8) {
+        send_json_response('error', 'Password must be at least 8 characters.', null, 422);
+        return;
+    }
+    if ($password !== $confirm) {
+        send_json_response('error', 'Passwords do not match.', null, 422);
+        return;
+    }
+
+    $passwordHash = password_hash($password, PASSWORD_BCRYPT);
+    $result = insert_admin_user($conn, $email, $passwordHash, $fullName, $phone, $role);
+
+    if (!$result['success']) {
+        send_json_response('error', $result['message'], null, $result['code'] ?? 400);
+        return;
+    }
+
+    $newUserId = (int)$result['user_id'];
+    require_once __DIR__ . '/../m7_evaluation_admin/queries.php';
+    if (function_exists('create_admin_log')) {
+        create_admin_log(
+            $conn,
+            $_SESSION['user_id'] ?? null,
+            'create_staff',
+            json_encode(['new_user_id' => $newUserId, 'email' => $email, 'role' => $role])
+        );
+    }
+
+    send_json_response('success', 'Staff account created successfully.', [
+        'user_id' => $newUserId,
+        'email'   => $email,
+        'role'    => $role,
+    ], 201);
+}
 ?>
+

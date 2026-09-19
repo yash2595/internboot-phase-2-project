@@ -57,7 +57,6 @@ if (registerForm) {
       phone: document.getElementById('phone').value.trim(),
       password: document.getElementById('password').value,
       confirm_password: document.getElementById('confirm_password').value,
-      role: registerForm.querySelector('input[name="role"]:checked').value,
     };
 
     if (payload.password !== payload.confirm_password) {

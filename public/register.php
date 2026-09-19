@@ -42,18 +42,12 @@ $pageTitle = 'Register — InternBoot';
 
         <form id="registerForm" novalidate>
 
-          <div class="ib-role-group">
-            <label class="ib-role-card selected" id="roleCardStudent">
-              <input type="radio" name="role" value="candidate" checked>
+          <div class="ib-role-group" style="justify-content: center;">
+            <label class="ib-role-card selected" id="roleCardStudent" style="max-width: 100%;">
+              <input type="radio" name="role" value="candidate" checked hidden>
               <span class="ib-role-icon">🎓</span>
-              <span class="ib-role-label">Student</span>
+              <span class="ib-role-label">Candidate Registration</span>
               <span class="ib-role-desc">Take assessments &amp; earn certificates</span>
-            </label>
-            <label class="ib-role-card" id="roleCardAdmin">
-              <input type="radio" name="role" value="admin">
-              <span class="ib-role-icon">🛠️</span>
-              <span class="ib-role-label">Admin</span>
-              <span class="ib-role-desc">Manage batches &amp; candidates</span>
             </label>
           </div>
 

@@ -66,4 +66,41 @@ function handle_list_questions_request(array $input, mysqli $conn): void {
         send_json_response('error', $e->getMessage(), null, 500);
     }
 }
+
+/**
+ * Controller handler for AI-backed question generation.
+ */
+function handle_generate_questions_request(array $input, mysqli $conn): void {
+    $qbankId = (int)($input['question_bank_id'] ?? 0);
+    $topic = trim((string)($input['topic'] ?? ''));
+    $count = (int)($input['count'] ?? 5);
+    $difficultyMix = trim((string)($input['difficulty_mix'] ?? ''));
+
+    if ($qbankId <= 0) {
+        send_json_response('error', 'Valid question_bank_id is required', null, 400);
+    }
+
+    if ($topic === '') {
+        send_json_response('error', 'Topic description is required', null, 400);
+    }
+
+    if ($count <= 0) {
+        send_json_response('error', 'Count must be a positive integer', null, 400);
+    }
+
+    if ($count > 50) {
+        $count = 50;
+    }
+
+    try {
+        $result = generate_questions_via_ai($qbankId, $topic, $count, $difficultyMix, $conn);
+        send_json_response('success', "Generated {$result['inserted']} question(s), pending admin approval", $result, 201);
+    } catch (InvalidArgumentException $e) {
+        send_json_response('error', $e->getMessage(), null, 400);
+    } catch (Throwable $e) {
+        $msg = $e->getMessage();
+        $code = (str_contains($msg, 'AI provider') || str_contains($msg, 'network')) ? 502 : 400;
+        send_json_response('error', $msg, null, $code);
+    }
+}
 ?>

@@ -43,7 +43,7 @@ function get_dashboard_stats(mysqli $conn): array
         'eligible_candidates' => (int)q_value($conn, "SELECT COUNT(*) FROM enrollments WHERE eligibility_status = 'eligible'"),
         'upcoming_batches' => (int)q_value($conn, "SELECT COUNT(DISTINCT b.id) FROM batches b JOIN exam_schedules s ON s.batch_id=b.id WHERE s.exam_date >= CURDATE() AND s.status='scheduled'"),
         'available_slots' => (int)q_value($conn, "SELECT COALESCE(SUM(seats_remaining),0) FROM exam_slots es JOIN exam_schedules s ON s.id=es.exam_schedule_id WHERE s.exam_date >= CURDATE() AND s.status='scheduled'"),
-        'completed_assessments' => (int)q_value($conn, "SELECT COUNT(*) FROM attempts WHERE status='submitted'"),
+        'completed_assessments' => (int)q_value($conn, "SELECT COUNT(DISTINCT at.id) FROM attempts at LEFT JOIN results r ON r.attempt_id=at.id WHERE at.status='submitted' OR r.id IS NOT NULL"),
         'certificates' => (int)q_value($conn, 'SELECT COUNT(*) FROM certificates'),
         'level_counts' => $levelCounts,
         'recent_candidates' => get_recent_candidates($conn, 8),
@@ -317,6 +317,14 @@ function update_attempt_submitted(mysqli $conn, int $attemptId): void
 {
     $stmt=$conn->prepare("UPDATE attempts SET status='submitted', submitted_at=NOW(), updated_at=NOW() WHERE id=?");
     $stmt->bind_param('i',$attemptId); $stmt->execute(); $stmt->close();
+}
+
+function mark_attempt_evaluated(mysqli $conn, int $attemptId): void
+{
+    $stmt = $conn->prepare("UPDATE attempts SET submitted_at = IF(submitted_at IS NULL, NOW(), submitted_at), updated_at = NOW() WHERE id = ?");
+    $stmt->bind_param('i', $attemptId);
+    $stmt->execute();
+    $stmt->close();
 }
 
 function upsert_result(mysqli $conn, int $attemptId, float $score, float $percentage, int $level): int

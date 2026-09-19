@@ -2,24 +2,22 @@
 // Values available from the API are dynamic. Static descriptive UI text remains in dashboard.html.
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const params = new URLSearchParams(window.location.search);
-    // Temporary M4 testing candidate. Replace with the authenticated PHP session in the final M3 integration.
-    const candidateId = params.get("candidate_id") || "1";
-
     try {
-        const response = await fetch(
-            `api/dashboard.php?candidate_id=${encodeURIComponent(candidateId)}`,
-            {
-                method: "GET",
-                headers: { "Accept": "application/json" }
-            }
-        );
+        const response = await fetch("api/dashboard.php", {
+            method: "GET",
+            headers: { "Accept": "application/json" }
+        });
+
+        if (response.status === 401) {
+            handleUnauthenticated("Session expired or authentication required. Please <a href='login.php' style='color:#1652d6;text-decoration:underline;font-weight:700;'>log in as candidate</a> to access your dashboard.");
+            return;
+        }
 
         const payload = await response.json();
 
         const isSuccess = payload.status === "success";
         if (!response.ok || !isSuccess || !payload.data) {
-            throw new Error(payload.message || "Unable to fetch dashboard data.");
+            throw new Error(payload.message || "Unable to load dashboard data.");
         }
 
         const source = payload.data;
@@ -45,6 +43,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 });
+
+function handleUnauthenticated(message) {
+    updateAvatar("—");
+    document.querySelectorAll('[data-candidate="name"]').forEach((el) => {
+        el.textContent = "Unauthenticated";
+    });
+
+    let alertBox = document.getElementById("dashboard-alert");
+    if (!alertBox) {
+        const content = document.querySelector(".content");
+        if (content) {
+            alertBox = document.createElement("div");
+            alertBox.id = "dashboard-alert";
+            alertBox.style.cssText = "margin-bottom: 20px; padding: 14px 18px; border: 1px solid #ef4444; background: #fef2f2; color: #991b1b; border-radius: 8px; font-size: 14px; line-height: 1.5;";
+            content.insertBefore(alertBox, content.firstChild);
+        }
+    }
+    if (alertBox) {
+        alertBox.innerHTML = message || "Session expired or authentication required. Please <a href='login.php' style='color:#1652d6;text-decoration:underline;font-weight:700;'>log in as candidate</a> to access your dashboard.";
+        alertBox.style.display = "block";
+    }
+}
 
 function fillSection(attribute, data) {
     if (!data) return;

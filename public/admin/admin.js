@@ -1476,6 +1476,108 @@
       };
     }
 
+    const aiBtn = $("#generateAiQuestionsButton");
+    if (aiBtn && !aiBtn.dataset.bound) {
+      aiBtn.dataset.bound = "1";
+      aiBtn.onclick = async () => {
+        try {
+          const qbanksData = await api("question-banks");
+          const qbanks = qbanksData.question_banks || [];
+          if (!qbanks.length) {
+            notify("No question banks available.", true);
+            return;
+          }
+
+          const qbankOptions = qbanks.map(b => `<option value="${b.id}">${escapeHtml(b.name)} (${escapeHtml(b.assessment_title || 'General')})</option>`).join('');
+
+          const html = `
+            <form id="generateAiForm" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Question Bank <span class="text-red-500">*</span></label>
+                <select id="aif_bank" class="w-full rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600" required>
+                  <option value="">Select Question Bank</option>
+                  ${qbankOptions}
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Topic / Subject <span class="text-red-500">*</span></label>
+                <input type="text" id="aif_topic" class="w-full rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600" placeholder="e.g. PHP Data Types & Functions" required>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">Number of Questions <span class="text-red-500">*</span></label>
+                  <input type="number" id="aif_count" min="1" max="50" value="5" class="w-full rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600" required>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">Difficulty Mix</label>
+                  <input type="text" id="aif_diff" class="w-full rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600" placeholder="easy:2,medium:2,hard:1">
+                </div>
+              </div>
+
+              <p class="text-xs text-slate-500">AI-generated questions will be inserted with <span class="font-semibold text-amber-600">Pending</span> status and must be approved before appearing in exams.</p>
+
+              <div id="aif_error" class="hidden text-sm text-red-600 font-medium"></div>
+
+              <div class="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-5">
+                <button type="button" onclick="document.getElementById('m7Modal').remove()" class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">Cancel</button>
+                <button type="submit" id="aif_submit" class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 transition">Generate Questions</button>
+              </div>
+            </form>
+          `;
+
+          modal("Generate Questions with AI", html);
+
+          const form = $("#generateAiForm");
+          form.onsubmit = async (e) => {
+            e.preventDefault();
+            const errBox = $("#aif_error");
+            const submitBtn = $("#aif_submit");
+            errBox.classList.add("hidden");
+
+            const qbankId = $("#aif_bank").value;
+            const topic = $("#aif_topic").value.trim();
+            const count = parseInt($("#aif_count").value, 10);
+            const difficultyMix = $("#aif_diff").value.trim();
+
+            if (!qbankId || !topic) {
+              errBox.textContent = "Question bank and topic description are required.";
+              errBox.classList.remove("hidden");
+              return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Generating with AI...";
+
+            try {
+              const res = await apiQbank("generate_questions", {
+                method: "POST",
+                body: {
+                  question_bank_id: parseInt(qbankId, 10),
+                  topic: topic,
+                  count: count || 5,
+                  difficulty_mix: difficultyMix
+                }
+              });
+
+              notify(`Generated ${res.inserted || count} question(s), pending admin approval.`);
+              $("#m7Modal").remove();
+              await loadQuestions();
+            } catch (err) {
+              errBox.textContent = err.message || "AI generation failed.";
+              errBox.classList.remove("hidden");
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Generate Questions";
+            }
+          };
+        } catch (e) {
+          notify(e.message, true);
+        }
+      };
+    }
+
     const qBtn = $("#generateQuestionsButton");
     if (qBtn && !qBtn.dataset.bound) {
       qBtn.dataset.bound = "1";

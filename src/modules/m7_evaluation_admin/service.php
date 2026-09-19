@@ -21,8 +21,18 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
 
         if($attempt['status']==='submitted'){
             $existing=q_one($conn,'SELECT r.*, c.full_name FROM results r JOIN attempts a ON a.id=r.attempt_id JOIN candidates c ON c.id=a.candidate_id WHERE r.attempt_id=?','i',[$attemptId]);
-            $conn->commit();
-            return ['result'=>$existing,'already_evaluated'=>true];
+            if ($existing) {
+                $conn->commit();
+                return ['result'=>$existing,'already_evaluated'=>true];
+            }
+        }
+
+        if ($attempt['status'] === 'expired') {
+            $existing = q_one($conn, 'SELECT r.*, c.full_name FROM results r JOIN attempts a ON a.id=r.attempt_id JOIN candidates c ON c.id=a.candidate_id WHERE r.attempt_id=?', 'i', [$attemptId]);
+            if ($existing) {
+                $conn->commit();
+                return ['result' => $existing, 'already_evaluated' => true];
+            }
         }
 
         // Guard: only 'expired' (and 'in_progress' whose timer has silently run out)
@@ -52,7 +62,7 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
         // Defensive catch-all: reject any status that is neither 'submitted' nor 'expired'.
         // With the current ENUM('in_progress','submitted','expired') this branch is
         // unreachable, but guards against future schema changes.
-        if($attempt['status']!=='expired'){
+        if($attempt['status']!=='expired' && $attempt['status']!=='submitted'){
             throw new InvalidArgumentException(
                 "Attempt has unexpected status '{$attempt['status']}' and cannot be evaluated."
             );
@@ -72,7 +82,7 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
         if(!$level) throw new RuntimeException('No level mapping exists for this percentage.');
 
         $resultId=upsert_result($conn,$attemptId,(float)$correct,$percentage,(int)$level['level_number']);
-        update_attempt_submitted($conn,$attemptId);
+        mark_attempt_evaluated($conn,$attemptId);
         ensure_placement_record($conn,(int)$attempt['candidate_id'],$resultId);
 
         $certificate=null;
@@ -115,6 +125,9 @@ function generate_certificate(mysqli $conn,int $resultId): array
 
     if(!$row) throw new InvalidArgumentException('Result not found.');
 
+    $levelRow = q_one($conn, 'SELECT level_name FROM levels WHERE level_number=?', 'i', [(int)$row['level_assigned']]);
+    $levelName = $levelRow ? $levelRow['level_name'] : ('Level ' . $row['level_assigned']);
+
     return upsert_certificate(
         $conn,
         (int)$row['candidate_id'],
@@ -125,7 +138,8 @@ function generate_certificate(mysqli $conn,int $resultId): array
         'email'=>$row['email'],
         'assessment'=>$row['assessment_title'],
         'percentage'=>$row['percentage'],
-        'level'=>$row['level_assigned']
+        'level'=>$row['level_assigned'],
+        'level_name'=>$levelName
     ];
 }
 

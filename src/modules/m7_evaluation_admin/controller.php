@@ -35,6 +35,7 @@ function m7_handle_request(mysqli $conn): void
             case 'results': send_json_response('success','Results loaded',['results'=>m7_results($conn)]);
             case 'pending-attempts': send_json_response('success','Pending attempts loaded',['attempts'=>m7_pending_attempts($conn)]);
             case 'attempt':
+                require_admin_only($conn);
                 $id=require_positive_int($_GET['id']??null,'id');
                 $data=get_attempt_detail($conn,$id);
                 if(!$data) throw new InvalidArgumentException('Attempt not found.');
@@ -47,7 +48,9 @@ function m7_handle_request(mysqli $conn): void
                 if(!$certificate) send_json_response('success','Certificate not found.',['verified'=>false]);
                 send_json_response('success','Certificate verified.',['verified'=>true,'certificate'=>$certificate]);
             case 'placements': send_json_response('success','Placement records loaded',['placements'=>m7_placements($conn)]);
-            case 'questions': send_json_response('success','Questions loaded',['questions'=>m7_questions($conn)]);
+            case 'questions':
+                $isAdmin = ($_SESSION['role'] ?? '') === 'admin';
+                send_json_response('success','Questions loaded',['questions'=>m7_questions($conn, $isAdmin)]);
             case 'batches': send_json_response('success','Batches loaded',m7_batches($conn));
             case 'question-banks': send_json_response('success','Question banks loaded',['question_banks'=>m7_question_banks($conn)]);
             case 'settings': send_json_response('success','Settings loaded',m7_settings($conn));

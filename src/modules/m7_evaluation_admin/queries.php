@@ -202,13 +202,16 @@ function get_all_question_banks(mysqli $conn): array
         ORDER BY qb.name ASC");
 }
 
-function get_questions(mysqli $conn): array
+function get_questions(mysqli $conn, bool $isAdmin = false): array
 {
+    $correctOptionSql = $isAdmin 
+        ? "(SELECT GROUP_CONCAT(CASE WHEN o.is_correct=1 THEN o.option_text END SEPARATOR ' | ') FROM options o WHERE o.question_id=q.id) correct_option"
+        : "NULL as correct_option";
+
     return q_all($conn, "SELECT q.id, q.question_text, q.difficulty, q.approval_status,
         qb.id question_bank_id, qb.name question_bank, a.id assessment_id, a.title assessment_title,
         (SELECT COUNT(*) FROM options o WHERE o.question_id=q.id) option_count,
-        (SELECT GROUP_CONCAT(CASE WHEN o.is_correct=1 THEN o.option_text END SEPARATOR ' | ')
-          FROM options o WHERE o.question_id=q.id) correct_option
+        $correctOptionSql
       FROM questions q
       JOIN question_banks qb ON qb.id=q.question_bank_id
       JOIN assessments a ON a.id=qb.assessment_id

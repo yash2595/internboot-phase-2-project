@@ -471,6 +471,136 @@ if (file_exists(dirname(__DIR__, 2) . '/core/bootstrap.php')) {
         }
 
         /* =========================
+           INSTRUCTIONS
+        ========================= */
+
+        .instructions {
+            max-width: 680px;
+            margin: 40px auto;
+            padding: 32px 36px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        .instructions h2 {
+            margin: 0 0 6px;
+            font-size: 22px;
+            color: #111827;
+        }
+
+        .instructions .subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 24px;
+        }
+
+        .instr-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 24px;
+        }
+
+        .instr-list li {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+            line-height: 1.55;
+            color: #374151;
+        }
+
+        .instr-list li:last-child {
+            border-bottom: none;
+        }
+
+        .instr-icon {
+            flex-shrink: 0;
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .instr-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .instr-meta-pill {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .instr-warn {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #92400e;
+            margin-bottom: 22px;
+        }
+
+        .instr-ack {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        .instr-ack input[type=checkbox] {
+            margin-top: 2px;
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        #instrStartBtn {
+            width: 100%;
+            padding: 13px;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+        }
+
+        #instrStartBtn:disabled {
+            background: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        #instrStartBtn:not(:disabled) {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        #instrStartBtn:not(:disabled):hover {
+            background: #1d4ed8;
+        }
+
+        @media (max-width: 600px) {
+            .instructions {
+                margin: 16px;
+                padding: 22px 18px;
+            }
+        }
+
+        /* =========================
            ERROR
         ========================= */
 
@@ -632,15 +762,57 @@ if (file_exists(dirname(__DIR__, 2) . '/core/bootstrap.php')) {
     class="loading"
 >
     <div>Loading assessment...</div>
+</div>
 
-    <button
-        id="fullscreenBtn"
-        class="btn-primary"
-        style="margin-top:20px;"
-        onclick="enterFullscreen()"
-    >
-        Enter Fullscreen & Start Assessment
-    </button>
+
+<!-- =============================================
+     ASSESSMENT INSTRUCTIONS GATE
+     Shown to fresh-start candidates only.
+     Hidden on resume (start_time already set).
+============================================== -->
+<div id="instructions" class="instructions" style="display:none;">
+    <h2>📋 Assessment Instructions</h2>
+    <p class="subtitle">Please read carefully before starting. Your timer begins only after you click <strong>Start Exam</strong>.</p>
+
+    <div class="instr-meta">
+        <span class="instr-meta-pill" id="instrQuestions">— Questions</span>
+        <span class="instr-meta-pill" id="instrDuration">— Minutes</span>
+        <span class="instr-meta-pill">Online · MCQ</span>
+    </div>
+
+    <ul class="instr-list">
+        <li>
+            <span class="instr-icon">🧭</span>
+            <span><strong>Free navigation:</strong> You can move between questions in any order using Previous / Next buttons or the Question Navigator panel. Your position is saved as you go.</span>
+        </li>
+        <li>
+            <span class="instr-icon">💾</span>
+            <span><strong>Auto-save:</strong> Every answer you select is saved automatically in real time. You do not need to click a separate save button.</span>
+        </li>
+        <li>
+            <span class="instr-icon">⏱️</span>
+            <span><strong>Timer:</strong> The countdown timer starts the moment you click <strong>Start Exam</strong> below. It runs continuously and cannot be paused.</span>
+        </li>
+        <li>
+            <span class="instr-icon">🔒</span>
+            <span><strong>Single attempt:</strong> This is a one-time attempt. You cannot restart or retake once the exam begins.</span>
+        </li>
+        <li>
+            <span class="instr-icon">🖥️</span>
+            <span><strong>Stay on screen:</strong> Switching tabs or moving focus away from the exam window is tracked as a violation. Exceeding <strong id="instrMaxViolations">3</strong> violations will automatically submit your attempt.</span>
+        </li>
+    </ul>
+
+    <div class="instr-warn">
+        ⚠️ <strong>Important:</strong> Once you click <em>Start Exam</em>, your assessment timer begins and cannot be paused. Ensure you have a stable internet connection and a quiet environment before proceeding.
+    </div>
+
+    <label class="instr-ack">
+        <input type="checkbox" id="instrAck">
+        <span>I have read and understood the instructions above, and I am ready to begin my assessment.</span>
+    </label>
+
+    <button id="instrStartBtn" disabled>Start Exam →</button>
 </div>
 
 
@@ -843,8 +1015,100 @@ if (!attemptId || attemptId <= 0) {
 }
 
 /* ==========================================
-   STATE
+   INSTRUCTIONS GATE — PRE-FLIGHT CHECK
+   Runs immediately on page load (before
+   start_exam.php is ever called).
+
+   Uses exam_status.php (GET, read-only) to
+   check if this attempt already has a
+   start_time set:
+
+   - start_time IS SET  → resume: skip
+     instructions, go straight to exam.
+   - start_time NOT SET → fresh start: show
+     instructions screen; block until the
+     candidate ticks the checkbox and clicks
+     "Start Exam".
+
+   NOTE: initializeExam() / start_exam.php
+   are NOT called here.  They are only called
+   from enterFullscreen(), which is now
+   triggered exclusively by #instrStartBtn.
 ========================================== */
+
+(async function initInstructionsGate() {
+
+    try {
+        const statusRes = await fetch(
+            getApiUrl(`exam_status.php?attempt_id=${attemptId}`),
+            { method: 'GET', headers: { Accept: 'application/json' } }
+        );
+        const statusRaw = await statusRes.json();
+        const statusData = statusRaw.data || {};
+
+        const isResuming = !!(statusData.start_time);
+
+        if (isResuming) {
+            /*
+             * Timer already running — skip instructions and
+             * go straight into the exam grid.
+             */
+            document.getElementById('loading').style.display = 'none';
+            await enterFullscreen();
+            return;
+        }
+
+        /*
+         * Fresh start — show instructions.
+         * Populate real metadata from the status response.
+         */
+        document.getElementById('loading').style.display = 'none';
+
+        const instrEl = document.getElementById('instructions');
+        instrEl.style.display = 'block';
+
+        const qEl = document.getElementById('instrQuestions');
+        const dEl = document.getElementById('instrDuration');
+        const vEl = document.getElementById('instrMaxViolations');
+
+        if (statusData.total_questions > 0) {
+            qEl.textContent = statusData.total_questions + ' Questions';
+        }
+        if (statusData.duration_minutes > 0) {
+            dEl.textContent = statusData.duration_minutes + ' Minutes';
+        }
+
+        /* Pull the violation threshold from the already-declared constant */
+        if (vEl) vEl.textContent = MAX_VIOLATIONS;
+
+        /* Checkbox gate */
+        const ackBox = document.getElementById('instrAck');
+        const startBtn = document.getElementById('instrStartBtn');
+
+        ackBox.addEventListener('change', function () {
+            startBtn.disabled = !this.checked;
+        });
+
+        startBtn.addEventListener('click', async function () {
+            if (!ackBox.checked) return;
+            startBtn.disabled = true;
+            startBtn.textContent = 'Starting…';
+            await enterFullscreen();
+        });
+
+    } catch (err) {
+        /*
+         * If the pre-flight check itself fails (network, auth, etc.)
+         * fall back to showing the loading error state.
+         */
+        document.getElementById('loading').style.display = 'none';
+        showError('Unable to load assessment. Please check your connection and try again.');
+        console.error('Instructions gate pre-flight error:', err);
+    }
+
+})();
+
+
 
 let questions = [];
 
@@ -897,6 +1161,10 @@ async function enterFullscreen() {
 
     document.getElementById(
         "loading"
+    ).style.display = "none";
+
+    document.getElementById(
+        "instructions"
     ).style.display = "none";
 
     document.getElementById(

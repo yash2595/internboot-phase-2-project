@@ -450,6 +450,7 @@ INSERT INTO `settings` (`setting_key`, `setting_value`, `description`) VALUES
 ('batch_threshold', '100', 'Minimum number of registered candidates required to form a batch'),
 ('exam_fee', '2999', 'Assessment fee per candidate in local currency (INR)'),
 ('negative_marking_enabled', '0', 'Boolean flag (1/0) indicating whether negative marking is active'),
+('negative_marking_value', '0.25', 'Marks deducted per wrong (attempted) answer when negative_marking_enabled is 1'),
 ('retake_allowed', '0', 'Boolean flag (1/0) indicating whether candidates can re-attempt exams');
 
 -- Sample Initial Level Mapping Configurations (Levels 1 to 5)

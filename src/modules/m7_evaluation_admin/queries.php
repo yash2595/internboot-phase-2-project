@@ -298,7 +298,8 @@ function get_answer_rows(mysqli $conn, int $attemptId): array
     return q_all($conn, "SELECT an.id answer_id, an.question_id, an.selected_option_id,
         CASE WHEN an.selected_option_id IS NOT NULL AND EXISTS(
           SELECT 1 FROM options o WHERE o.id=an.selected_option_id AND o.question_id=an.question_id AND o.is_correct=1
-        ) THEN 1 ELSE 0 END AS is_correct
+        ) THEN 1 ELSE 0 END AS is_correct,
+        an.selected_option_id IS NOT NULL AS was_answered
       FROM answers an WHERE an.attempt_id=?", 'i', [$attemptId]);
 }
 

@@ -68,20 +68,30 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
             );
         }
 
+        require_once __DIR__ . '/../m5_batch_slots/queries.php';
+        $negativeMarkingEnabled = get_setting_value('negative_marking_enabled', $conn) === '1';
+        $negativeMarkValue = (float)(get_setting_value('negative_marking_value', $conn) ?? '0.25');
+
         $answers=get_answer_rows($conn,$attemptId);
-        $correct=0;
+        $score=0.0;
         foreach($answers as $answer){
             $isCorrect=(int)$answer['is_correct'];
-            $correct += $isCorrect;
+            $wasAnswered=(int)$answer['was_answered'];
+            if ($isCorrect) {
+                $score += 1;
+            } elseif ($negativeMarkingEnabled && $wasAnswered) {
+                $score -= $negativeMarkValue;
+            }
             save_answer_correctness($conn,(int)$answer['answer_id'],$isCorrect);
         }
+        $score = max(0, $score);
 
         $total=max(1,(int)$attempt['total_questions']);
-        $percentage=round(($correct/$total)*100,2);
+        $percentage=round(($score/$total)*100,2);
         $level=get_level_for_percentage($conn,$percentage);
         if(!$level) throw new RuntimeException('No level mapping exists for this percentage.');
 
-        $resultId=upsert_result($conn,$attemptId,(float)$correct,$percentage,(int)$level['level_number']);
+        $resultId=upsert_result($conn,$attemptId,(float)$score,$percentage,(int)$level['level_number']);
         mark_attempt_evaluated($conn,$attemptId);
         ensure_placement_record($conn,(int)$attempt['candidate_id'],$resultId);
 

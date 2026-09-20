@@ -85,8 +85,39 @@ php -S localhost:8000 -t public
 ### Accessing Interfaces & Diagnostic Endpoints:
 - **Candidate Interface:** `http://localhost:8000/dashboard.html` (Registration: `/register.php`, Login: `/login.php`)
 - **Admin Dashboard UI:** `http://localhost:8000/admin/index.html`
-- **Database Connection Sanity Check:** `http://localhost:8000/api/connection-test.php`
 - **M7 Admin API Health Check:** `http://localhost:8000/api/admin/evaluate.php?action=health`
+
+---
+
+## 4. ⚡ First-Time Setup (Seed)
+
+After applying the schema, a fresh database has no admin user, no assessment, and no question bank — making the platform unusable until these are created.
+
+Run the seed script once to bootstrap all three:
+
+```bash
+# Step 1 — Apply schema (creates all tables)
+php scripts/apply-schema.php
+
+# Step 2 — Set seed credentials in your .env
+# SEED_ADMIN_EMAIL=admin@internboot.com
+# SEED_ADMIN_PASSWORD=YourSecurePassword123!
+# SEED_ADMIN_NAME=Platform Admin
+
+# Step 3 — Run the seeder
+php scripts/seed.php
+```
+
+The seeder is **idempotent** — re-running it safely skips any step that has already been completed (it will not create duplicate rows or error out).
+
+Seed output example:
+```
+[OK]   Admin user created — email: admin@internboot.com, id: 1
+[OK]   Assessment created — title: "InternBoot Level Assessment", id: 1
+[OK]   Question bank created — name: "Main Question Bank", id: 1, linked to assessment: 1
+```
+
+After seeding, log in at `/admin/index.html` with `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD`.
 
 ---
 
@@ -138,7 +169,7 @@ MYSQLUSER=root
 | :--- | :--- | :--- | :--- |
 | **M1** | **Database & AI QBank** | Schema governance, DB connection bootstrap, AI question bank generation & approval endpoints | `/src/core/`, `/src/modules/m1_ai_qbank/` |
 | **M3** | **Authentication & Profile** | User registration, bcrypt hashing, candidate profile creation, login session management | `/src/modules/m3_auth/`, `/public/api/auth/` |
-| **M4** | **Payment & Dashboard** | Payment verification, candidate dashboard, enrollment state tracking | `/src/modules/m4_payment_dashboard/`, `/public/api/payment/` |
+| **M4** | **Payment & Dashboard** | Payment verification, candidate dashboard, enrollment state tracking | `/public/api/payment/`, `/public/api/dashboard.php` |
 | **M5** | **Batches & Slots** | Batch threshold grouping (default 100), weekend exam date math, atomic slot booking | `/src/modules/m5_batch_slots/`, `/public/api/slots/` |
 | **M6** | **Exam Engine** | Timer-based MCQ exam delivery, anti-cheating browser deterrents, answer autosave | `/src/modules/m6_exam_engine/`, `/public/api/exam/` |
 | **M7** | **Evaluation & Admin** | Score calculation, level mapping (Level 1-5), PDF certificate generation, admin panel | `/src/modules/m7_evaluation_admin/`, `/public/api/admin/` |

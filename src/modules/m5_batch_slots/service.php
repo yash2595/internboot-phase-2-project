@@ -241,8 +241,13 @@ function book_exam_slot(int $candidateId, int $assessmentId, int $examSlotId, my
         throw new Exception("Exam schedule is no longer open for booking (Status: " . $slot['schedule_status'] . ")");
     }
 
-    if (strtotime($slot['exam_date']) < strtotime(date('Y-m-d'))) {
+    $currentDate = date('Y-m-d');
+    if (strtotime($slot['exam_date']) < strtotime($currentDate)) {
         throw new Exception("Exam slot date is in the past and cannot be booked");
+    }
+
+    if ($slot['exam_date'] === $currentDate && strtotime($slot['end_time']) <= time()) {
+        throw new Exception("Exam slot time has already passed today and cannot be booked");
     }
 
     if ((int)$slot['seats_remaining'] <= 0) {

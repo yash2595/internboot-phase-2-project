@@ -192,42 +192,61 @@ try {
      * Same attempt = same order after refresh.
      * Different attempt = different order.
      */
-    $questionSql = "
-        SELECT
-            q.id AS question_id,
-            q.question_text,
-            q.type,
-            q.difficulty
-        FROM questions q
-        INNER JOIN question_banks qb
-            ON qb.id = q.question_bank_id
-        WHERE qb.assessment_id = ?
-          AND q.type = 'MCQ'
-          AND q.approval_status = 'approved'
-        ORDER BY MD5(CONCAT(?, ':', q.id))
-        LIMIT ?
-    ";
+    $conn->begin_transaction();
+    try {
+        // Try to read an existing snapshot, locking it against concurrent builds.
+        $snapshotSql = "
+            SELECT q.id AS question_id, q.question_text, q.type, q.difficulty
+            FROM attempt_questions aq
+            JOIN questions q ON q.id = aq.question_id
+            WHERE aq.attempt_id = ?
+            ORDER BY aq.position ASC
+            FOR UPDATE
+        ";
+        $snapStmt = $conn->prepare($snapshotSql);
+        $snapStmt->bind_param("i", $attemptId);
+        $snapStmt->execute();
+        $fetchedQuestions = $snapStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $snapStmt->close();
 
-    $questionStmt = $conn->prepare($questionSql);
+        if (empty($fetchedQuestions)) {
+            // First call for this attempt — build the snapshot once from the live pool.
+            $poolSql = "
+                SELECT q.id AS question_id, q.question_text, q.type, q.difficulty
+                FROM questions q
+                INNER JOIN question_banks qb ON qb.id = q.question_bank_id
+                WHERE qb.assessment_id = ?
+                  AND q.type = 'MCQ'
+                  AND q.approval_status = 'approved'
+                ORDER BY MD5(CONCAT(?, ':', q.id))
+                LIMIT ?
+            ";
+            $poolStmt = $conn->prepare($poolSql);
+            $poolStmt->bind_param("iii", $attempt['assessment_id'], $attemptId, $totalQuestions);
+            $poolStmt->execute();
+            $fetchedQuestions = $poolStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $poolStmt->close();
 
-    if (!$questionStmt) {
-        throw new Exception('Failed to prepare question query');
+            $insertSql = "INSERT INTO attempt_questions (attempt_id, question_id, position) VALUES (?, ?, ?)";
+            $insertStmt = $conn->prepare($insertSql);
+            foreach ($fetchedQuestions as $pos => $q) {
+                $position = $pos + 1;
+                $qId = (int)$q['question_id'];
+                $insertStmt->bind_param("iii", $attemptId, $qId, $position);
+                $insertStmt->execute();
+            }
+            $insertStmt->close();
+        }
+
+        $conn->commit();
+    } catch (Throwable $e) {
+        $conn->rollback();
+        throw $e;
     }
-
-    $questionStmt->bind_param(
-        "iii",
-        $attempt['assessment_id'],
-        $attemptId,
-        $totalQuestions
-    );
-
-    $questionStmt->execute();
-
-    $questionResult = $questionStmt->get_result();
 
     $questions = [];
 
-    while ($question = $questionResult->fetch_assoc()) {
+    foreach ($fetchedQuestions as $question) {
 
         $questionId = (int) $question['question_id'];
 

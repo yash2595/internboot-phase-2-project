@@ -473,3 +473,22 @@ CREATE TABLE `login_attempts` (
   INDEX `idx_login_attempts_email_ip` (`email`, `ip_address`),
   INDEX `idx_login_attempts_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- Table 24: attempt_questions
+-- Purpose: Frozen snapshot of the exact questions served to one attempt,
+--          in fixed order, so the paper cannot change mid-exam.
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `attempt_questions`;
+CREATE TABLE `attempt_questions` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `attempt_id` BIGINT UNSIGNED NOT NULL,
+  `question_id` BIGINT UNSIGNED NOT NULL,
+  `position` INT UNSIGNED NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `uk_attempt_question` (`attempt_id`, `question_id`),
+  UNIQUE KEY `uk_attempt_position` (`attempt_id`, `position`),
+  CONSTRAINT `fk_aq_attempt` FOREIGN KEY (`attempt_id`) REFERENCES `attempts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_aq_question` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  INDEX `idx_aq_attempt` (`attempt_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

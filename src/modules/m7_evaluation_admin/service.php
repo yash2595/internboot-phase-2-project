@@ -86,8 +86,9 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
         }
         $score = max(0, $score);
 
-        $total=max(1,(int)$attempt['total_questions']);
-        $percentage=round(($score/$total)*100,2);
+        $total = max(1, (int)$attempt['total_questions']);
+        $servedCount = max(1, (int) q_one($conn, "SELECT COUNT(*) AS cnt FROM attempt_questions WHERE attempt_id = ?", 'i', [$attemptId])['cnt']);
+        $percentage = round(($score / $servedCount) * 100, 2);
         $level=get_level_for_percentage($conn,$percentage);
         if(!$level) throw new RuntimeException('No level mapping exists for this percentage.');
 

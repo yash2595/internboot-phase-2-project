@@ -64,6 +64,13 @@ if (!$action) {
     $action = $_SERVER['REQUEST_METHOD'] === 'GET' ? 'details' : 'create';
 }
 
+if (($action === 'create' || $action === 'verify') && demo_mode()) {
+    $appEnv = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production';
+    if ($appEnv === 'production') {
+        send_json_response('error', 'Demo payments are disabled in production environment.', null, 403);
+    }
+}
+
 try {
     if ($action === 'details') {
         $candidateId = resolve_candidate_id($_GET);

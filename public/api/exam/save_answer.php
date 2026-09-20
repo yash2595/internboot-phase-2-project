@@ -176,93 +176,30 @@ try {
     /*
      * 6. Get the assessment's configured question count.
      */
-    $assessmentSql = "
-        SELECT
-            total_questions
-        FROM assessments
-        WHERE id = ?
-        LIMIT 1
-    ";
-
-    $assessmentStmt = $conn->prepare($assessmentSql);
-
-    if (!$assessmentStmt) {
-        throw new Exception('Failed to prepare assessment query');
-    }
-
-    $assessmentStmt->bind_param(
-        "i",
-        $attempt['assessment_id']
-    );
-
-    $assessmentStmt->execute();
-
-    $assessmentResult = $assessmentStmt->get_result();
-
-    $assessment = $assessmentResult->fetch_assoc();
-
-    $assessmentStmt->close();
-
-    $totalQuestions = ($assessment && !empty($assessment['total_questions']))
-        ? (int) $assessment['total_questions']
-        : 50;
-
-    if ($totalQuestions <= 0) {
-        $totalQuestions = 50;
-    }
-
     /*
      * 7. IMPORTANT:
      *
      * Verify that the question is actually part of THIS
-     * attempt's deterministic randomized question set.
-     *
-     * This uses exactly the same ordering algorithm as
-     * get_questions.php.
+     * attempt's frozen question set.
      */
     $assignedQuestionSql = "
-        SELECT
-            q.id
-        FROM questions q
-        INNER JOIN question_banks qb
-            ON qb.id = q.question_bank_id
-        WHERE qb.assessment_id = ?
-          AND q.type = 'MCQ'
-          AND q.approval_status = 'approved'
-        ORDER BY MD5(CONCAT(?, ':', q.id))
-        LIMIT ?
+        SELECT 1
+        FROM attempt_questions
+        WHERE attempt_id = ? AND question_id = ?
+        LIMIT 1
     ";
 
-    $assignedStmt = $conn->prepare(
-        $assignedQuestionSql
-    );
+    $assignedStmt = $conn->prepare($assignedQuestionSql);
 
     if (!$assignedStmt) {
-        throw new Exception(
-            'Failed to prepare assigned question query'
-        );
+        throw new Exception('Failed to prepare assigned question query');
     }
 
-    $assignedStmt->bind_param(
-        "iii",
-        $attempt['assessment_id'],
-        $attemptId,
-        $totalQuestions
-    );
-
+    $assignedStmt->bind_param("ii", $attemptId, $questionId);
     $assignedStmt->execute();
-
     $assignedResult = $assignedStmt->get_result();
 
-    $questionAssigned = false;
-
-    while ($assignedQuestion = $assignedResult->fetch_assoc()) {
-
-        if ((int) $assignedQuestion['id'] === $questionId) {
-            $questionAssigned = true;
-            break;
-        }
-    }
+    $questionAssigned = ($assignedResult->num_rows > 0);
 
     $assignedStmt->close();
 

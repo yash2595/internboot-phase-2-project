@@ -924,9 +924,7 @@ async function enterFullscreen() {
 
     buildQuestionNavigator();
 
-    startTimer();
-
-    renderQuestion();
+    await initializeExam();
 }
 
 
@@ -999,23 +997,10 @@ async function initializeExam() {
 
         /*
         * Step 3:
-        * Ready - candidate clicks to enter fullscreen & start.
+        * Start Exam UI
         */
-        document.getElementById(
-            "loading"
-        ).innerHTML =
-            `
-                <div style="font-size:18px; font-weight:600; margin-bottom:10px;">Assessment Ready</div>
-                <div style="color:#6b7280; margin-bottom:20px;">${questions.length} questions loaded. Click below to begin your examination.</div>
-
-                <button
-                    id="fullscreenBtn"
-                    class="btn-primary"
-                    onclick="enterFullscreen()"
-                >
-                    Start Assessment & Enter Fullscreen
-                </button>
-            `;
+        startTimer();
+        renderQuestion();
 
     }
 
@@ -2002,13 +1987,6 @@ function showError(message) {
         message;
 
 }
-
-
-/* ==========================================
-   START
-========================================== */
-
-initializeExam();
 
 </script>
 

@@ -98,6 +98,18 @@ try {
     }
 
     /*
+     * Guard: reject if the exam was never started.
+     * start_time is set exclusively by start_exam.php after the slot-window
+     * gate is passed. A NULL start_time means the candidate has not yet
+     * opened the exam (e.g. future slot) and must not be able to submit.
+     */
+    if (empty($attempt['start_time'])) {
+        send_json_response('error', 'Exam has not been started yet', [
+            'status' => $attempt['status']
+        ], 409);
+    }
+
+    /*
      * Lock the attempt atomically.
      *
      * Only an in-progress attempt can be submitted.
@@ -110,6 +122,7 @@ try {
         WHERE id = ?
           AND candidate_id = ?
           AND status = 'in_progress'
+          AND start_time IS NOT NULL
     ";
 
     $submitStmt = $conn->prepare($submitSql);

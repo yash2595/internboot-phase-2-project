@@ -360,13 +360,19 @@ function generate_questions_via_ai(
     try {
         foreach ($validatedQuestions as $q) {
             $qId = insert_question($qbankId, $q['question_text'], $q['difficulty'], $conn, 'pending');
-            foreach ($q['options'] as $opt) {
-                insert_question_option($qId, $opt['option_text'], $opt['is_correct'], $conn);
+            if ($qId > 0) {
+                foreach ($q['options'] as $opt) {
+                    insert_question_option($qId, $opt['option_text'], $opt['is_correct'], $conn);
+                }
+                $questionIds[] = $qId;
             }
-            $questionIds[] = $qId;
         }
 
         $conn->commit();
+
+        if (empty($questionIds)) {
+            throw new Exception("No new questions generated; all were duplicates.");
+        }
 
         return [
             'requested' => $count,

@@ -302,8 +302,22 @@ function handle_cancel_slot_booking_request(array $input, mysqli $conn): void {
         return;
     } catch (Throwable $e) {
         $msg = $e->getMessage();
+        // Mask internal database / SQL errors to avoid leaking schema details
+        if ($e instanceof mysqli_sql_exception || str_contains($msg, "Table '") || str_contains($msg, "doesn't exist") || str_contains($msg, 'SQLSTATE') || str_contains($msg, 'Failed to prepare') || str_contains($msg, 'Database')) {
+            error_log("Database error in slot cancellation: " . $msg);
+            send_json_response('error', is_dev_env() ? $msg : 'An internal server error occurred.', null, 500);
+            return;
+        }
+        if (stripos($msg, 'already started') !== false || stripos($msg, 'cannot be cancelled') !== false) {
+            send_json_response('error', $msg, null, 400);
+            return;
+        }
+        if (stripos($msg, 'No active booking') !== false) {
+            send_json_response('error', $msg, null, 404);
+            return;
+        }
         error_log("Error cancelling slot booking: " . $msg);
-        send_json_response('error', is_dev_env() ? $msg : 'An internal server error occurred.', null, 500);
+        send_json_response('error', $msg, null, 400);
         return;
     }
 }

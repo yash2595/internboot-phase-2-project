@@ -49,8 +49,10 @@
   const label = (value) => {
     const map = {
       "not-started": "Not Started",
+      not_started: "Not Started",
       in_progress: "In Progress",
-      submitted: "Completed",
+      submitted: "Submitted",
+      evaluated: "Evaluated",
       expired: "Expired",
       pending: "Pending",
       success: "Paid",
@@ -77,9 +79,11 @@
       paid: "success",
       enrolled: "eligible",
       "in-progress": "in_progress",
+      "not-started": "not_started",
       "placement-ready": "eligible",
       interview: "interviewing",
       generated: "verified",
+      completed: "evaluated",
     };
     return aliases[v] ?? v;
   };
@@ -87,7 +91,11 @@
   const sameFilterValue = (actual, selected) => {
     const a = normalizeFilterValue(actual);
     const s = normalizeFilterValue(selected);
-    return !s || a === s;
+    if (!s) return true;
+    if (s === "pending") {
+      return a !== "evaluated" && a !== "completed";
+    }
+    return a === s;
   };
 
   const refreshIcons = () => {
@@ -109,13 +117,15 @@
 
   const typeForStatus = (value) => {
     if (
-      ["success", "completed", "approved", "placed", "verified"].includes(value)
+      ["success", "completed", "evaluated", "approved", "placed", "verified"].includes(value)
     )
       return "green";
-    if (["eligible", "shortlisted", "interviewing", "pending"].includes(value))
+    if (["eligible", "shortlisted", "interviewing", "pending", "submitted"].includes(value))
       return "amber";
     if (["failed", "rejected", "not_placed", "expired"].includes(value))
       return "red";
+    if (["not_started", "not-started"].includes(value))
+      return "slate";
     return "blue";
   };
 
@@ -703,27 +713,39 @@
 
     if (!tbody) return;
     const rows = results.map(
-      (r) => `
-      <tr data-result="true" data-level="level ${r.level_assigned}" data-status="completed">
+      (r) => {
+        const displayStatus = r.display_status || "evaluated";
+        const rawStatus = r.attempt_status || r.status || "";
+        const statusLabel = label(displayStatus);
+        const rawHint = rawStatus && rawStatus !== displayStatus ? ` <span class="text-xs text-slate-400">(${escapeHtml(rawStatus)})</span>` : "";
+        return `
+      <tr data-result="true" data-level="level ${r.level_assigned}" data-status="${escapeHtml(displayStatus)}">
         <td class="px-6 py-4"><div><p class="font-medium text-slate-900">${escapeHtml(r.full_name)}</p><p class="text-xs text-slate-500">${escapeHtml(r.email)}</p></div></td>
         <td class="px-6 py-4"><span class="result-score font-semibold text-slate-900">${escapeHtml(r.percentage)}%</span></td>
         <td class="px-6 py-4">${badge(`Level ${r.level_assigned}`, "blue")}</td>
-        <td class="px-6 py-4">${badge("Completed", "green")}</td>
+        <td class="px-6 py-4">${badge(statusLabel, typeForStatus(displayStatus))}${rawHint}</td>
         <td class="px-6 py-4 text-slate-500">${formatDate(r.created_at)}</td>
         <td class="px-6 py-4"><button class="view-result-btn inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 transition hover:border-intern-blue hover:text-intern-blue" type="button" data-attempt="${r.attempt_id}">View</button></td>
-      </tr>`,
+      </tr>`;
+      }
     );
 
     const pendingRows = pending.map(
-      (a) => `
-      <tr data-result="true" data-level="" data-status="pending">
+      (a) => {
+        const displayStatus = a.display_status || a.status;
+        const rawStatus = a.status || "";
+        const statusLabel = label(displayStatus);
+        const rawHint = rawStatus && rawStatus !== displayStatus ? ` <span class="text-xs text-slate-400">(${escapeHtml(rawStatus)})</span>` : "";
+        return `
+      <tr data-result="true" data-level="" data-status="${escapeHtml(displayStatus)}">
         <td class="px-6 py-4"><div><p class="font-medium text-slate-900">${escapeHtml(a.full_name)}</p><p class="text-xs text-slate-500">${escapeHtml(a.email)}</p></div></td>
         <td class="px-6 py-4 font-semibold text-slate-500">Pending</td>
         <td class="px-6 py-4">—</td>
-        <td class="px-6 py-4">${badge(label(a.status), "amber")}</td>
+        <td class="px-6 py-4">${badge(statusLabel, typeForStatus(displayStatus))}${rawHint}</td>
         <td class="px-6 py-4 text-slate-500">${formatDate(a.created_at)}</td>
         <td class="px-6 py-4"><button class="evaluate-attempt-btn rounded-lg bg-intern-blue px-3 py-2 text-xs font-medium text-white" type="button" data-attempt="${a.attempt_id}">Evaluate</button></td>
-      </tr>`,
+      </tr>`;
+      }
     );
 
     tbody.innerHTML =
@@ -747,6 +769,9 @@
       const payload = await response.json();
       if (payload.status === "error") throw new Error(payload.message);
       const a = payload.data;
+      const displayStatus = a.display_status || a.status;
+      const rawStatus = a.status || "";
+      const rawHint = rawStatus && rawStatus !== displayStatus ? ` <span class="text-xs text-slate-400">(${escapeHtml(rawStatus)})</span>` : "";
       modal(
         "Assessment Attempt",
         `
@@ -754,7 +779,7 @@
           <div><p class="text-slate-400">Candidate</p><p class="font-medium">${escapeHtml(a.full_name)}</p></div>
           <div><p class="text-slate-400">Email</p><p class="font-medium">${escapeHtml(a.email)}</p></div>
           <div><p class="text-slate-400">Assessment</p><p class="font-medium">${escapeHtml(a.assessment_title)}</p></div>
-          <div><p class="text-slate-400">Status</p>${badge(label(a.status), typeForStatus(a.status))}</div>
+          <div><p class="text-slate-400">Status</p>${badge(label(displayStatus), typeForStatus(displayStatus))}${rawHint}</div>
         </div>
         <div class="mt-5 space-y-3">
           ${(a.answers || []).map((x, i) => `<div class="rounded-xl border border-slate-100 p-4"><p class="text-sm font-medium text-slate-800">${i + 1}. ${escapeHtml(x.question_text)}</p><p class="mt-2 text-xs text-slate-500">Selected: ${escapeHtml(x.selected_option_text || "Not answered")}</p></div>`).join("") || '<p class="text-sm text-slate-500">No answers recorded.</p>'}
@@ -1178,9 +1203,103 @@
     }
   }
 
+  let currentPlacementRows = [];
+
+  function escapeCsvCell(value) {
+    const str = String(value ?? "");
+    if (/[",\r\n]/.test(str)) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  }
+
+  function generateCsv(headers, rows) {
+    const headerLine = headers.map(escapeCsvCell).join(",");
+    const dataLines = rows.map((row) => row.map(escapeCsvCell).join(","));
+    return [headerLine, ...dataLines].join("\r\n");
+  }
+
+  function downloadCsv(filename, csvContent) {
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportPlacementCsv() {
+    const search = $("#placementSearch"),
+      level = $("#placementLevelFilter"),
+      status = $("#placementStatusFilter");
+
+    const q = (search?.value || "").toLowerCase(),
+      l = (level?.value || "").toLowerCase(),
+      s = (status?.value || "").toLowerCase();
+
+    const filtered = currentPlacementRows.filter((p) => {
+      const levelStr = p.level_assigned ? `level ${p.level_assigned}` : "";
+      const statusStr =
+        p.placement_status === "eligible"
+          ? "placement ready"
+          : p.placement_status === "interviewing"
+            ? "interview"
+            : (p.placement_status || "");
+
+      const searchableText = `${p.full_name || ""} ${p.email || ""} ${p.phone || ""} ${p.company_name || ""} ${p.notes || ""} ${levelStr} ${label(p.placement_status)}`.toLowerCase();
+
+      return (
+        searchableText.includes(q) &&
+        sameFilterValue(levelStr, l) &&
+        sameFilterValue(statusStr, s)
+      );
+    });
+
+    if (!filtered.length) {
+      notify("No placement records to export.", true);
+      return;
+    }
+
+    const headers = [
+      "Candidate Name",
+      "Email",
+      "Phone",
+      "Level",
+      "Percentage",
+      "Placement Status",
+      "Company Name",
+      "Notes",
+      "Updated Date",
+    ];
+
+    const rows = filtered.map((p) => [
+      p.full_name || "",
+      p.email || "",
+      p.phone || "",
+      p.level_assigned ? `Level ${p.level_assigned}` : "—",
+      p.percentage !== null && p.percentage !== undefined ? `${p.percentage}%` : "—",
+      label(p.placement_status),
+      p.company_name || "",
+      p.notes || "",
+      p.updated_at || "",
+    ]);
+
+    const csvContent = generateCsv(headers, rows);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    downloadCsv(`internboot-placements-${dateStr}.csv`, csvContent);
+    notify(`Exported ${filtered.length} placement record${filtered.length === 1 ? "" : "s"}.`);
+  }
+
   async function loadPlacements() {
     const data = await api("placements"),
       rows = data.placements || [];
+    currentPlacementRows = rows;
     const set = (id, v) => {
       const el = $("#" + id);
       if (el) el.textContent = v;
@@ -1276,6 +1395,7 @@
     const search = $("#placementSearch"),
       level = $("#placementLevelFilter"),
       status = $("#placementStatusFilter"),
+      exportBtn = $("#exportPlacementCsvBtn"),
       tbody = document
         .querySelector("#placementSearch")
         ?.closest("div.mt-8")
@@ -1299,6 +1419,11 @@
     };
     [search, level, status].forEach((el) => el?.addEventListener("input", run));
     [level, status].forEach((el) => el?.addEventListener("change", run));
+
+    if (exportBtn && !exportBtn.dataset.bound) {
+      exportBtn.dataset.bound = "1";
+      exportBtn.onclick = () => exportPlacementCsv();
+    }
   }
 
   async function loadSettings() {

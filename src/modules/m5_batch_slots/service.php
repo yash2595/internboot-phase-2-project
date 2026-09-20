@@ -323,18 +323,44 @@ function fetch_available_slots(int $assessmentId, ?int $candidateId, mysqli $con
 
 /**
  * Cancels a candidate's booked slot attempt and restores slot capacity.
+ * Restricted strictly to attempts that were booked but NEVER started (start_time IS NULL).
  */
 function cancel_slot_booking(int $candidateId, int $assessmentId, mysqli $conn): bool {
     $conn->begin_transaction();
     try {
-        $attempt = get_candidate_booked_attempt_for_update($candidateId, $assessmentId, $conn);
-        if (!$attempt || !in_array($attempt['status'], ['in_progress', 'scheduled'], true)) {
+        $attempt = get_candidate_latest_attempt_for_update($candidateId, $assessmentId, $conn);
+        if (!$attempt) {
             $conn->rollback();
-            return false;
+            throw new Exception("No active booking found to cancel");
         }
+
+        // If the exam has already started or completed, it cannot be cancelled
+        if (!empty($attempt['start_time']) || $attempt['status'] !== 'in_progress') {
+            $conn->rollback();
+            throw new Exception("This exam has already started and cannot be cancelled.");
+        }
+
         $slotId = (int)$attempt['exam_slot_id'];
-        $conn->query("UPDATE exam_slots SET seats_remaining = seats_remaining + 1 WHERE id = $slotId");
-        $conn->query("DELETE FROM attempts WHERE id = " . (int)$attempt['id']);
+        $attemptId = (int)$attempt['id'];
+
+        // Prepared statement for updating slot seats_remaining
+        $updateSlotStmt = $conn->prepare("UPDATE exam_slots SET seats_remaining = seats_remaining + 1 WHERE id = ?");
+        if (!$updateSlotStmt) {
+            throw new Exception("Failed to prepare slot capacity update query: " . $conn->error);
+        }
+        $updateSlotStmt->bind_param("i", $slotId);
+        $updateSlotStmt->execute();
+        $updateSlotStmt->close();
+
+        // Prepared statement for deleting attempt
+        $deleteAttemptStmt = $conn->prepare("DELETE FROM attempts WHERE id = ?");
+        if (!$deleteAttemptStmt) {
+            throw new Exception("Failed to prepare attempt deletion query: " . $conn->error);
+        }
+        $deleteAttemptStmt->bind_param("i", $attemptId);
+        $deleteAttemptStmt->execute();
+        $deleteAttemptStmt->close();
+
         $conn->commit();
         return true;
     } catch (Throwable $e) {

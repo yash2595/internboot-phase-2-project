@@ -179,9 +179,10 @@ function get_candidate_enrollment(int $candidateId, int $assessmentId, mysqli $c
 function get_candidate_booked_attempt(int $candidateId, int $assessmentId, mysqli $conn): ?array {
     $retakeAllowed = get_setting_value('retake_allowed', $conn) === '1';
     $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted'";
-    $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status 
+    $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status, start_time 
             FROM attempts 
             WHERE candidate_id = ? AND assessment_id = ? AND status IN ($statusFilter) 
+            ORDER BY id DESC
             LIMIT 1";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
@@ -226,9 +227,33 @@ function get_candidate_enrollment_for_update(int $candidateId, int $assessmentId
 function get_candidate_booked_attempt_for_update(int $candidateId, int $assessmentId, mysqli $conn): ?array {
     $retakeAllowed = get_setting_value('retake_allowed', $conn) === '1';
     $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted'";
-    $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status 
+    $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status, start_time 
             FROM attempts 
             WHERE candidate_id = ? AND assessment_id = ? AND status IN ($statusFilter) 
+            ORDER BY id DESC 
+            LIMIT 1 
+            FOR UPDATE";
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        throw new Exception("Failed to prepare attempt lock query: " . (@$conn->error ?: 'query error'));
+    }
+    $stmt->bind_param("ii", $candidateId, $assessmentId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+
+    return $row ?: null;
+}
+
+/**
+ * Fetches the candidate's latest attempt for an assessment with an exclusive row lock (FOR UPDATE).
+ */
+function get_candidate_latest_attempt_for_update(int $candidateId, int $assessmentId, mysqli $conn): ?array {
+    $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status, start_time 
+            FROM attempts 
+            WHERE candidate_id = ? AND assessment_id = ? 
+            ORDER BY id DESC 
             LIMIT 1 
             FOR UPDATE";
     $stmt = $conn->prepare($sql);

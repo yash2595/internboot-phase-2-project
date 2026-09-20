@@ -115,7 +115,16 @@ function get_results(mysqli $conn): array
 {
     return q_all($conn, "SELECT r.id, r.attempt_id, c.id candidate_id, c.full_name, u.email,
         a.title assessment_title, r.total_score, r.percentage, r.level_assigned,
-        at.status attempt_status, r.created_at
+        at.status attempt_status,
+        CASE
+          WHEN r.id IS NOT NULL THEN 'evaluated'
+          WHEN at.status = 'in_progress' AND at.start_time IS NULL THEN 'not_started'
+          WHEN at.status = 'in_progress' AND at.start_time IS NOT NULL THEN 'in_progress'
+          WHEN at.status = 'submitted' THEN 'submitted'
+          WHEN at.status = 'expired' THEN 'expired'
+          ELSE at.status
+        END AS display_status,
+        r.created_at
       FROM results r
       JOIN attempts at ON at.id=r.attempt_id
       JOIN candidates c ON c.id=at.candidate_id
@@ -127,7 +136,15 @@ function get_results(mysqli $conn): array
 function get_pending_attempts(mysqli $conn): array
 {
     return q_all($conn, "SELECT at.id attempt_id, c.id candidate_id, c.full_name, u.email,
-        a.title assessment_title, a.total_questions, at.status, at.start_time, at.end_time, at.created_at
+        a.title assessment_title, a.total_questions, at.status, at.start_time, at.end_time, at.created_at,
+        CASE
+          WHEN r.id IS NOT NULL THEN 'evaluated'
+          WHEN at.status = 'in_progress' AND at.start_time IS NULL THEN 'not_started'
+          WHEN at.status = 'in_progress' AND at.start_time IS NOT NULL THEN 'in_progress'
+          WHEN at.status = 'submitted' THEN 'submitted'
+          WHEN at.status = 'expired' THEN 'expired'
+          ELSE at.status
+        END AS display_status
       FROM attempts at
       JOIN candidates c ON c.id=at.candidate_id
       JOIN users u ON u.id=c.user_id
@@ -142,11 +159,20 @@ function get_pending_attempts(mysqli $conn): array
 function get_attempt_detail(mysqli $conn, int $attemptId): ?array
 {
     $attempt = q_one($conn, "SELECT at.id,at.candidate_id,at.assessment_id,at.exam_slot_id,at.status,
-        at.start_time,at.end_time,at.submitted_at,c.full_name,u.email,a.title assessment_title,a.total_questions
+        at.start_time,at.end_time,at.submitted_at,c.full_name,u.email,a.title assessment_title,a.total_questions,
+        CASE
+          WHEN r.id IS NOT NULL THEN 'evaluated'
+          WHEN at.status = 'in_progress' AND at.start_time IS NULL THEN 'not_started'
+          WHEN at.status = 'in_progress' AND at.start_time IS NOT NULL THEN 'in_progress'
+          WHEN at.status = 'submitted' THEN 'submitted'
+          WHEN at.status = 'expired' THEN 'expired'
+          ELSE at.status
+        END AS display_status
         FROM attempts at
         JOIN candidates c ON c.id=at.candidate_id
         JOIN users u ON u.id=c.user_id
         JOIN assessments a ON a.id=at.assessment_id
+        LEFT JOIN results r ON r.attempt_id=at.id
         WHERE at.id=?", 'i', [$attemptId]);
     if (!$attempt) return null;
 
@@ -187,7 +213,7 @@ function sync_placement_records(mysqli $conn): void
 
 function get_placement_records(mysqli $conn): array
 {
-    return q_all($conn, "SELECT pr.id, pr.candidate_id, c.full_name, u.email, pr.result_id,
+    return q_all($conn, "SELECT pr.id, pr.candidate_id, c.full_name, c.phone, u.email, pr.result_id,
         r.percentage, r.level_assigned, pr.placement_status, pr.company_name, pr.notes, pr.updated_at
       FROM placement_records pr
       JOIN candidates c ON c.id=pr.candidate_id

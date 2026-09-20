@@ -350,8 +350,6 @@ try {
         ];
     }
 
-    $questionStmt->close();
-
     /*
      * 11. Return questions using standardized helper.
      */

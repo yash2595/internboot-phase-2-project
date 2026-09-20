@@ -130,6 +130,18 @@ try {
         send_json_response('error', 'Attempt could not be submitted', null, 409);
     }
 
+    require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
+    $evaluationDone = false;
+    try {
+        evaluate_attempt($conn, $attemptId, false);
+        $evaluationDone = true;
+    } catch (Throwable $evalError) {
+        error_log('Auto-evaluation failed for attempt ' . $attemptId . ': ' . $evalError->getMessage());
+        // Do not fail the submission if auto-evaluation errors —
+        // the attempt is still correctly marked submitted, and it
+        // remains visible to admin for manual evaluation as a fallback.
+    }
+
     /*
      * Count answers for the final handoff to M7.
      *
@@ -159,7 +171,7 @@ try {
         'status' => 'submitted',
         'submitted_at' => date('Y-m-d H:i:s'),
         'answered_count' => $answeredCount,
-        'evaluation_pending' => true
+        'evaluation_pending' => !$evaluationDone
     ], 200);
 
 } catch (Throwable $e) {

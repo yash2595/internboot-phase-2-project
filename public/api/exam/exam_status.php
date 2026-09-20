@@ -138,6 +138,13 @@ try {
         $expireStmt->bind_param("i", $attemptId);
         $expireStmt->execute();
 
+        require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
+        try {
+            evaluate_attempt($conn, $attemptId, false);
+        } catch (Throwable $evalError) {
+            error_log('Auto-evaluation failed for attempt ' . $attemptId . ': ' . $evalError->getMessage());
+        }
+
         $attempt['status'] = 'expired';
         $attempt['submitted_at'] = date('Y-m-d H:i:s');
         $remainingSeconds = 0;

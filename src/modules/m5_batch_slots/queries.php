@@ -179,7 +179,7 @@ function get_candidate_enrollment(int $candidateId, int $assessmentId, mysqli $c
 function get_candidate_booked_attempt(int $candidateId, int $assessmentId, mysqli $conn): ?array {
     $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status 
             FROM attempts 
-            WHERE candidate_id = ? AND assessment_id = ? 
+            WHERE candidate_id = ? AND assessment_id = ? AND status IN ('in_progress','submitted') 
             LIMIT 1";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
@@ -224,8 +224,9 @@ function get_candidate_enrollment_for_update(int $candidateId, int $assessmentId
 function get_candidate_booked_attempt_for_update(int $candidateId, int $assessmentId, mysqli $conn): ?array {
     $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status 
             FROM attempts 
-            WHERE candidate_id = ? AND assessment_id = ? 
-            LIMIT 1";
+            WHERE candidate_id = ? AND assessment_id = ? AND status IN ('in_progress','submitted') 
+            LIMIT 1 
+            FOR UPDATE";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         throw new Exception("Failed to prepare attempt lock query: " . (@$conn->error ?: 'query error'));

@@ -554,7 +554,7 @@ function allocate_candidate_to_batch(mysqli $conn,int $enrollmentId,int $batchId
         if($enrollment['eligibility_status']!=='eligible') throw new InvalidArgumentException('Candidate is not eligible.');
         if(!empty($enrollment['batch_id'])) throw new InvalidArgumentException('Candidate is already allocated.');
 
-        $existingAttempt = q_one($conn, 'SELECT id FROM attempts WHERE candidate_id=? AND assessment_id=? LIMIT 1 FOR UPDATE', 'ii', [(int)$enrollment['candidate_id'], (int)$enrollment['assessment_id']]);
+        $existingAttempt = q_one($conn, "SELECT id FROM attempts WHERE candidate_id=? AND assessment_id=? AND status IN ('in_progress','submitted') LIMIT 1 FOR UPDATE", 'ii', [(int)$enrollment['candidate_id'], (int)$enrollment['assessment_id']]);
         if ($existingAttempt) {
             throw new InvalidArgumentException('Candidate already has a booked slot for this assessment.');
         }

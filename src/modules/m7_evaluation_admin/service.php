@@ -110,7 +110,7 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
             'result_id'=>$resultId,
             'attempt_id'=>$attemptId,
             'candidate_id'=>(int)$attempt['candidate_id'],
-            'score'=>$correct,
+            'score'=>$score,
             'total_questions'=>$total,
             'percentage'=>$percentage,
             'level'=>(int)$level['level_number'],

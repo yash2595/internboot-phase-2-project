@@ -105,6 +105,22 @@ function updateBookedSlotSection(dashData) {
     }
 }
 
+function getWeekdayLabel(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+function formatHHMM(timeStr) {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    if (parts.length >= 2) {
+        return `${parts[0]}:${parts[1]}`;
+    }
+    return timeStr;
+}
+
 async function loadAvailableSlots(assessmentId) {
     const slotsListEl = document.getElementById("slots-list");
     if (!slotsListEl) return;
@@ -128,13 +144,18 @@ async function loadAvailableSlots(assessmentId) {
 
         slotsListEl.innerHTML = `
             <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
-                ${slots.map(s => `
+                ${slots.map(s => {
+                    const dayLabel = getWeekdayLabel(s.exam_date);
+                    const dateHeader = dayLabel ? `${dayLabel} (${s.exam_date || ''})` : (s.exam_date || '');
+                    const startTimeFormatted = formatHHMM(s.start_time);
+                    const endTimeFormatted = formatHHMM(s.end_time);
+                    return `
                     <div style="border:1px solid #e5ebf2; border-radius:10px; padding:18px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
                         <div style="font-weight:700; font-size:16px; color:#17243a; margin-bottom:6px;">
-                            ${escapeHtml(s.day || '')} (${escapeHtml(s.exam_date || '')})
+                            ${escapeHtml(dateHeader)}
                         </div>
                         <div style="font-size:14px; color:#4b5563; margin-bottom:10px;">
-                            ⏰ ${escapeHtml(s.start_time || '')} – ${escapeHtml(s.end_time || '')}
+                            ⏰ ${escapeHtml(startTimeFormatted)} – ${escapeHtml(endTimeFormatted)}
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
                             <span class="badge ${s.seats_remaining > 0 ? 'blue' : 'gray'}">
@@ -142,7 +163,7 @@ async function loadAvailableSlots(assessmentId) {
                             </span>
                             <button 
                                 class="btn-book-slot" 
-                                data-slot-id="${s.slot_id}" 
+                                data-slot-id="${s.exam_slot_id}" 
                                 data-assessment-id="${assessmentId}"
                                 ${s.seats_remaining <= 0 ? 'disabled' : ''}
                                 style="background:#2563eb; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:700; cursor:pointer;"
@@ -150,8 +171,8 @@ async function loadAvailableSlots(assessmentId) {
                                 Book This Slot
                             </button>
                         </div>
-                    </div>
-                `).join('')}
+                    </div>`;
+                }).join('')}
             </div>`;
 
         slotsListEl.querySelectorAll(".btn-book-slot").forEach(btn => {
@@ -167,6 +188,17 @@ async function handleBookSlotClick(btn) {
     const slotId = btn.dataset.slotId;
     const assessmentId = btn.dataset.assessmentId;
     const noticeContainer = document.getElementById("notice-container");
+
+    const parsedSlotId = Number(slotId);
+    if (!slotId || isNaN(parsedSlotId) || !Number.isInteger(parsedSlotId) || parsedSlotId <= 0) {
+        if (noticeContainer) {
+            noticeContainer.innerHTML = `
+                <div class="notice notice-error" style="background:#fdf2f2; border:1px solid #f8cdcd; color:#b91c1c; padding:14px 18px; border-radius:8px; margin-bottom:18px;">
+                    ❌ ${escapeHtml("Invalid slot selected")}
+                </div>`;
+        }
+        return;
+    }
 
     btn.disabled = true;
     const originalText = btn.textContent;
@@ -207,6 +239,13 @@ async function handleBookSlotClick(btn) {
         }
 
         await loadAvailableSlots(assessmentId);
+
+        document.querySelectorAll(".btn-book-slot").forEach(b => {
+            b.disabled = true;
+            b.textContent = "Already Booked";
+            b.style.opacity = "0.6";
+            b.style.cursor = "not-allowed";
+        });
 
     } catch (err) {
         btn.disabled = false;

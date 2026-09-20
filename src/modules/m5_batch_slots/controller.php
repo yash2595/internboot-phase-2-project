@@ -189,6 +189,11 @@ function handle_list_slots_request(array $input, mysqli $conn): void {
     $sessionCandidateId = !empty($_SESSION['candidate_id']) ? (int)$_SESSION['candidate_id'] : null;
     $role = $_SESSION['role'] ?? $_SESSION['user_role'] ?? null;
 
+    if ($sessionCandidateId === null && $role !== 'admin') {
+        send_json_response('error', 'Unauthorized: candidate authentication required', null, 401);
+        return;
+    }
+
     if (!array_key_exists('assessment_id', $input) || $input['assessment_id'] === null) {
         send_json_response('error', 'A valid assessment_id parameter is required', null, 400);
         return;

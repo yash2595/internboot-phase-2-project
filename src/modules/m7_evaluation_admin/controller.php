@@ -68,6 +68,10 @@ function m7_handle_request(mysqli $conn): void
     if($method!=='POST') send_json_response('error','Method not allowed.',null,405);
     require_csrf();
 
+    if (in_array($action, ['setting', 'batch', 'slot', 'allocate'], true)) {
+        require_admin_only($conn);
+    }
+
     /* Avatar upload uses multipart/form-data; all other POST actions use JSON. */
     if ($action === 'avatar-upload') {
         if (!isset($_FILES['avatar']) || !is_array($_FILES['avatar'])) {

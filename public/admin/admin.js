@@ -12,7 +12,7 @@
     });
     const payload = await response.json();
     if (!response.ok || payload.status === "error") {
-      if (response.status === 401 || response.status === 403) {
+      if (response.status === 401 || (response.status === 403 && payload?.data?.reason !== "admin_only")) {
         window.location.href = "/login.php";
         return;
       }
@@ -144,7 +144,7 @@
       throw new Error(text || `Request failed (${response.status})`);
     }
     if (!response.ok || payload.status === "error") {
-      if (response.status === 401 || response.status === 403) {
+      if (response.status === 401 || (response.status === 403 && payload?.data?.reason !== "admin_only")) {
         window.location.href = "/login.php";
         return;
       }
@@ -177,7 +177,7 @@
       throw new Error(text || `Request failed (${response.status})`);
     }
     if (!response.ok || payload.status === "error") {
-      if (response.status === 401 || response.status === 403) {
+      if (response.status === 401 || (response.status === 403 && payload?.data?.reason !== "admin_only")) {
         window.location.href = "/login.php";
         return;
       }

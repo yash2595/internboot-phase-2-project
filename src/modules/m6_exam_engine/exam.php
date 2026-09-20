@@ -822,7 +822,7 @@ function getApiUrl(endpoint) {
         const root = path.substring(0, pubIdx);
         return `${root}/public/api/exam/${endpoint}`;
     }
-    return `api/${endpoint}`;
+    return `api/exam/${endpoint}`;
 }
 
 const urlParams = new URLSearchParams(window.location.search);

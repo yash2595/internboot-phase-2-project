@@ -396,6 +396,8 @@ CREATE TABLE `email_verifications` (
   `password_hash` VARCHAR(255) NOT NULL,
   `role` ENUM('candidate', 'admin', 'staff') NOT NULL DEFAULT 'candidate',
   `is_used` TINYINT(1) NOT NULL DEFAULT 0,
+  `attempts` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `resend_count` TINYINT UNSIGNED NOT NULL DEFAULT 0,
   `expires_at` DATETIME NOT NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX `idx_email_verifications_email` (`email`),

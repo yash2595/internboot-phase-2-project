@@ -2,7 +2,12 @@
 require_once __DIR__ . '/../src/core/bootstrap.php';
 
 if (isset($_SESSION['user_id'])) {
-    header('Location: /dashboard.html');
+    $role = $_SESSION['role'] ?? $_SESSION['user_role'] ?? '';
+    if (in_array($role, ['admin', 'staff'], true)) {
+        header('Location: /admin/index.html');
+    } else {
+        header('Location: /dashboard.html');
+    }
     exit;
 }
 

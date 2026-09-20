@@ -63,18 +63,28 @@ function handle_resend_otp_request(array $data, mysqli $conn): void {
         send_json_response('error', 'Email is required.', null, 422);
     }
 
-    $stmt = $conn->prepare('SELECT * FROM email_verifications WHERE email = ? ORDER BY id DESC LIMIT 1');
-    $stmt->bind_param('s', $email);
-    $stmt->execute();
-    $pending = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
+    $pending = find_latest_pending_verification($conn, $email);
 
     if (!$pending) {
         send_json_response('error', 'No pending registration found for this email.', null, 404);
     }
 
+    $age = isset($pending['age_seconds']) ? (int)$pending['age_seconds'] : 0;
+    if ($age < OTP_RESEND_COOLDOWN_SECONDS) {
+        $remaining = OTP_RESEND_COOLDOWN_SECONDS - $age;
+        if (!headers_sent()) {
+            header('Retry-After: ' . $remaining);
+        }
+        send_json_response('error', "Please wait {$remaining} seconds before requesting a new code.", null, 429);
+    }
+
+    $resendCount = (int)($pending['resend_count'] ?? 0);
+    if ($resendCount >= OTP_MAX_RESENDS) {
+        send_json_response('error', 'Resend limit reached. Please register again later.', null, 429);
+    }
+
     $otp = (string) random_int(100000, 999999);
-    $saved = save_pending_registration($conn, $email, $otp, $pending['full_name'], $pending['phone'], $pending['password_hash'], $pending['role']);
+    $saved = save_pending_registration($conn, $email, $otp, $pending['full_name'], $pending['phone'], $pending['password_hash'], $pending['role'], $resendCount + 1);
 
     if (!$saved) {
         send_json_response('error', 'Could not resend code. Please try again.', null, 500);
@@ -115,7 +125,16 @@ function handle_login_request(array $data, mysqli $conn): void {
         send_json_response('error', $result['message'], null, 401);
     }
 
-    if ($expectedRole !== '' && $expectedRole !== $result['user']['role']) {
+    $dbRole = $result['user']['role'];
+    if ($expectedRole === 'admin') {
+        $roleMatch = in_array($dbRole, ['admin', 'staff'], true);
+    } elseif ($expectedRole === 'candidate') {
+        $roleMatch = ($dbRole === 'candidate');
+    } else {
+        $roleMatch = ($expectedRole === '' || $expectedRole === $dbRole);
+    }
+
+    if (!$roleMatch) {
         $label = $expectedRole === 'admin' ? 'an Admin' : 'a Student';
         send_json_response('error', "This account is not registered as {$label}.", null, 403);
     }
@@ -131,9 +150,11 @@ function handle_login_request(array $data, mysqli $conn): void {
     }
     $_SESSION['candidate_id'] = $result['user']['candidate_id'] ?? null;
 
+    $redirectUrl = in_array($result['user']['role'], ['admin', 'staff'], true) ? '/admin/index.html' : '/dashboard.html';
+
     send_json_response('success', 'Login successful.', [
         'role'     => $result['user']['role'],
-        'redirect' => $result['user']['role'] === 'admin' ? '/admin/index.html' : '/dashboard.html',
+        'redirect' => $redirectUrl,
     ], 200);
 }
 
@@ -168,7 +189,7 @@ function handle_logout_request(): void {
  * Admin-authenticated staff creation path.
  */
 function handle_create_staff_request(array $data, mysqli $conn): void {
-    require_admin_access($conn);
+    require_admin_only($conn);
     require_csrf();
 
     $fullName = sanitize_string($data['full_name'] ?? '');

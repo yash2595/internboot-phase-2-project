@@ -554,6 +554,11 @@ function allocate_candidate_to_batch(mysqli $conn,int $enrollmentId,int $batchId
         if($enrollment['eligibility_status']!=='eligible') throw new InvalidArgumentException('Candidate is not eligible.');
         if(!empty($enrollment['batch_id'])) throw new InvalidArgumentException('Candidate is already allocated.');
 
+        $existingAttempt = q_one($conn, 'SELECT id FROM attempts WHERE candidate_id=? AND assessment_id=? LIMIT 1 FOR UPDATE', 'ii', [(int)$enrollment['candidate_id'], (int)$enrollment['assessment_id']]);
+        if ($existingAttempt) {
+            throw new InvalidArgumentException('Candidate already has a booked slot for this assessment.');
+        }
+
         $slot=q_one($conn,'SELECT es.id,es.exam_schedule_id,es.seats_remaining,b.id batch_id,b.assessment_id,s.exam_date,s.status schedule_status
             FROM exam_slots es JOIN exam_schedules s ON s.id=es.exam_schedule_id JOIN batches b ON b.id=s.batch_id
             WHERE es.id=? FOR UPDATE','i',[$slotId]);
@@ -571,8 +576,19 @@ function allocate_candidate_to_batch(mysqli $conn,int $enrollmentId,int $batchId
         if($stmt->affected_rows!==1) { $stmt->close(); throw new RuntimeException('Slot allocation failed.'); }
         $stmt->close();
 
+        $stmt = $conn->prepare('INSERT INTO attempts (candidate_id, assessment_id, exam_slot_id, status, created_at) VALUES (?, ?, ?, "in_progress", NOW())');
+        $candId = (int)$enrollment['candidate_id'];
+        $assId = (int)$enrollment['assessment_id'];
+        $stmt->bind_param('iii', $candId, $assId, $slotId);
+        $stmt->execute();
+        if ($conn->errno) {
+            throw new mysqli_sql_exception($conn->error, $conn->errno);
+        }
+        $attemptId = (int)$stmt->insert_id;
+        $stmt->close();
+
         $conn->commit();
-        return ['enrollment_id'=>$enrollmentId,'batch_id'=>$batchId,'slot_id'=>$slotId];
+        return ['enrollment_id'=>$enrollmentId,'batch_id'=>$batchId,'slot_id'=>$slotId,'attempt_id'=>$attemptId];
     } catch(Throwable $e) {
         $conn->rollback();
         throw $e;

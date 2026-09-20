@@ -97,6 +97,8 @@ $__db_connect_start = microtime(true);
 try {
     $conn = new mysqli($host, $user, $password, $dbname, $port);
     $conn->set_charset('utf8mb4');
+    // Synchronize MySQL DB session time zone with PHP timezone offset (e.g. +05:30)
+    $conn->query("SET time_zone = '" . date('P') . "'");
     // TEMP DIAGNOSTIC — remove after confirming fix
     error_log('DB connected to ' . $host . ':' . $port . ' in ' . round((microtime(true) - $__db_connect_start) * 1000, 1) . 'ms');
 } catch (mysqli_sql_exception $e) {

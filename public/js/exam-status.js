@@ -1,8 +1,7 @@
 /**
  * InternBoot - Exam Status Handler (M6 Integration)
- * Connects public/exam.html to backend APIs:
+ * Connects public/exam.html to backend API:
  * - GET api/exam/exam_status.php
- * - GET api/exam/start_exam.php
  */
 document.addEventListener("DOMContentLoaded", async () => {
     await initExamStatusModule();
@@ -85,15 +84,8 @@ async function initExamStatusModule() {
             return;
         }
 
-        // 3. Attempt exists but start_time is NULL / not started -> Test start eligibility by calling start_exam.php (GET)
-        const startCheckRes = await fetch(`api/exam/start_exam.php?attempt_id=${encodeURIComponent(attemptId)}`, {
-            method: "GET",
-            headers: { "Accept": "application/json" }
-        });
-
-        const startPayload = await startCheckRes.json();
-
-        if (startCheckRes.ok && startPayload.status === "success") {
+        // 3. Attempt exists but not started -> Decide between "Ready to Start" and "Exam Window Locked" from can_start and gate_message
+        if (data.can_start) {
             container.innerHTML = `
                 <div class="grid4" style="margin-bottom:20px;">
                     <div class="card stat"><label>Attempt ID</label><strong>#${data.attempt_id}</strong></div>
@@ -108,7 +100,7 @@ async function initExamStatusModule() {
                     <a href="take-exam.php?attempt_id=${data.attempt_id}" class="btn btn-ib-primary" style="background:#2563eb; color:#fff; padding:12px 32px; border-radius:8px; font-size:16px; font-weight:700; text-decoration:none; display:inline-block;">Start Exam →</a>
                 </section>`;
         } else {
-            const gateMessage = startPayload.message || "Your exam slot is not open yet.";
+            const gateMessage = data.gate_message || "Your exam slot is not open yet.";
             container.innerHTML = `
                 <div class="grid4" style="margin-bottom:20px;">
                     <div class="card stat"><label>Attempt ID</label><strong>#${data.attempt_id}</strong></div>

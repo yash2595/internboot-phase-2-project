@@ -271,21 +271,66 @@ try {
         ];
     }
 
+    /* 3. Candidate's own attempt for the assessment */
+    $attemptRow = null;
+    if ($assessment !== null && !empty($assessment['id'])) {
+        $stmt = $conn->prepare(
+            'SELECT a.id, a.status, a.start_time, sl.start_time AS slot_start,
+                    sl.end_time AS slot_end, es.exam_date
+             FROM attempts a
+             JOIN exam_slots sl ON sl.id = a.exam_slot_id
+             JOIN exam_schedules es ON es.id = sl.exam_schedule_id
+             WHERE a.candidate_id = ? AND a.assessment_id = ?
+             ORDER BY a.id DESC LIMIT 1'
+        );
+        $assId = (int)$assessment['id'];
+        $stmt->bind_param('ii', $candidateId, $assId);
+        $stmt->execute();
+        $attemptRow = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+    }
+
     $exam = [
         'name' => $assessment['title'] ?? 'Assessment',
         'date' => '—', 'time' => '—',
         'duration' => ($assessment['duration_minutes'] ?? 0) . ' min',
         'questions' => (string)($assessment['total_questions'] ?? 0),
-        'mode' => 'Online Assessment', 'status' => 'Upcoming'
+        'mode' => 'Online Assessment', 'status' => 'Upcoming',
+        'booked' => false,
+        'attempt_id' => null,
+        'exam_date' => null,
+        'slot_time' => null,
     ];
-    if ($batchRow && !empty($batchRow['exam_date'])) {
-        $exam['date'] = date('d M Y', strtotime($batchRow['exam_date']));
-        if (!empty($batchRow['start_time']) && !empty($batchRow['end_time'])) {
-            $exam['time'] = date('h:i A', strtotime($batchRow['start_time'])) . ' – ' . date('h:i A', strtotime($batchRow['end_time']));
+
+    if ($attemptRow) {
+        $exam['booked'] = true;
+        $exam['attempt_id'] = (int)$attemptRow['id'];
+        if (!empty($attemptRow['exam_date'])) {
+            $exam['exam_date'] = date('Y-m-d', strtotime($attemptRow['exam_date']));
+            $exam['date'] = date('d M Y', strtotime($attemptRow['exam_date']));
         }
-        if (!empty($batchRow['exam_status'])) {
-            $exam['status'] = ucwords(str_replace('_', ' ', $batchRow['exam_status']));
+        if (!empty($attemptRow['slot_start']) && !empty($attemptRow['slot_end'])) {
+            $timeFormatted = date('h:i A', strtotime($attemptRow['slot_start'])) . ' – ' . date('h:i A', strtotime($attemptRow['slot_end']));
+            $exam['time'] = $timeFormatted;
+            $exam['slot_time'] = $timeFormatted;
         }
+
+        $attStatus = strtolower((string)($attemptRow['status'] ?? ''));
+        if ($attStatus === 'in_progress') {
+            if (empty($attemptRow['start_time'])) {
+                $exam['status'] = 'Scheduled';
+            } else {
+                $exam['status'] = 'In Progress';
+            }
+        } elseif ($attStatus === 'submitted') {
+            $exam['status'] = 'Completed';
+        } elseif ($attStatus === 'expired') {
+            $exam['status'] = 'Expired';
+        } else {
+            $exam['status'] = ucwords(str_replace('_', ' ', $attStatus));
+        }
+    } elseif ($batchRow) {
+        $exam['status'] = 'Slot Not Booked';
     }
 
     $result = ['score' => '— / 100', 'level' => '—', 'status' => 'Pending', 'evaluation' => 'Pending'];

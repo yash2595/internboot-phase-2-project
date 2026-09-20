@@ -1,5 +1,18 @@
 <?php
 // Path: src/modules/m3_auth/queries.php
+
+if (!defined('OTP_TTL_MINUTES')) {
+    define('OTP_TTL_MINUTES', 10);
+}
+if (!defined('OTP_MAX_ATTEMPTS')) {
+    define('OTP_MAX_ATTEMPTS', 5);
+}
+if (!defined('OTP_RESEND_COOLDOWN_SECONDS')) {
+    define('OTP_RESEND_COOLDOWN_SECONDS', 60);
+}
+if (!defined('OTP_MAX_RESENDS')) {
+    define('OTP_MAX_RESENDS', 5);
+}
 //
 // Matches the real schema.sql from M1:
 //   users(id, email, password, role, is_active, created_at, updated_at)
@@ -136,23 +149,52 @@ function insert_admin_user(mysqli $conn, string $email, string $passwordHash, st
 }
 
 
-function save_pending_registration(mysqli $conn, string $email, string $otp, string $fullName, string $phone, string $passwordHash, string $role): bool {
+function save_pending_registration(mysqli $conn, string $email, string $otp, string $fullName, string $phone, string $passwordHash, string $role, int $resendCount = 0): bool {
     // Clear any old pending entries for this email first
     $del = $conn->prepare('DELETE FROM email_verifications WHERE email = ?');
     $del->bind_param('s', $email);
     $del->execute();
     $del->close();
 
-    $expiresAt = date('Y-m-d H:i:s', time() + 600); // 10 minutes
-
     $stmt = $conn->prepare(
-        'INSERT INTO email_verifications (email, otp_code, full_name, phone, password_hash, role, expires_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO email_verifications (email, otp_code, full_name, phone, password_hash, role, resend_count, expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))'
     );
-    $stmt->bind_param('sssssss', $email, $otp, $fullName, $phone, $passwordHash, $role, $expiresAt);
+    $stmt->bind_param('ssssssi', $email, $otp, $fullName, $phone, $passwordHash, $role, $resendCount);
     $result = $stmt->execute();
     $stmt->close();
     return $result;
+}
+
+function find_latest_pending_verification(mysqli $conn, string $email): ?array {
+    $stmt = $conn->prepare(
+        'SELECT id, email, otp_code, full_name, phone, password_hash, role, is_used, attempts, resend_count, expires_at, created_at,
+                TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_seconds,
+                (expires_at > NOW()) AS is_unexpired
+         FROM email_verifications
+         WHERE email = ? AND is_used = 0
+         ORDER BY id DESC LIMIT 1'
+    );
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    return $row ?: null;
+}
+
+function consume_verification_attempt(mysqli $conn, int $id): int {
+    $maxAttempts = OTP_MAX_ATTEMPTS;
+    $stmt = $conn->prepare(
+        'UPDATE email_verifications
+         SET attempts = attempts + 1
+         WHERE id = ? AND is_used = 0 AND expires_at > NOW() AND attempts < ?'
+    );
+    $stmt->bind_param('ii', $id, $maxAttempts);
+    $stmt->execute();
+    $affected = $stmt->affected_rows;
+    $stmt->close();
+    return $affected;
 }
 
 function find_pending_registration(mysqli $conn, string $email, string $otp): ?array {

@@ -99,6 +99,14 @@ function require_admin_access_or_throw(mysqli $conn, string $message = 'Administ
     throw new AdminAccessDeniedException($message);
 }
 
+function require_admin_only(mysqli $conn): void
+{
+    $role = resolve_admin_role($conn);
+    if ($role === 'admin') return;
+
+    send_json_response('error', 'Admin-only action. Your account role does not have permission.', ['reason' => 'admin_only'], 403);
+}
+
 
 
 function csrf_token(): string

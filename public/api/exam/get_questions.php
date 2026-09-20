@@ -243,7 +243,7 @@ try {
                 option_text
             FROM options
             WHERE question_id = ?
-            ORDER BY id ASC
+            ORDER BY MD5(CONCAT(?, ':', id))
         ";
 
         $optionStmt = $conn->prepare($optionSql);
@@ -253,8 +253,9 @@ try {
         }
 
         $optionStmt->bind_param(
-            "i",
-            $questionId
+            "ii",
+            $questionId,
+            $attemptId
         );
 
         $optionStmt->execute();

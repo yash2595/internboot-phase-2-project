@@ -66,7 +66,7 @@ function handle_resend_otp_request(array $data, mysqli $conn): void {
     $pending = find_latest_pending_verification($conn, $email);
 
     if (!$pending) {
-        send_json_response('error', 'No pending registration found for this email.', null, 404);
+        send_json_response('success', 'A new verification code has been sent.', null, 200);
     }
 
     $age = isset($pending['age_seconds']) ? (int)$pending['age_seconds'] : 0;
@@ -87,21 +87,18 @@ function handle_resend_otp_request(array $data, mysqli $conn): void {
     $saved = save_pending_registration($conn, $email, $otp, $pending['full_name'], $pending['phone'], $pending['password_hash'], $pending['role'], $resendCount + 1);
 
     if (!$saved) {
-        send_json_response('error', 'Could not resend code. Please try again.', null, 500);
+        error_log('Failed to save resend OTP registration for ' . $email);
+        send_json_response('success', 'A new verification code has been sent.', null, 200);
     }
 
     try {
         require_once __DIR__ . '/../../core/Mailer.php';
         $sent = send_otp_email($email, $pending['full_name'], $otp);
         if (!$sent) {
-            send_json_response('error', 'Could not send verification email. Contact support with your registration email.', null, 500);
+            error_log('Could not send verification email to ' . $email);
         }
-    } catch (RuntimeException $e) {
-        error_log('Resend OTP mail error: ' . $e->getMessage());
-        send_json_response('error', 'Could not send verification email. Contact support with your registration email.', null, 500);
     } catch (Throwable $e) {
-        error_log('Resend OTP mail unexpected error: ' . $e->getMessage());
-        send_json_response('error', 'Could not send verification email. Contact support with your registration email.', null, 500);
+        error_log('Resend OTP mail error for ' . $email . ': ' . $e->getMessage());
     }
 
     send_json_response('success', 'A new verification code has been sent.', null, 200);
@@ -257,43 +254,46 @@ function handle_forgot_password_request(array $data, mysqli $conn): void {
     $user = find_user_by_email($conn, $email);
     if ($user) {
         $userId = (int)$user['id'];
-        
-        // Check cooldown
+
+        // Check cooldown (< 60s since last reset request)
         $stmt = $conn->prepare('SELECT TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age FROM password_resets WHERE user_id = ? ORDER BY id DESC LIMIT 1');
         $stmt->bind_param('i', $userId);
         $stmt->execute();
         $resRow = $stmt->get_result()->fetch_assoc();
         $stmt->close();
 
-        if ($resRow && (int)$resRow['age'] < 60) {
-            $remaining = 60 - (int)$resRow['age'];
-            if (!headers_sent()) {
-                header('Retry-After: ' . $remaining);
+        $inCooldown = ($resRow && isset($resRow['age']) && (int)$resRow['age'] < 60);
+
+        // If cooldown is active, skip generating/sending a second email internally to prevent spam,
+        // but do NOT return 429 or Retry-After header, so attackers cannot distinguish registered emails.
+        if (!$inCooldown) {
+            try {
+                $token = bin2hex(random_bytes(32));
+                $tokenHash = hash('sha256', $token);
+
+                $stmt = $conn->prepare('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 MINUTE))');
+                $stmt->bind_param('is', $userId, $tokenHash);
+                $stmt->execute();
+                $stmt->close();
+
+                require_once __DIR__ . '/../../core/Mailer.php';
+                $rawAppUrl = env_value('APP_URL');
+                if (empty($rawAppUrl)) {
+                    if (!is_dev_env()) {
+                        error_log('CRITICAL CONFIG WARNING: APP_URL environment variable is not configured. Password reset links will default to http://localhost:8080 in production!');
+                    }
+                    $rawAppUrl = 'http://localhost:8080';
+                }
+                $appUrl = rtrim($rawAppUrl, '/');
+                $resetLink = "{$appUrl}/reset-password.php?token={$token}&email=" . urlencode($email);
+
+                $name = $user['full_name'] ?? 'User';
+                send_password_reset_email($email, $name, $resetLink);
+            } catch (Throwable $e) {
+                // Log failure internally but never return 500 to the client, preventing email enumeration via mail failure
+                error_log('Password reset processing failed for ' . $email . ': ' . $e->getMessage());
             }
-            send_json_response('error', "Please wait {$remaining} seconds before requesting a new link.", null, 429);
         }
-        
-        $token = bin2hex(random_bytes(32));
-        $tokenHash = hash('sha256', $token);
-        
-        $stmt = $conn->prepare('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 MINUTE))');
-        $stmt->bind_param('is', $userId, $tokenHash);
-        $stmt->execute();
-        $stmt->close();
-        
-        require_once __DIR__ . '/../../core/Mailer.php';
-        $rawAppUrl = env_value('APP_URL');
-        if (empty($rawAppUrl)) {
-            if (!is_dev_env()) {
-                error_log('CRITICAL CONFIG WARNING: APP_URL environment variable is not configured. Password reset links will default to http://localhost:8080 in production!');
-            }
-            $rawAppUrl = 'http://localhost:8080';
-        }
-        $appUrl = rtrim($rawAppUrl, '/');
-        $resetLink = "{$appUrl}/reset-password.php?token={$token}&email=" . urlencode($email);
-        
-        $name = $user['full_name'] ?? 'User';
-        send_password_reset_email($email, $name, $resetLink);
     }
 
     send_json_response('success', 'If an account exists for this email, a reset link has been sent.', null, 200);

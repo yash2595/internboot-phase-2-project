@@ -143,10 +143,18 @@ try {
 
         $expireStmt->close();
 
+        require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
+        try {
+            evaluate_attempt($conn, $attemptId, false);
+        } catch (Throwable $evalError) {
+            error_log('Auto-evaluation failed for attempt ' . $attemptId . ': ' . $evalError->getMessage());
+        }
+
         send_json_response('error', 'Exam time has expired', [
             'status' => 'expired'
         ], 403);
     }
+
 
     /*
      * 6. Get the assessment's configured question count.

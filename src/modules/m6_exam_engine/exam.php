@@ -21,6 +21,7 @@ if (file_exists(dirname(__DIR__, 2) . '/core/bootstrap.php')) {
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
+    <meta name="csrf-token" content="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
 
     <title>InternBoot Level Assessment</title>
 
@@ -850,14 +851,22 @@ let questions = [];
 let currentQuestionIndex = 0;
 
 let remainingSeconds = 0;
+let deadlineTimestamp = 0;
 
 let timerInterval = null;
+let statusSyncInterval = null;
 
 let examSubmitted = false;
 let violationCount = 0;
 const MAX_VIOLATIONS = 3;
 
 let autosaveInterval = null;
+
+function setDeadlineToRemaining(seconds) {
+    const sec = Math.max(0, Math.floor(Number(seconds) || 0));
+    remainingSeconds = sec;
+    deadlineTimestamp = Date.now() + (sec * 1000);
+}
 
 
 /*
@@ -912,8 +921,18 @@ async function initializeExam() {
          * Step 1:
          * Start or resume attempt.
          */
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         const startResponse = await fetch(
-            getApiUrl(`start_exam.php?attempt_id=${attemptId}`)
+            getApiUrl(`start_exam.php`),
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ attempt_id: attemptId })
+            }
         );
 
         const startRaw = await startResponse.json();
@@ -925,8 +944,7 @@ async function initializeExam() {
             return;
         }
 
-        remainingSeconds =
-            Number(startPayload.remaining_seconds);
+        setDeadlineToRemaining(startPayload.remaining_seconds);
 
         /*
          * Step 2:
@@ -995,37 +1013,121 @@ async function initializeExam() {
 
 function startTimer() {
 
-    if (timerInterval) {
-        clearInterval(timerInterval);
-    }
+    stopTimer();
 
+    if (deadlineTimestamp > 0) {
+        remainingSeconds = Math.max(0, Math.round((deadlineTimestamp - Date.now()) / 1000));
+    }
     updateTimerDisplay();
 
+    if (remainingSeconds <= 0) {
+        submitExam(true);
+        return;
+    }
 
-    timerInterval =
-        setInterval(async () => {
+    timerInterval = setInterval(async () => {
 
-            remainingSeconds--;
+        if (examSubmitted) {
+            return;
+        }
 
+        remainingSeconds = Math.max(0, Math.round((deadlineTimestamp - Date.now()) / 1000));
 
-            if (remainingSeconds <= 0) {
-
-                remainingSeconds = 0;
-
-                clearInterval(timerInterval);
-
-                await submitExam(true);
-
-                return;
-            }
-
-
+        if (remainingSeconds <= 0) {
+            remainingSeconds = 0;
+            stopTimer();
             updateTimerDisplay();
+            await submitExam(true);
+            return;
+        }
 
-        }, 1000);
+        updateTimerDisplay();
 
+    }, 1000);
+
+    startPeriodicStatusSync();
     startPeriodicAutosave();
 
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    if (statusSyncInterval) {
+        clearInterval(statusSyncInterval);
+        statusSyncInterval = null;
+    }
+}
+
+function startPeriodicStatusSync() {
+    if (statusSyncInterval) {
+        clearInterval(statusSyncInterval);
+        statusSyncInterval = null;
+    }
+
+    statusSyncInterval = setInterval(async () => {
+        if (examSubmitted) {
+            return;
+        }
+        await syncExamStatus(true);
+    }, 30000);
+}
+
+async function syncExamStatus(triggerSubmitIfExpired = true) {
+    if (examSubmitted) {
+        return null;
+    }
+
+    try {
+        const response = await fetch(getApiUrl(`exam_status.php?attempt_id=${attemptId}`));
+        if (!response.ok) {
+            console.warn("Status sync HTTP error:", response.status);
+            return null;
+        }
+
+        const raw = await response.json();
+        const payload = raw.data || raw;
+        const isSuccess = raw.status === 'success' || raw.success === true || payload.success === true;
+
+        if (!isSuccess) {
+            console.warn("Status sync unsuccessful:", raw.message);
+            return null;
+        }
+
+        const serverStatus = payload.status;
+        const serverRemaining = typeof payload.remaining_seconds === 'number'
+            ? payload.remaining_seconds
+            : parseInt(payload.remaining_seconds, 10);
+
+        // Check if server considers attempt already expired or closed
+        if (serverStatus !== 'in_progress' || (Number.isFinite(serverRemaining) && serverRemaining <= 0)) {
+            console.warn("Server reports attempt is closed or expired:", serverStatus);
+            remainingSeconds = 0;
+            updateTimerDisplay();
+            stopTimer();
+            if (autosaveInterval) {
+                clearInterval(autosaveInterval);
+                autosaveInterval = null;
+            }
+            if (triggerSubmitIfExpired && !examSubmitted) {
+                await submitExam(true);
+            }
+            return payload;
+        }
+
+        if (Number.isFinite(serverRemaining)) {
+            setDeadlineToRemaining(serverRemaining);
+            remainingSeconds = Math.max(0, Math.round((deadlineTimestamp - Date.now()) / 1000));
+            updateTimerDisplay();
+        }
+
+        return payload;
+    } catch (err) {
+        console.warn("Status sync network error:", err);
+        return null;
+    }
 }
 
 
@@ -1801,15 +1903,11 @@ async function submitExam(
 
     examSubmitted = true;
 
-
-    clearInterval(
-        timerInterval
-    );
+    stopTimer();
     if (autosaveInterval) {
         clearInterval(autosaveInterval);
         autosaveInterval = null;
     }
-
 
     try {
 
@@ -1882,14 +1980,7 @@ async function submitExam(
 
         else {
 
-            /*
-             * Allow another submission attempt
-             * if server rejected the request.
-             */
-            examSubmitted = false;
-
-
-            alert(
+            await handleFailedSubmission(
                 data.message ||
                 "Unable to submit the exam."
             );
@@ -1902,16 +1993,69 @@ async function submitExam(
 
         console.error(error);
 
-
-        examSubmitted = false;
-
-
-        alert(
+        await handleFailedSubmission(
             "Unable to submit the exam. Please check your connection."
         );
 
     }
 
+}
+
+async function handleFailedSubmission(errorMessage) {
+
+    examSubmitted = false;
+
+    alert(
+        errorMessage +
+        "\n\nResuming exam timer and autosave. You can continue answering or submit again."
+    );
+
+    // Refresh remaining time and attempt status from authoritative server endpoint
+    const statusData = await syncExamStatus(false);
+
+    if (
+        statusData &&
+        (statusData.status !== 'in_progress' ||
+         (typeof statusData.remaining_seconds === 'number' && statusData.remaining_seconds <= 0))
+    ) {
+        remainingSeconds = 0;
+        updateTimerDisplay();
+        examSubmitted = true;
+        alert("Your assessment time has expired.");
+
+        document
+            .querySelectorAll(
+                "button, input"
+            )
+            .forEach(element => {
+                element.disabled = true;
+            });
+
+        document.getElementById(
+            "questionText"
+        ).textContent =
+            "Assessment has closed.";
+
+        document.getElementById(
+            "options"
+        ).innerHTML = "";
+
+        document.getElementById(
+            "saveStatus"
+        ).textContent =
+            "Your attempt has expired and been submitted.";
+        return;
+    }
+
+    const currentRemaining = Math.max(0, Math.round((deadlineTimestamp - Date.now()) / 1000));
+    if (currentRemaining <= 0) {
+        remainingSeconds = 0;
+        updateTimerDisplay();
+        await submitExam(true);
+        return;
+    }
+
+    startTimer();
 }
 
 

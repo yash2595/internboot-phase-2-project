@@ -12,7 +12,7 @@ function add_manual_question(int $qbankId, string $questionText, string $difficu
     $stmt->bind_param("i", $qbankId);
     $stmt->execute();
     if (!$stmt->get_result()->fetch_assoc()) {
-        throw new Exception("Question Bank not found.");
+        throw new InvalidArgumentException("Question Bank not found.");
     }
     $stmt->close();
 
@@ -20,7 +20,7 @@ function add_manual_question(int $qbankId, string $questionText, string $difficu
     $correctCount = 0;
     foreach ($options as $opt) {
         if (!isset($opt['option_text']) || trim($opt['option_text']) === '') {
-            throw new Exception("Option text cannot be empty.");
+            throw new InvalidArgumentException("Option text cannot be empty.");
         }
         if (!empty($opt['is_correct'])) {
             $correctCount++;
@@ -28,7 +28,7 @@ function add_manual_question(int $qbankId, string $questionText, string $difficu
     }
 
     if ($correctCount !== 1) {
-        throw new Exception("Exactly 1 option must be marked as correct (is_correct = 1).");
+        throw new InvalidArgumentException("Exactly 1 option must be marked as correct (is_correct = 1).");
     }
 
     // 3. Begin Atomic Database Transaction

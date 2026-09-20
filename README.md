@@ -31,12 +31,12 @@ InternBoot manages the candidate assessment lifecycle from user registration and
 
 ---
 
-## 3. Local Environment Setup
+## 4. Local Environment Setup
 
 Follow these steps to set up and run the platform locally:
 
 ### Step 1: Install Dependencies
-Open your terminal in the project root directory and run Composer to install required backend packages (`phpmailer/phpmailer`, `vlucas/phpdotenv`):
+Open your terminal in the project root directory and run Composer to install required backend packages (`phpmailer/phpmailer`, `tecnickcom/tcpdf`):
 ```bash
 composer install
 ```
@@ -51,11 +51,18 @@ cp .env.example .env
 Open `.env` and fill in your local or Railway database credentials, along with SMTP credentials for OTP email verification:
 ```env
 APP_ENV=development
-DB_HOST=okaido.proxy.rlwy.net
-DB_PORT=18068
+APP_URL=http://localhost:8000
+
+# Database Configuration (Local MySQL or Railway public proxy)
+DB_HOST=127.0.0.1
+DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=your_assigned_password
+DB_PASSWORD=your_local_password
 DB_NAME=railway
+
+# DEV/DEMO ONLY (Mock payment & candidate impersonation guard)
+M4_DEMO_MODE=0
+M4_DEMO_SECRET=your_local_demo_secret_here
 
 # SMTP Mail Configuration (Required for M3 candidate registration & OTP verification)
 MAIL_HOST=sandbox.smtp.mailtrap.io
@@ -89,7 +96,7 @@ php -S localhost:8000 -t public
 
 ---
 
-## 4. ⚡ First-Time Setup (Seed)
+## 5. ⚡ First-Time Setup (Seed)
 
 After applying the schema, a fresh database has no admin user, no assessment, and no question bank — making the platform unusable until these are created.
 
@@ -121,18 +128,25 @@ After seeding, log in at `/admin/index.html` with `SEED_ADMIN_EMAIL` and `SEED_A
 
 ---
 
-## 4. Railway & Production Environment Variables
+## 6. Railway & Production Environment Variables
 
 The backend supports standard application variables as well as Railway-injected MySQL environment variables:
 
 ```env
-# Shared Application Credentials
-APP_ENV=development
-DB_HOST=okaido.proxy.rlwy.net
-DB_PORT=18068
+# Application Settings
+APP_ENV=production
+APP_URL=https://yourdomain.com
+
+# Database Settings (Explicit Application DB Credentials)
+DB_HOST=your-project.proxy.rlwy.net
+DB_PORT=12345
 DB_USER=root
 DB_PASSWORD=YOUR_RAILWAY_PASSWORD
 DB_NAME=railway
+
+# DEV/DEMO Safeguards (MUST be disabled in production)
+M4_DEMO_MODE=0
+M4_DEMO_SECRET=generate_a_long_random_secret_here
 
 # SMTP Mail Delivery Variables (Production / Cloud)
 MAIL_HOST=smtp.sendgrid.net
@@ -140,12 +154,23 @@ MAIL_PORT=587
 MAIL_USERNAME=apikey
 MAIL_PASSWORD=YOUR_SENDGRID_API_KEY
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=noreply@internboot.com
+MAIL_FROM_ADDRESS=noreply@yourdomain.com
 MAIL_FROM_NAME="InternBoot"
 
-# Railway Platform Managed Variables
+# Payment Gateway Configuration (M4 Payment Integration - Easebuzz / PayU)
+KEY=YOUR_PAYMENT_MERCHANT_KEY
+SALT=YOUR_PAYMENT_MERCHANT_SALT
+
+# AI Provider Configuration (M1 AI Question Bank Generation)
+AI_PROVIDER=gemini
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+GEMINI_MODEL=gemini-2.0-flash
+OPENAI_API_KEY=YOUR_OPENAI_API_KEY
+OPENAI_MODEL=gpt-4o-mini
+
+# Railway Platform Managed Variables (Automatically injected in Railway deployments)
 MYSQL_DATABASE=railway
-MYSQL_PUBLIC_URL=mysql://root:YOUR_PASSWORD@okaido.proxy.rlwy.net:18068/railway
+MYSQL_PUBLIC_URL=mysql://root:YOUR_PASSWORD@your-project.proxy.rlwy.net:12345/railway
 MYSQL_ROOT_PASSWORD=YOUR_PASSWORD
 MYSQL_URL=mysql://root:YOUR_PASSWORD@mysql.railway.internal:3306/railway
 MYSQLDATABASE=railway
@@ -163,7 +188,7 @@ MYSQLUSER=root
 
 ---
 
-## 5. Module Ownership (M1–M7)
+## 7. Module Ownership (M1–M7)
 
 | Module ID | Module Name | Primary Responsibility & Core Scope | Directory Path |
 | :--- | :--- | :--- | :--- |
@@ -176,9 +201,9 @@ MYSQLUSER=root
 
 ---
 
-## 6. Database Schema Summary
+## 8. Database Schema Summary
 
-The platform uses 20 relational tables defined in `schema.sql`:
+The platform uses 23 relational tables defined in `schema.sql`:
 
 | Table | Purpose | Key Foreign Keys & Constraints |
 | :--- | :--- | :--- |
@@ -201,10 +226,15 @@ The platform uses 20 relational tables defined in `schema.sql`:
 | `placement_records` | Recruitment & hiring tracking | FK `candidate_id`, `placement_status` |
 | `admin_logs` | Administrative security audit trail | FK `user_id`, action, IP address |
 | `settings` | System-wide key-value configurations | `batch_threshold` (100), `exam_fee` (2999) |
+| `email_verifications` | OTP email verification records | `email`, `otp_code`, `expires_at`, `resend_count` |
+| `login_attempts` | Failed login brute-force tracking | `ip_address`, `email`, `attempted_at` |
+| `attempt_questions` | Question served snapshot per attempt | FK `attempt_id`, FK `question_id`, `position` |
+| `password_resets` | Password reset tokens | `user_id`, `token_hash`, `expires_at` |
+| `certificate_verification_attempts` | Rate limiting for certificate verification | `ip_address`, `attempted_at` |
 
 ---
 
-## 7. Payment Module Notes (M4)
+## 9. Payment Module Notes (M4)
 
 - **Verification Approach Kept:** During restructuring, the payment verification mechanism from the Razorpay standalone demo was retained as canonical. It generates a 32-byte cryptographically secure session-bound token (`bin2hex(random_bytes(32))`) stored in `$_SESSION['m4_demo_payment']` and verifies verify requests using `hash_equals()`. Browser-supplied success flags are strictly ignored.
 - **Endpoints:**
@@ -216,21 +246,32 @@ The platform uses 20 relational tables defined in `schema.sql`:
 
 ---
 
-## 8. M7 / Evaluation & Admin Notes
+## 10. M7 / Evaluation & Admin Notes
 
 - **Admin Panel URL:** `http://localhost:8000/admin/index.html`
 - **Admin Public API:** `/api/admin/evaluate.php`
 - **Core Operations Supported:**
-  - GET `?action=health`: Validates DB connection and confirms presence of all 19 schema tables.
+  - GET `?action=health`: Validates DB connection and confirms presence of schema tables.
   - GET `?action=dashboard`: Returns total candidates, payments, active batches, and level distribution statistics.
   - POST `?action=evaluate`: Accepts `{ "attempt_id": 1, "generate_certificate": true }`, evaluates submitted answers against `options.is_correct`, calculates percentage, assigns skill level (Level 1–5), inserts `results` row, generates certificate, and creates initial placement record.
   - GET `?action=certificate_pdf.php?result_id=1`: Renders/downloads candidate PDF certificate.
   - POST `?action=batch`, `?action=slot`, `?action=allocate`: Manages batch creation, slot times, and candidate seat allocations.
   - Security: All POST operations require CSRF protection (`X-CSRF-Token` header).
 
+- **Public Certificate Verification:**
+  - **URL:** `/verify-certificate.php`
+  - **Access:** Public (no authentication required). Ideal for third-party background checks and employers.
+  - **Functionality:** Accepts `certificate_number` via query parameter or form submission. Supports both web UI and JSON API (`format=json` or `Accept: application/json`).
+  - **Privacy:** Returns strictly non-sensitive fields (`candidate_name`, `assessment_title`, `level`, `level_name`, `issue_date`, `verified: true/false`). Internal fields (email, percentage score, candidate_id) are strictly redacted.
+  - **Rate Limiting:** Scoped by client IP, allowing a maximum of 20 verification requests per 15-minute window to protect against certificate number enumeration.
+
+- **Certificate Issuance & Eligibility:**
+  - Enforces minimum qualification gate (`settings.min_certificate_level`, default: Level 2 / Elementary, 40%+). Results for Level 1 (0–39.99%) or failing scores are rejected with `InvalidArgumentException`.
+  - PDF rendering uses TCPDF with full TrueType Unicode font embedding (`FreeSans`), fully supporting Devanagari, Latin, and non-Latin character sets.
+
 ---
 
-## 9. Module Notes (M3, M5, M6)
+## 11. Module Notes (M3, M5, M6)
 
 ### M3 — Authentication & Profile
 - Registration creates entries in `users` and `candidates` within a single SQL transaction.
@@ -243,13 +284,13 @@ The platform uses 20 relational tables defined in `schema.sql`:
 - **Anti-Race-Condition Booking:** Slot seat reservation uses atomic UPDATE checks (`UPDATE exam_slots SET seats_remaining = seats_remaining - 1 WHERE id = ? AND seats_remaining > 0`) inside a transaction to prevent overselling.
 
 ### M6 — Online Exam Engine
-- **Server-Authoritative Timer:** Server records start time and deadline (`end_time`). Browser countdown is for display only; API rejects submissions arriving past deadline.
+- **Server-Authoritative Timer:** Server records start time and deadline (`end_time`). Submissions on in-progress attempts are accepted up to and upon expiration (triggering server-side answer evaluation); subsequent submissions against already-closed or unstarted attempts are rejected.
 - **Deterministic Question Randomization:** Questions ordering is randomized per attempt using `ORDER BY MD5(CONCAT(attempt_id, ':', question_id))` without exposing answer keys (`options.is_correct`) to the frontend.
 - **Browser Anti-Cheating:** Tracks tab/visibility changes (`visibilitychange`) and focus loss (`blur`). Exceeding 3 violations auto-submits the assessment.
 
 ---
 
-## 10. Known Gaps & Future Roadmap Items
+## 12. Known Gaps & Future Roadmap Items
 
 1. **AI Question Bank Auto-Generation:** Prompt-driven dynamic AI question generation endpoint is not yet fully wired to external LLM provider APIs.
 2. **PDF Certificate Design Template:** PDF generation is active in M7 (`certificate_pdf.php`), but the visual layout uses a standard placeholder layout requiring final graphic styling.

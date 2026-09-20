@@ -5,30 +5,111 @@ function demo_mode(): bool {
     return ($_ENV['M4_DEMO_MODE'] ?? '0') === '1';
 }
 
+/**
+ * Validate active candidate session with 60s cache TTL.
+ * Returns candidate_id (int) if valid and active, or null if invalid/deactivated.
+ * On deactivation/invalidation, fully destroys the session.
+ */
+function validate_candidate_session(?mysqli $conn = null): ?int {
+    $hasSession = isset($_SESSION['candidate_id']) || isset($_SESSION['user_id']);
+    if (!$hasSession) {
+        return null;
+    }
+
+    if (!isset($conn) || !($conn instanceof mysqli)) {
+        global $conn;
+        if (!isset($conn) || !($conn instanceof mysqli)) {
+            $conn = get_db_connection();
+        }
+    }
+
+    $now = time();
+    $lastCheck = $_SESSION['candidate_checked_at'] ?? 0;
+
+    // Path 1: candidate_id is cached and active status checked within 60s TTL
+    if (
+        isset($_SESSION['candidate_id']) &&
+        ctype_digit((string)$_SESSION['candidate_id']) &&
+        ($now - $lastCheck) < 60
+    ) {
+        return (int)$_SESSION['candidate_id'];
+    }
+
+    // Path 2: Cache miss or 60s TTL expired — re-validate is_active from DB
+    $candidateId = (isset($_SESSION['candidate_id']) && ctype_digit((string)$_SESSION['candidate_id']))
+        ? (int)$_SESSION['candidate_id']
+        : null;
+    $userId = (isset($_SESSION['user_id']) && ctype_digit((string)$_SESSION['user_id']))
+        ? (int)$_SESSION['user_id']
+        : null;
+
+    $user = null;
+    if ($candidateId !== null && $candidateId > 0 && $userId !== null && $userId > 0) {
+        $stmt = $conn->prepare(
+            'SELECT c.id AS candidate_id, c.user_id, u.is_active
+             FROM candidates c
+             JOIN users u ON u.id = c.user_id
+             WHERE c.id = ? AND c.user_id = ?
+             LIMIT 1'
+        );
+        $stmt->bind_param('ii', $candidateId, $userId);
+        $stmt->execute();
+        $user = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+    } elseif ($candidateId !== null && $candidateId > 0) {
+        $stmt = $conn->prepare(
+            'SELECT c.id AS candidate_id, c.user_id, u.is_active
+             FROM candidates c
+             JOIN users u ON u.id = c.user_id
+             WHERE c.id = ?
+             LIMIT 1'
+        );
+        $stmt->bind_param('i', $candidateId);
+        $stmt->execute();
+        $user = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+    } elseif ($userId !== null && $userId > 0) {
+        $stmt = $conn->prepare(
+            'SELECT c.id AS candidate_id, c.user_id, u.is_active
+             FROM candidates c
+             JOIN users u ON u.id = c.user_id
+             WHERE u.id = ?
+             LIMIT 1'
+        );
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $user = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+    }
+
+    if ($user && (int)$user['is_active'] === 1 && !empty($user['candidate_id'])) {
+        $_SESSION['candidate_id']        = (int)$user['candidate_id'];
+        $_SESSION['user_id']             = (int)$user['user_id'];
+        $_SESSION['candidate_checked_at'] = $now;
+        return (int)$user['candidate_id'];
+    }
+
+    // Deactivated or not found in DB: fully destroy session so user_id doesn't linger
+    destroy_session();
+    return null;
+}
+
 function resolve_candidate_id(array $input = []): int {
     global $conn;
 
     $hasSession = isset($_SESSION['candidate_id']) || isset($_SESSION['user_id']);
 
-    if (isset($_SESSION['candidate_id']) && ctype_digit((string)$_SESSION['candidate_id'])) {
-        return (int)$_SESSION['candidate_id'];
-    }
-
-    if (isset($_SESSION['user_id']) && ctype_digit((string)$_SESSION['user_id'])) {
-        $stmt = $conn->prepare('SELECT id FROM candidates WHERE user_id = ? LIMIT 1');
-        $userId = (int) $_SESSION['user_id'];
-        $stmt->bind_param('i', $userId);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-        if ($row) {
-            $_SESSION['candidate_id'] = (int)$row['id'];
-            return (int)$row['id'];
+    if ($hasSession) {
+        $cid = validate_candidate_session($conn);
+        if ($cid !== null) {
+            return $cid;
         }
+
+        // Deactivated or invalid: session was destroyed by validate_candidate_session()
+        send_json_response('error', 'Candidate authentication/session is required.', null, 401);
+        exit;
     }
 
-    $appEnv = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production';
-    
     // FAIL-SAFE GUARD: Require a dedicated secret to prevent accidental impersonation if APP_ENV is misconfigured
     $expectedSecret = $_ENV['M4_DEMO_SECRET'] ?? getenv('M4_DEMO_SECRET') ?: '';
     $providedSecret = $input['demo_secret'] ?? $_GET['demo_secret'] ?? '';
@@ -36,7 +117,7 @@ function resolve_candidate_id(array $input = []): int {
     if (
         !$hasSession && 
         demo_mode() && 
-        $appEnv !== 'production' && 
+        is_dev_env() && 
         $expectedSecret !== '' && 
         hash_equals($expectedSecret, $providedSecret)
     ) {
@@ -47,3 +128,39 @@ function resolve_candidate_id(array $input = []): int {
     send_json_response('error', 'Candidate authentication/session is required.', null, 401);
     exit;
 }
+
+/**
+ * Shared candidate authentication helper for exam endpoints.
+ * Resolves candidate_id from session or from candidates table using session user_id.
+ * Sends 401 response and exits if candidate authentication is missing.
+ */
+function require_candidate_auth(?mysqli $conn = null): int {
+    if ($conn === null) {
+        global $conn;
+    }
+
+    if (
+        (!isset($_SESSION['candidate_id']) || !is_numeric($_SESSION['candidate_id'])) &&
+        isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id']) &&
+        isset($conn) && $conn instanceof mysqli
+    ) {
+        $userStmt = $conn->prepare("SELECT id FROM candidates WHERE user_id = ? LIMIT 1");
+        if ($userStmt) {
+            $uId = (int)$_SESSION['user_id'];
+            $userStmt->bind_param("i", $uId);
+            $userStmt->execute();
+            $userRes = $userStmt->get_result()->fetch_assoc();
+            $userStmt->close();
+            if ($userRes) {
+                $_SESSION['candidate_id'] = (int)$userRes['id'];
+            }
+        }
+    }
+
+    if (!isset($_SESSION['candidate_id']) || !is_numeric($_SESSION['candidate_id'])) {
+        send_json_response('error', 'Candidate authentication required', null, 401);
+    }
+
+    return (int)$_SESSION['candidate_id'];
+}
+

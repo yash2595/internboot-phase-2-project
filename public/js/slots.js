@@ -5,6 +5,34 @@
  * - GET api/slots/available.php
  * - POST api/slots/book.php
  */
+let csrfToken = null;
+
+async function getCsrfToken() {
+    if (csrfToken) return csrfToken;
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag && metaTag.content) {
+        csrfToken = metaTag.content;
+        return csrfToken;
+    }
+    try {
+        const res = await fetch("api/auth/csrf.php", {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        });
+        const payload = await res.json();
+        csrfToken = payload.data?.token || null;
+    } catch {
+        const res = await fetch("/api/admin/evaluate.php?action=csrf", {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        });
+        const payload = await res.json();
+        csrfToken = payload.data?.token || null;
+    }
+    if (!csrfToken) throw new Error("Security token could not be loaded.");
+    return csrfToken;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     await initSlotsModule();
 });
@@ -205,11 +233,13 @@ async function handleBookSlotClick(btn) {
     btn.textContent = "Booking...";
 
     try {
+        const token = await getCsrfToken();
         const response = await fetch("api/slots/book.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "X-CSRF-Token": token
             },
             body: JSON.stringify({
                 assessment_id: Number(assessmentId),

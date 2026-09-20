@@ -121,9 +121,21 @@ function insert_admin_user(mysqli $conn, string $email, string $passwordHash, st
         return ['success' => false, 'code' => 422, 'message' => 'Invalid staff role specified.'];
     }
 
+    $conn->begin_transaction();
     try {
-        $stmt = $conn->prepare("INSERT INTO users (email, password, role) VALUES (?, ?, ?)");
-        $stmt->bind_param('sss', $email, $passwordHash, $role);
+        static $hasUsersPhone = null;
+        if ($hasUsersPhone === null) {
+            $chk = $conn->query("SHOW COLUMNS FROM users LIKE 'phone'");
+            $hasUsersPhone = ($chk && $chk->num_rows > 0);
+        }
+
+        if ($hasUsersPhone) {
+            $stmt = $conn->prepare("INSERT INTO users (email, password, role, phone) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param('ssss', $email, $passwordHash, $role, $phone);
+        } else {
+            $stmt = $conn->prepare("INSERT INTO users (email, password, role) VALUES (?, ?, ?)");
+            $stmt->bind_param('sss', $email, $passwordHash, $role);
+        }
         $stmt->execute();
 
         if ($conn->errno) {
@@ -133,14 +145,27 @@ function insert_admin_user(mysqli $conn, string $email, string $passwordHash, st
         $userId = (int) $stmt->insert_id;
         $stmt->close();
 
+        if ($phone !== '' || $fullName !== '') {
+            $stmt2 = $conn->prepare("INSERT INTO candidates (user_id, full_name, phone) VALUES (?, ?, ?)");
+            $stmt2->bind_param('iss', $userId, $fullName, $phone);
+            $stmt2->execute();
+            if ($conn->errno) {
+                throw new mysqli_sql_exception($conn->error, $conn->errno);
+            }
+            $stmt2->close();
+        }
+
+        $conn->commit();
         return ['success' => true, 'user_id' => $userId];
     } catch (Throwable $e) {
+        $conn->rollback();
         $isDuplicate = (method_exists($e, 'getCode') && (int) $e->getCode() === 1062) || $conn->errno === 1062;
         if ($isDuplicate) {
+            $onPhone = str_contains($e->getMessage(), 'phone') || str_contains($conn->error, 'phone');
             return [
                 'success' => false,
                 'code' => 409,
-                'message' => 'An account with this email already exists.',
+                'message' => $onPhone ? 'This phone number is already registered.' : 'An account with this email already exists.',
             ];
         }
 
@@ -197,20 +222,6 @@ function consume_verification_attempt(mysqli $conn, int $id): int {
     return $affected;
 }
 
-function find_pending_registration(mysqli $conn, string $email, string $otp): ?array {
-    $stmt = $conn->prepare(
-        'SELECT * FROM email_verifications
-         WHERE email = ? AND otp_code = ? AND is_used = 0 AND expires_at > NOW()
-         ORDER BY id DESC LIMIT 1'
-    );
-    $stmt->bind_param('ss', $email, $otp);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $stmt->close();
-    return $row ?: null;
-}
-
 function mark_pending_registration_used(mysqli $conn, int $id): void {
     $stmt = $conn->prepare('UPDATE email_verifications SET is_used = 1 WHERE id = ?');
     $stmt->bind_param('i', $id);
@@ -218,30 +229,85 @@ function mark_pending_registration_used(mysqli $conn, int $id): void {
     $stmt->close();
 }
 
-function check_login_rate_limit(mysqli $conn, string $email, string $ipAddress): bool {
+/**
+ * Check whether a login attempt should be rate-limited.
+ *
+ * Two independent checks run in order:
+ *
+ * 1. Per-(email, ip) check — 5 failures from THIS IP for THIS email in the
+ *    last 15 minutes.  An attacker's failures from their own IP cannot block
+ *    the legitimate account owner who connects from a different IP.
+ *
+ * 2. Per-IP abuse check — 20 failures from THIS IP across ANY email in the
+ *    last 15 minutes.  Catches credential-stuffing from a single source
+ *    without affecting other source IPs.
+ *
+ * @return bool  true → caller should reject with 429
+ */
+function check_login_rate_limit(mysqli $conn, string $email, string $ipAddress): bool
+{
+    // Check 1: per-(email, ip) — 5 failures in 15 min
     $stmt = $conn->prepare(
-        'SELECT COUNT(*) AS failed_count 
-         FROM login_attempts 
-         WHERE email = ? AND ip_address = ? 
+        'SELECT COUNT(*) AS cnt
+         FROM login_attempts
+         WHERE email = ? AND ip_address = ?
            AND created_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)'
     );
     $stmt->bind_param('ss', $email, $ipAddress);
     $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
+    $row = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    
-    return ((int)$row['failed_count'] >= 5);
+
+    if ((int)$row['cnt'] >= 5) {
+        return true;
+    }
+
+    // Check 2: per-IP abuse — 20 failures from this IP in 15 min (any email)
+    $stmt2 = $conn->prepare(
+        'SELECT COUNT(*) AS cnt
+         FROM login_attempts
+         WHERE ip_address = ?
+           AND created_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)'
+    );
+    $stmt2->bind_param('s', $ipAddress);
+    $stmt2->execute();
+    $row2 = $stmt2->get_result()->fetch_assoc();
+    $stmt2->close();
+
+    return ((int)$row2['cnt'] >= 20);
 }
 
-function record_failed_login(mysqli $conn, string $email, string $ipAddress): void {
+/**
+ * Record one failed login attempt and prune rows older than 24 hours.
+ *
+ * Inline cleanup keeps the table from growing unbounded without needing a
+ * separate cron job — consistent with how cleanup is handled elsewhere in
+ * this codebase (alongside writes).
+ */
+function record_failed_login(mysqli $conn, string $email, string $ipAddress): void
+{
     $stmt = $conn->prepare('INSERT INTO login_attempts (email, ip_address) VALUES (?, ?)');
     $stmt->bind_param('ss', $email, $ipAddress);
     $stmt->execute();
     $stmt->close();
+
+    // Prune rows older than 24 hours (best-effort)
+    try {
+        $conn->query('DELETE FROM login_attempts WHERE created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)');
+    } catch (Throwable $e) {
+        error_log('login_attempts cleanup failed: ' . $e->getMessage());
+    }
 }
 
-function clear_failed_logins(mysqli $conn, string $email, string $ipAddress): void {
+/**
+ * Clear failed login attempts for the (email, ip) pair on successful login.
+ *
+ * Scoped to the authenticated IP so that an attacker's recorded failures for
+ * the same email from a different IP are preserved (they remain throttled
+ * from their own source IP).
+ */
+function clear_failed_logins(mysqli $conn, string $email, string $ipAddress): void
+{
     $stmt = $conn->prepare('DELETE FROM login_attempts WHERE email = ? AND ip_address = ?');
     $stmt->bind_param('ss', $email, $ipAddress);
     $stmt->execute();

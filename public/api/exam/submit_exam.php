@@ -11,32 +11,7 @@ if (file_exists(dirname(__DIR__, 3) . '/src/core/bootstrap.php')) {
 
 try {
 
-    if (
-        (!isset($_SESSION['candidate_id']) || !is_numeric($_SESSION['candidate_id'])) &&
-        isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id']) &&
-        isset($conn)
-    ) {
-        $userStmt = $conn->prepare("SELECT id FROM candidates WHERE user_id = ? LIMIT 1");
-        if ($userStmt) {
-            $uId = (int)$_SESSION['user_id'];
-            $userStmt->bind_param("i", $uId);
-            $userStmt->execute();
-            $userRes = $userStmt->get_result()->fetch_assoc();
-            $userStmt->close();
-            if ($userRes) {
-                $_SESSION['candidate_id'] = (int)$userRes['id'];
-            }
-        }
-    }
-
-    if (
-        !isset($_SESSION['candidate_id']) ||
-        !is_numeric($_SESSION['candidate_id'])
-    ) {
-        send_json_response('error', 'Candidate authentication required', null, 401);
-    }
-
-    $candidateId = (int) $_SESSION['candidate_id'];
+    $candidateId = require_candidate_auth($conn);
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         send_json_response('error', 'POST request required', null, 405);

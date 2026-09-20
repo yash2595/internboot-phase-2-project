@@ -86,8 +86,10 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
         }
         $score = max(0, $score);
 
-        $total = max(1, (int)$attempt['total_questions']);
-        $servedCount = max(1, (int) q_one($conn, "SELECT COUNT(*) AS cnt FROM attempt_questions WHERE attempt_id = ?", 'i', [$attemptId])['cnt']);
+        $servedRaw = function_exists('get_attempt_served_question_count')
+            ? get_attempt_served_question_count($conn, $attemptId)
+            : (int) q_one($conn, "SELECT COUNT(*) AS cnt FROM attempt_questions WHERE attempt_id = ?", 'i', [$attemptId])['cnt'];
+        $servedCount = $servedRaw > 0 ? $servedRaw : max(1, (int)$attempt['total_questions']);
         $percentage = round(($score / $servedCount) * 100, 2);
         $level=get_level_for_percentage($conn,$percentage);
         if(!$level) throw new RuntimeException('No level mapping exists for this percentage.');
@@ -98,7 +100,11 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
 
         $certificate=null;
         if($generateCertificate){
-            $certificate=upsert_certificate($conn,(int)$attempt['candidate_id'],$resultId,(int)$level['level_number']);
+            $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 2);
+            $minCertPct = (float)(get_setting_value('min_certificate_percentage', $conn) ?? 40.0);
+            if ((int)$level['level_number'] >= $minCertLevel && $percentage >= $minCertPct) {
+                $certificate=upsert_certificate($conn,(int)$attempt['candidate_id'],$resultId,(int)$level['level_number']);
+            }
         }
 
         create_admin_log($conn,$_SESSION['user_id']??null,'evaluate_attempt',json_encode([
@@ -112,7 +118,7 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
             'attempt_id'=>$attemptId,
             'candidate_id'=>(int)$attempt['candidate_id'],
             'score'=>$score,
-            'total_questions'=>$total,
+            'total_questions'=>$servedCount,
             'percentage'=>$percentage,
             'level'=>(int)$level['level_number'],
             'level_name'=>$level['level_name'],
@@ -136,6 +142,22 @@ function generate_certificate(mysqli $conn,int $resultId): array
 
     if(!$row) throw new InvalidArgumentException('Result not found.');
 
+    require_once __DIR__ . '/../m5_batch_slots/queries.php';
+    $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 2);
+    $minCertPct = (float)(get_setting_value('min_certificate_percentage', $conn) ?? 40.0);
+
+    if ((int)$row['level_assigned'] < $minCertLevel || (float)$row['percentage'] < $minCertPct) {
+        throw new InvalidArgumentException(
+            sprintf(
+                'Candidate result does not qualify for certificate issuance. Requires Level %d+ (minimum %.1f%% score), but achieved Level %d (%.2f%%).',
+                $minCertLevel,
+                $minCertPct,
+                (int)$row['level_assigned'],
+                (float)$row['percentage']
+            )
+        );
+    }
+
     $levelRow = q_one($conn, 'SELECT level_name FROM levels WHERE level_number=?', 'i', [(int)$row['level_assigned']]);
     $levelName = $levelRow ? $levelRow['level_name'] : ('Level ' . $row['level_assigned']);
 
@@ -156,12 +178,16 @@ function generate_certificate(mysqli $conn,int $resultId): array
 
 function generate_next_certificate(mysqli $conn): array
 {
+    require_once __DIR__ . '/../m5_batch_slots/queries.php';
+    $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 2);
+    $minCertPct = (float)(get_setting_value('min_certificate_percentage', $conn) ?? 40.0);
+
     $row=q_one($conn,"SELECT r.id
         FROM results r
         LEFT JOIN certificates c ON c.result_id=r.id
-        WHERE c.id IS NULL
+        WHERE c.id IS NULL AND r.level_assigned >= ? AND r.percentage >= ?
         ORDER BY r.created_at ASC
-        LIMIT 1");
+        LIMIT 1", 'id', [$minCertLevel, $minCertPct]);
 
     if(!$row) throw new InvalidArgumentException('There are no results waiting for a certificate.');
     return generate_certificate($conn,(int)$row['id']);

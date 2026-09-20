@@ -378,12 +378,25 @@
 
   async function logoutAdmin() {
     try {
-      await api("logout", { method: "POST", body: {} });
-      notify("Logged out successfully.");
-    } catch (e) {
-      notify(e.message, true);
+      const csrf = await getCsrfToken();
+      await fetch("/api/auth/logout.php", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": csrf,
+        },
+        body: JSON.stringify({ csrf_token: csrf }),
+      });
+      sessionStorage.clear();
+      window.location.href = "../login.php";
+    } catch {
+      sessionStorage.clear();
+      window.location.href = "../login.php";
     }
   }
+
 
   function initCommon() {
     initResponsiveShell();
@@ -1205,7 +1218,7 @@
         <td class="px-6 py-5">${p.percentage !== null ? `${escapeHtml(p.percentage)} / 100` : "—"}</td>
         <td class="px-6 py-5">${badge(label(p.placement_status), typeForStatus(p.placement_status))}</td>
         <td class="px-6 py-5">${escapeHtml(p.company_name || "—")}</td>
-        <td class="px-6 py-5"><button class="view-placement-btn text-intern-blue" type="button" data-id="${p.id}" data-name="${escapeHtml(p.full_name)}" data-status="${p.placement_status}" data-company="${escapeHtml(p.company_name || "")}" data-notes="${escapeHtml(p.notes || "")}">View</button></td>
+        <td class="px-6 py-5"><button class="view-placement-btn text-intern-blue" type="button" data-id="${Number(p.id)}" data-name="${escapeHtml(p.full_name)}" data-status="${escapeHtml(p.placement_status)}" data-company="${escapeHtml(p.company_name || "")}" data-notes="${escapeHtml(p.notes || "")}">View</button></td>
       </tr>`,
           )
           .join("")
@@ -1230,10 +1243,10 @@
           </select>
         </label>
         <label class="block text-sm text-slate-600">Company
-          <input id="placementCompanyEdit" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" value="${btn.dataset.company || ""}">
+          <input id="placementCompanyEdit" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" value="${escapeHtml(btn.dataset.company || "")}">
         </label>
         <label class="block text-sm text-slate-600">Notes
-          <textarea id="placementNotesEdit" class="mt-1 min-h-24 w-full rounded-lg border border-slate-200 px-3 py-2">${btn.dataset.notes || ""}</textarea>
+          <textarea id="placementNotesEdit" class="mt-1 min-h-24 w-full rounded-lg border border-slate-200 px-3 py-2">${escapeHtml(btn.dataset.notes || "")}</textarea>
         </label>
         <button class="w-full rounded-lg bg-intern-blue px-4 py-2.5 text-sm font-medium text-white">Save</button>
       </form>`,

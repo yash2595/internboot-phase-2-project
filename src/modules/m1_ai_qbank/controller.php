@@ -45,8 +45,11 @@ function handle_add_question_request(array $input, mysqli $conn): void {
     try {
         $result = add_manual_question($qbankId, $questionText, $difficulty, $options, $conn, $approvalStatus);
         send_json_response('success', 'Question added successfully', $result, 201);
-    } catch (Exception $e) {
+    } catch (InvalidArgumentException $e) {
         send_json_response('error', $e->getMessage(), null, 400);
+    } catch (Throwable $e) {
+        error_log('InternBoot M1 add question error: ' . $e->getMessage());
+        send_json_response('error', is_dev_env() ? $e->getMessage() : 'Failed to add question. Please try again.', null, 500);
     }
 }
 
@@ -67,8 +70,9 @@ function handle_list_questions_request(array $input, mysqli $conn): void {
     try {
         $data = fetch_approved_qbank_questions($qbankId, $conn, $isAdmin);
         send_json_response('success', 'Approved questions retrieved successfully', $data, 200);
-    } catch (Exception $e) {
-        send_json_response('error', $e->getMessage(), null, 500);
+    } catch (Throwable $e) {
+        error_log('InternBoot M1 list questions error: ' . $e->getMessage());
+        send_json_response('error', is_dev_env() ? $e->getMessage() : 'Failed to retrieve questions.', null, 500);
     }
 }
 
@@ -106,8 +110,12 @@ function handle_generate_questions_request(array $input, mysqli $conn): void {
         send_json_response('error', $e->getMessage(), null, 400);
     } catch (Throwable $e) {
         $msg = $e->getMessage();
-        $code = (str_contains($msg, 'AI provider') || str_contains($msg, 'network')) ? 502 : 400;
-        send_json_response('error', $msg, null, $code);
+        error_log('InternBoot M1 question generation error: ' . $msg);
+        if (str_contains($msg, 'AI provider') || str_contains($msg, 'network')) {
+            send_json_response('error', 'AI question generation service is currently unavailable. Please try again later.', null, 502);
+        } else {
+            send_json_response('error', is_dev_env() ? $msg : 'Failed to generate questions. Please try again.', null, 500);
+        }
     }
 }
 ?>

@@ -36,6 +36,9 @@ if (!$action) {
 // It MUST be replaced with a real gateway (e.g., PayU, Easebuzz, Razorpay)
 // with server-to-server signature verification before real production launch.
 if ($action === 'create' || $action === 'verify') {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        send_json_response('error', 'Method not allowed. Use POST.', null, 405);
+    }
     $demoMode = ($_ENV['M4_DEMO_MODE'] ?? getenv('M4_DEMO_MODE') ?? '0') === '1';
     $demoSecret = trim($_ENV['M4_DEMO_SECRET'] ?? getenv('M4_DEMO_SECRET') ?? '');
     

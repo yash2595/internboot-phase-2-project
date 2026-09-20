@@ -26,6 +26,7 @@ function parse_positive_int($val): ?int {
  * Rejects with 403 if candidate_id in payload conflicts with authenticated session.
  */
 function handle_book_slot_request(array $input, mysqli $conn): void {
+    require_csrf();
     $sessionCandidateId = !empty($_SESSION['candidate_id']) ? (int)$_SESSION['candidate_id'] : null;
     $role = resolve_admin_role($conn);
 
@@ -86,9 +87,9 @@ function handle_book_slot_request(array $input, mysqli $conn): void {
     } catch (Throwable $e) {
         $msg = $e->getMessage();
         // Mask internal database / SQL errors to avoid leaking schema names
-        if ($e instanceof mysqli_sql_exception || str_contains($msg, "Table '") || str_contains($msg, "doesn't exist") || str_contains($msg, 'SQLSTATE')) {
+        if ($e instanceof mysqli_sql_exception || str_contains($msg, "Table '") || str_contains($msg, "doesn't exist") || str_contains($msg, 'SQLSTATE') || str_contains($msg, 'Failed to prepare') || str_contains($msg, 'Database')) {
             error_log("Database error in slot booking: " . $msg);
-            send_json_response('error', 'An internal server error occurred.', null, 500);
+            send_json_response('error', is_dev_env() ? $msg : 'An internal server error occurred.', null, 500);
             return;
         }
         if (stripos($msg, 'already has a booked slot') !== false || stripos($msg, 'fully booked') !== false) {
@@ -99,7 +100,8 @@ function handle_book_slot_request(array $input, mysqli $conn): void {
             send_json_response('error', $msg, null, 403);
             return;
         }
-        send_json_response('error', $msg, null, 400);
+        error_log("Slot booking error: " . $msg);
+        send_json_response('error', is_dev_env() ? $msg : 'An internal server error occurred.', null, 400);
         return;
     }
 }
@@ -111,6 +113,7 @@ function handle_book_slot_request(array $input, mysqli $conn): void {
  * Security: Enforces Admin role access (strictly admin, staff excluded).
  */
 function handle_auto_batch_request(array $input, mysqli $conn): void {
+    require_csrf();
     // RBAC Security Check: Strictly Admin Access Only
     $role = resolve_admin_role($conn);
     if ($role !== 'admin') {
@@ -171,12 +174,8 @@ function handle_auto_batch_request(array $input, mysqli $conn): void {
         }
     } catch (Throwable $e) {
         $msg = $e->getMessage();
-        if ($e instanceof mysqli_sql_exception || str_contains($msg, "Table '") || str_contains($msg, "doesn't exist") || str_contains($msg, 'SQLSTATE')) {
-            error_log("Database error in auto batch: " . $msg);
-            send_json_response('error', 'An internal server error occurred.', null, 500);
-            return;
-        }
-        send_json_response('error', $msg, null, 400);
+        error_log("Error in auto batch: " . $msg);
+        send_json_response('error', is_dev_env() ? $msg : 'An internal server error occurred.', null, 500);
         return;
     }
 }

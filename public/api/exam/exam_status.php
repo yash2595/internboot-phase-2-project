@@ -11,32 +11,7 @@ if (file_exists(dirname(__DIR__, 3) . '/src/core/bootstrap.php')) {
 
 try {
 
-    if (
-        (!isset($_SESSION['candidate_id']) || !is_numeric($_SESSION['candidate_id'])) &&
-        isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id']) &&
-        isset($conn)
-    ) {
-        $userStmt = $conn->prepare("SELECT id FROM candidates WHERE user_id = ? LIMIT 1");
-        if ($userStmt) {
-            $uId = (int)$_SESSION['user_id'];
-            $userStmt->bind_param("i", $uId);
-            $userStmt->execute();
-            $userRes = $userStmt->get_result()->fetch_assoc();
-            $userStmt->close();
-            if ($userRes) {
-                $_SESSION['candidate_id'] = (int)$userRes['id'];
-            }
-        }
-    }
-
-    if (
-        !isset($_SESSION['candidate_id']) ||
-        !is_numeric($_SESSION['candidate_id'])
-    ) {
-        send_json_response('error', 'Candidate authentication required', null, 401);
-    }
-
-    $candidateId = (int) $_SESSION['candidate_id'];
+    $candidateId = require_candidate_auth($conn);
 
     $attemptId = isset($_GET['attempt_id'])
         ? (int) $_GET['attempt_id']
@@ -116,13 +91,18 @@ try {
 
     /*
      * Automatically expire an in-progress attempt
-     * when server time reaches end_time (only if started).
+     * when server time reaches end_time (only if started),
+     * OR if the underlying exam schedule was cancelled/completed by an administrator.
      */
+    $validScheduleStatuses = ['scheduled', 'in_progress'];
+    $scheduleIsActive = empty($attempt['schedule_status']) || in_array($attempt['schedule_status'], $validScheduleStatuses, true);
+
     if (
         $attempt['status'] === 'in_progress' &&
-        !empty($attempt['start_time']) &&
-        !empty($attempt['end_time']) &&
-        $remainingSeconds <= 0
+        (
+            (!empty($attempt['start_time']) && !empty($attempt['end_time']) && $remainingSeconds <= 0) ||
+            (!$scheduleIsActive && !empty($attempt['start_time']))
+        )
     ) {
 
         $expireSql = "
@@ -157,7 +137,12 @@ try {
     $canStart = false;
     $gateMessage = null;
 
-    if (!$isStarted && $attempt['status'] === 'in_progress') {
+    if (!$scheduleIsActive) {
+        $canStart = false;
+        $gateMessage = ($attempt['schedule_status'] === 'cancelled')
+            ? 'This exam schedule has been cancelled.'
+            : 'This exam schedule is no longer active.';
+    } elseif (!$isStarted && $attempt['status'] === 'in_progress') {
         $canStart = true;
         $now = new DateTime();
         $today = $now->format('Y-m-d');
@@ -208,11 +193,14 @@ try {
     $answeredCount = (int) $answerData['answered_count'];
 
     /*
-     * Get total number of questions for the assessment.
+     * Get total number of questions served for the attempt, falling back to assessment configuration if unassigned.
      */
-    $totalQuestions = isset($attempt['total_questions'])
-        ? (int) $attempt['total_questions']
+    $servedQuestions = function_exists('get_attempt_served_question_count')
+        ? get_attempt_served_question_count($conn, $attemptId)
         : 0;
+    $totalQuestions = ($servedQuestions > 0)
+        ? $servedQuestions
+        : (isset($attempt['total_questions']) ? (int) $attempt['total_questions'] : 0);
 
     send_json_response('success', 'Exam status retrieved', [
         'success' => true,
@@ -221,6 +209,7 @@ try {
         'assessment_id' => (int) $attempt['assessment_id'],
         'exam_slot_id' => (int) $attempt['exam_slot_id'],
         'status' => $attempt['status'],
+        'schedule_status' => $attempt['schedule_status'] ?? null,
         'start_time' => $attempt['start_time'],
         'end_time' => $attempt['end_time'],
         'submitted_at' => $attempt['submitted_at'],

@@ -43,5 +43,7 @@ try {
 
     send_json_response('success', 'Enrollments fetched successfully', $enrollments);
 } catch (Throwable $e) {
-    send_json_response('error', 'Failed to fetch enrollments: ' . $e->getMessage(), null, 500);
+    error_log('InternBoot enrollment error: ' . $e->getMessage());
+    send_json_response('error', 'Failed to fetch enrollments. Please try again or contact support.', null, 500);
 }
+

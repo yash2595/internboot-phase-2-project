@@ -456,7 +456,9 @@ INSERT INTO `settings` (`setting_key`, `setting_value`, `description`) VALUES
 ('exam_fee', '2999', 'Assessment fee per candidate in local currency (INR)'),
 ('negative_marking_enabled', '0', 'Boolean flag (1/0) indicating whether negative marking is active'),
 ('negative_marking_value', '0.25', 'Marks deducted per wrong (attempted) answer when negative_marking_enabled is 1'),
-('retake_allowed', '0', 'Boolean flag (1/0) indicating whether candidates can re-attempt exams');
+('retake_allowed', '0', 'Boolean flag (1/0) indicating whether candidates can re-attempt exams'),
+('min_certificate_level', '2', 'Minimum level required for certificate issuance (default Level 2 / Elementary, 40%)'),
+('min_certificate_percentage', '40.00', 'Minimum score percentage required for certificate issuance');
 
 -- Sample Initial Level Mapping Configurations (Levels 1 to 5)
 INSERT INTO `levels` (`level_number`, `level_name`, `min_percentage`, `max_percentage`, `description`) VALUES
@@ -477,6 +479,7 @@ CREATE TABLE IF NOT EXISTS `login_attempts` (
   `ip_address` VARCHAR(45) NOT NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX `idx_login_attempts_email_ip` (`email`, `ip_address`),
+  INDEX `idx_login_attempts_ip` (`ip_address`),
   INDEX `idx_login_attempts_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -514,4 +517,17 @@ CREATE TABLE IF NOT EXISTS `password_resets` (
   CONSTRAINT `fk_password_resets_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   INDEX `idx_password_resets_user` (`user_id`),
   INDEX `idx_password_resets_token_hash` (`token_hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- Table 26: certificate_verification_attempts
+-- Purpose: Tracking public certificate lookups for rate limiting (enumeration prevention)
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `certificate_verification_attempts`;
+CREATE TABLE IF NOT EXISTS `certificate_verification_attempts` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `ip_address` VARCHAR(45) NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_cert_verif_ip` (`ip_address`),
+  INDEX `idx_cert_verif_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

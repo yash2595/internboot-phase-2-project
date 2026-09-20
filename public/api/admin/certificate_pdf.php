@@ -96,8 +96,8 @@ try {
     render_certificate_error_page($e->getMessage(), 422);
 } catch (Throwable $e) {
     error_log('InternBoot M7 certificate PDF error: ' . $e->getMessage());
-    $dev = ($_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production') === 'development';
-    render_certificate_error_page($dev ? $e->getMessage() : 'Certificate could not be generated. Please try again or contact support.', 500);
+    render_certificate_error_page(is_dev_env() ? $e->getMessage() : 'Certificate could not be generated. Please try again or contact support.', 500);
 }
+
 
 

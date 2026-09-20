@@ -346,5 +346,7 @@ try {
         'certificate' => $certificate
     ]);
 } catch (Throwable $e) {
-    send_json_response('error', 'Unable to fetch dashboard data: ' . $e->getMessage(), null, 500);
+    error_log('InternBoot dashboard error: ' . $e->getMessage());
+    send_json_response('error', 'Unable to fetch dashboard data. Please try again or contact support.', null, 500);
 }
+

@@ -335,7 +335,7 @@ function get_available_slots_by_batch(int $batchId, mysqli $conn): array {
             JOIN exam_schedules sch ON s.exam_schedule_id = sch.id
             WHERE sch.batch_id = ? 
               AND sch.status = 'scheduled' 
-              AND sch.exam_date >= CURDATE()
+              AND (sch.exam_date > CURDATE() OR (sch.exam_date = CURDATE() AND s.end_time > CURTIME()))
               AND s.seats_remaining > 0
             ORDER BY sch.exam_date ASC, s.start_time ASC";
     $stmt = $conn->prepare($sql);
@@ -369,7 +369,7 @@ function get_available_slots_by_assessment(int $assessmentId, mysqli $conn): arr
             JOIN batches b ON sch.batch_id = b.id
             WHERE b.assessment_id = ? 
               AND sch.status = 'scheduled' 
-              AND sch.exam_date >= CURDATE()
+              AND (sch.exam_date > CURDATE() OR (sch.exam_date = CURDATE() AND s.end_time > CURTIME()))
               AND s.seats_remaining > 0
             ORDER BY sch.exam_date ASC, s.start_time ASC";
     $stmt = $conn->prepare($sql);

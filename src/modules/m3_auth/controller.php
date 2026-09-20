@@ -111,7 +111,7 @@ function handle_login_request(array $data, mysqli $conn): void {
     $email        = sanitize_string($data['email'] ?? '');
     $password     = (string) ($data['password'] ?? '');
     $expectedRole = sanitize_string($data['role'] ?? '');
-    $ipAddress    = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    $ipAddress    = get_client_ip();
 
     if ($email === '' || $password === '') {
         send_json_response('error', 'Email and password are required.', null, 422);
@@ -158,6 +158,8 @@ function handle_login_request(array $data, mysqli $conn): void {
         error_log("Data integrity issue: candidate-role user {$result['user']['id']} has no candidates row");
     }
     $_SESSION['candidate_id'] = $result['user']['candidate_id'] ?? null;
+    $_SESSION['candidate_checked_at'] = time();
+    $_SESSION['role_checked_at']      = time();
 
     $redirectUrl = in_array($result['user']['role'], ['admin', 'staff'], true) ? '/admin/index.html' : '/dashboard.html';
 
@@ -174,24 +176,10 @@ function handle_login_request(array $data, mysqli $conn): void {
  * Handles POST /api/auth/logout.php
  */
 function handle_logout_request(): void {
-    $_SESSION = [];
-
-    if (ini_get('session.use_cookies')) {
-        $params = session_get_cookie_params();
-        setcookie(
-            session_name(),
-            '',
-            time() - 42000,
-            $params['path'],
-            $params['domain'],
-            $params['secure'],
-            $params['httponly']
-        );
-    }
-
-    session_destroy();
-    send_json_response('success', 'Logged out.', null, 200);
+    destroy_session();
+    send_json_response('success', 'Logged out successfully.', ['redirect' => '/login.php'], 200);
 }
+
 
 /**
  * Handles POST /api/admin/create-staff.php
@@ -294,7 +282,14 @@ function handle_forgot_password_request(array $data, mysqli $conn): void {
         $stmt->close();
         
         require_once __DIR__ . '/../../core/Mailer.php';
-        $appUrl = rtrim(env_value('APP_URL', 'http://localhost:8080'), '/');
+        $rawAppUrl = env_value('APP_URL');
+        if (empty($rawAppUrl)) {
+            if (!is_dev_env()) {
+                error_log('CRITICAL CONFIG WARNING: APP_URL environment variable is not configured. Password reset links will default to http://localhost:8080 in production!');
+            }
+            $rawAppUrl = 'http://localhost:8080';
+        }
+        $appUrl = rtrim($rawAppUrl, '/');
         $resetLink = "{$appUrl}/reset-password.php?token={$token}&email=" . urlencode($email);
         
         $name = $user['full_name'] ?? 'User';
@@ -364,6 +359,7 @@ function handle_reset_password_request(array $data, mysqli $conn): void {
         $conn->commit();
     } catch (Throwable $e) {
         $conn->rollback();
+        error_log('InternBoot password reset error: ' . $e->getMessage());
         send_json_response('error', 'Could not reset password. Please try again.', null, 500);
     }
 

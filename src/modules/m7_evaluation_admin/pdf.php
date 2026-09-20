@@ -1,9 +1,19 @@
 <?php
-/** Minimal dependency-free PDF writer for certificate downloads. */
+/**
+ * Professional PDF generator for certificates using TCPDF with full UTF-8 Unicode TrueType font support.
+ */
+
+if (!class_exists('TCPDF')) {
+    $autoload = dirname(__DIR__, 3) . '/vendor/autoload.php';
+    if (file_exists($autoload)) {
+        require_once $autoload;
+    }
+}
+
 function pdf_escape(string $text): string
 {
-    $text = iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $text) ?: $text;
-    return str_replace(['\\', '(', ')', "\r", "\n"], ['\\\\', '\\(', '\\)', '', ' '], $text);
+    // TCPDF handles UTF-8 natively; preserve Unicode characters (Devanagari, CJK, etc.)
+    return trim($text);
 }
 
 function output_certificate_pdf(array $data): void
@@ -32,104 +42,125 @@ function output_certificate_pdf(array $data): void
         $levelNameStr = "Level {$levelNum}";
     }
 
-    $levelDisplay = pdf_escape("Level {$levelNum} - {$levelNameStr}");
-    $percentage = pdf_escape((string)($data['percentage'] ?? '0') . '%');
-    $date = pdf_escape((string)($data['issue_date'] ?? date('Y-m-d')));
+    $levelDisplay = "Level {$levelNum} - {$levelNameStr}";
+    $percentage = (string)($data['percentage'] ?? '0') . '%';
+    $date = (string)($data['issue_date'] ?? date('Y-m-d'));
 
     // A4 Landscape: 842 pt x 595 pt
-    $nameLen = strlen((string)($data['candidate'] ?? 'Candidate Name'));
-    $nameX = max(60, (int)(421 - ($nameLen * 28 * 0.28)));
+    $pdf = new TCPDF('L', 'pt', 'A4', true, 'UTF-8', false);
 
-    $assLen = strlen((string)($data['assessment'] ?? 'Assessment Test'));
-    $assX = max(60, (int)(421 - ($assLen * 18 * 0.28)));
+    $pdf->SetCreator('InternBoot Platform');
+    $pdf->SetAuthor('InternBoot Assessment Engine');
+    $pdf->SetTitle('Certificate of Achievement - ' . $name);
+    $pdf->SetSubject('InternBoot Certificate of Achievement');
 
-    $levelLen = strlen("Qualification: Level {$levelNum} - {$levelNameStr}");
-    $levelX = max(60, (int)(421 - ($levelLen * 13 * 0.27)));
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+    $pdf->SetMargins(0, 0, 0);
+    $pdf->SetAutoPageBreak(false, 0);
+    $pdf->AddPage('L', 'A4');
 
-    $streamBytes = [];
-    
-    // 1. Outer Border: Dark Blue (#2563eb -> 0.145 0.388 0.922)
-    $streamBytes[] = "q";
-    $streamBytes[] = "0.145 0.388 0.922 RG 2.5 w 25 25 792 545 re S";
-    
-    // 2. Inner Border: Thin Slate Line (#94a3b8 -> 0.58 0.64 0.72)
-    $streamBytes[] = "0.58 0.64 0.72 RG 0.75 w 31 31 780 533 re S";
+    // 1. Outer Border: Dark Blue (#2563eb -> 37, 99, 235), 2.5 pt
+    $pdf->SetLineStyle(['width' => 2.5, 'color' => [37, 99, 235]]);
+    $pdf->Rect(25, 25, 792, 545);
+
+    // 2. Inner Border: Thin Slate Line (#94a3b8 -> 148, 163, 184), 0.75 pt
+    $pdf->SetLineStyle(['width' => 0.75, 'color' => [148, 163, 184]]);
+    $pdf->Rect(31, 31, 780, 533);
 
     // 3. Top Decorative Header Bar
-    $streamBytes[] = "0.145 0.388 0.922 rg 35 558 772 12 re f";
-    $streamBytes[] = "0.851 0.467 0.024 rg 35 554 772 4 re f";
+    $pdf->SetFillColor(37, 99, 235);
+    $pdf->Rect(35, 35, 772, 10, 'F');
+    $pdf->SetFillColor(217, 119, 6);
+    $pdf->Rect(35, 45, 772, 4, 'F');
 
     // 4. Header Text: Brand & Title
-    $streamBytes[] = "BT";
-    $streamBytes[] = "/F2 15 Tf 0.118 0.161 0.231 rg 1 0 0 1 345 520 Tm (INTERNBOOT PLATFORM) Tj";
-    $streamBytes[] = "/F2 26 Tf 0.145 0.388 0.922 rg 1 0 0 1 230 475 Tm (CERTIFICATE OF ACHIEVEMENT) Tj";
-    $streamBytes[] = "ET";
+    $pdf->SetFont('freesans', 'B', 14);
+    $pdf->SetTextColor(30, 41, 59);
+    $pdf->SetXY(0, 68);
+    $pdf->Cell(842, 20, 'INTERNBOOT PLATFORM', 0, 1, 'C');
+
+    $pdf->SetFont('freesans', 'B', 26);
+    $pdf->SetTextColor(37, 99, 235);
+    $pdf->SetXY(0, 96);
+    $pdf->Cell(842, 32, 'CERTIFICATE OF ACHIEVEMENT', 0, 1, 'C');
 
     // Accent line under title
-    $streamBytes[] = "0.145 0.388 0.922 RG 1.5 w 260 462 m 582 462 l S";
+    $pdf->SetLineStyle(['width' => 1.5, 'color' => [37, 99, 235]]);
+    $pdf->Line(260, 134, 582, 134);
 
     // 5. Certification Statement
-    $streamBytes[] = "BT";
-    $streamBytes[] = "/F1 12 Tf 0.392 0.455 0.545 rg 1 0 0 1 345 430 Tm (THIS IS TO CERTIFY THAT) Tj";
-    
-    // Candidate Name
-    $streamBytes[] = "/F2 28 Tf 0.06 0.09 0.16 rg 1 0 0 1 {$nameX} 378 Tm ({$name}) Tj";
-    $streamBytes[] = "ET";
+    $pdf->SetFont('freesans', '', 12);
+    $pdf->SetTextColor(100, 116, 139);
+    $pdf->SetXY(0, 155);
+    $pdf->Cell(842, 18, 'THIS IS TO CERTIFY THAT', 0, 1, 'C');
 
-    // Accent line under candidate name
-    $streamBytes[] = "0.851 0.467 0.024 RG 1.5 w 280 365 m 562 365 l S";
+    // Candidate Name (Supports Devanagari, Chinese, Arabic, Latin, etc.)
+    $pdf->SetFont('freesans', 'B', 28);
+    $pdf->SetTextColor(15, 23, 42);
+    $pdf->SetXY(0, 182);
+    $pdf->Cell(842, 38, $name, 0, 1, 'C');
+
+    // Accent gold line under candidate name
+    $pdf->SetLineStyle(['width' => 1.5, 'color' => [217, 119, 6]]);
+    $pdf->Line(280, 226, 562, 226);
 
     // 6. Assessment Details
-    $streamBytes[] = "BT";
-    $streamBytes[] = "/F1 12 Tf 0.392 0.455 0.545 rg 1 0 0 1 200 330 Tm (has successfully demonstrated proficiency and completed the assessment:) Tj";
-    $streamBytes[] = "/F2 18 Tf 0.145 0.388 0.922 rg 1 0 0 1 {$assX} 295 Tm ({$assessment}) Tj";
-    $streamBytes[] = "ET";
+    $pdf->SetFont('freesans', '', 12);
+    $pdf->SetTextColor(100, 116, 139);
+    $pdf->SetXY(0, 245);
+    $pdf->Cell(842, 18, 'has successfully demonstrated proficiency and completed the assessment:', 0, 1, 'C');
+
+    $pdf->SetFont('freesans', 'B', 18);
+    $pdf->SetTextColor(37, 99, 235);
+    $pdf->SetXY(0, 268);
+    $pdf->Cell(842, 26, $assessment, 0, 1, 'C');
 
     // 7. Qualification Badge Box
-    $streamBytes[] = "0.941 0.965 1.0 rg 0.753 0.847 0.988 RG 1 w 180 195 482 65 re B";
-    $streamBytes[] = "BT";
-    $streamBytes[] = "/F2 13 Tf 0.118 0.161 0.231 rg 1 0 0 1 {$levelX} 235 Tm (Qualification: {$levelDisplay}) Tj";
-    $streamBytes[] = "/F1 12 Tf 0.145 0.388 0.922 rg 1 0 0 1 350 212 Tm (Final Evaluation Score: {$percentage}) Tj";
-    $streamBytes[] = "ET";
+    $pdf->SetFillColor(240, 246, 255);
+    $pdf->SetLineStyle(['width' => 1.0, 'color' => [192, 216, 252]]);
+    $pdf->Rect(180, 312, 482, 68, 'DF');
+
+    $pdf->SetFont('freesans', 'B', 13);
+    $pdf->SetTextColor(30, 41, 59);
+    $pdf->SetXY(180, 323);
+    $pdf->Cell(482, 20, "Qualification: {$levelDisplay}", 0, 1, 'C');
+
+    $pdf->SetFont('freesans', '', 12);
+    $pdf->SetTextColor(37, 99, 235);
+    $pdf->SetXY(180, 347);
+    $pdf->Cell(482, 20, "Final Evaluation Score: {$percentage}", 0, 1, 'C');
 
     // 8. Footer Section
-    $streamBytes[] = "0.85 0.88 0.92 RG 1 w 50 115 m 792 115 l S";
-    $streamBytes[] = "BT";
-    $streamBytes[] = "/F1 10 Tf 0.392 0.455 0.545 rg 1 0 0 1 60 90 Tm (Certificate No: {$cert}) Tj";
-    $streamBytes[] = "/F3 10 Tf 0.145 0.388 0.922 rg 1 0 0 1 305 90 Tm (Verified by InternBoot Assessment Engine) Tj";
-    $streamBytes[] = "/F1 10 Tf 0.392 0.455 0.545 rg 1 0 0 1 660 90 Tm (Issue Date: {$date}) Tj";
-    $streamBytes[] = "ET";
-    $streamBytes[] = "Q";
+    $pdf->SetLineStyle(['width' => 1.0, 'color' => [217, 224, 235]]);
+    $pdf->Line(50, 480, 792, 480);
 
-    $stream = implode("\n", $streamBytes) . "\n";
+    $pdf->SetFont('freesans', '', 10);
+    $pdf->SetTextColor(100, 116, 139);
+    $pdf->SetXY(50, 495);
+    $pdf->Cell(220, 16, "Certificate No: {$cert}", 0, 0, 'L');
 
-    $objects = [];
-    $objects[] = '<< /Type /Catalog /Pages 2 0 R >>';
-    $objects[] = '<< /Type /Pages /Kids [3 0 R] /Count 1 >>';
-    $objects[] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /Font << /F1 5 0 R /F2 6 0 R /F3 7 0 R >> >> /Contents 4 0 R >>';
-    $objects[] = '<< /Length ' . strlen($stream) . " >>\nstream\n" . $stream . 'endstream';
-    $objects[] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
-    $objects[] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
-    $objects[] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>';
+    $pdf->SetFont('freesans', 'I', 10);
+    $pdf->SetTextColor(37, 99, 235);
+    $pdf->SetXY(270, 495);
+    $pdf->Cell(302, 16, 'Verified by InternBoot Assessment Engine', 0, 0, 'C');
 
-    $pdf = "%PDF-1.4\n";
-    $offsets = [0];
-    foreach ($objects as $i => $object) {
-        $objectNumber = $i + 1;
-        $offsets[$objectNumber] = strlen($pdf);
-        $pdf .= $objectNumber . " 0 obj\n" . $object . "\nendobj\n";
-    }
-    $xref = strlen($pdf);
-    $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
-    $pdf .= "0000000000 65535 f \n";
-    for ($i = 1; $i <= count($objects); $i++) $pdf .= sprintf("%010d 00000 n \n", $offsets[$i]);
-    $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\nstartxref\n" . $xref . "\n%%EOF";
+    $pdf->SetFont('freesans', '', 10);
+    $pdf->SetTextColor(100, 116, 139);
+    $pdf->SetXY(572, 495);
+    $pdf->Cell(220, 16, "Issue Date: {$date}", 0, 0, 'R');
+
+    $pdfContent = $pdf->Output('', 'S');
+    $filename = preg_replace('/[^A-Za-z0-9_-]/', '_', (string)($data['certificate_number'] ?? 'certificate')) . '.pdf';
 
     if (!headers_sent()) {
         header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="' . preg_replace('/[^A-Za-z0-9_-]/', '_', (string)($data['certificate_number'] ?? 'certificate')) . '.pdf"');
-        header('Content-Length: ' . strlen($pdf));
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($pdfContent));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('Pragma: public');
     }
-    echo $pdf;
+
+    echo $pdfContent;
     exit;
 }

@@ -25,31 +25,34 @@ function get_batch_threshold(mysqli $conn, ?int $customThreshold = null): int {
 }
 
 /**
- * Calculates the next available Saturday and Sunday dates for exam scheduling.
+ * Calculates the next available Saturday and Sunday dates for exam scheduling,
+ * enforcing a consistent minimum lead time (default 3 days) so candidates have
+ * adequate time to prepare and book slots regardless of which day the batch forms.
  */
-function calculate_next_weekend_dates(?string $fromDate = null): array {
+function calculate_next_weekend_dates(?string $fromDate = null, int $minLeadDays = 3): array {
     $baseTime = $fromDate ? strtotime($fromDate) : time();
-    $dayOfWeek = (int)date('w', $baseTime); // 0 = Sunday, 6 = Saturday
+    $todayMidnight = strtotime(date('Y-m-d 00:00:00', $baseTime));
 
-    if ($dayOfWeek === 6) {
-        // Today is Saturday; schedule for next weekend to provide proper prep time
-        $nextSat = date('Y-m-d', strtotime('+7 days', $baseTime));
-        $nextSun = date('Y-m-d', strtotime('+8 days', $baseTime));
-    } elseif ($dayOfWeek === 0) {
-        // Today is Sunday; schedule for next weekend
-        $nextSat = date('Y-m-d', strtotime('next Saturday', $baseTime));
-        $nextSun = date('Y-m-d', strtotime('+7 days', $baseTime));
-    } else {
-        // Monday through Friday: schedule for the upcoming weekend
-        $nextSat = date('Y-m-d', strtotime('next Saturday', $baseTime));
-        $nextSun = date('Y-m-d', strtotime('next Sunday', $baseTime));
+    // Find next occurring Saturday
+    $candidateSat = strtotime('next Saturday', $todayMidnight);
+    if ((int)date('w', $todayMidnight) === 6) {
+        $candidateSat = $todayMidnight;
     }
 
+    // Days difference between today and candidate Saturday
+    $diffDays = (int)round(($candidateSat - $todayMidnight) / 86400);
+    if ($diffDays < $minLeadDays) {
+        // Insufficient lead time (e.g., booking on Thu/Fri/Sat); schedule for the subsequent weekend
+        $candidateSat = strtotime('+7 days', $candidateSat);
+    }
+    $candidateSun = strtotime('+1 day', $candidateSat);
+
     return [
-        'saturday' => $nextSat,
-        'sunday' => $nextSun
+        'saturday' => date('Y-m-d', $candidateSat),
+        'sunday' => date('Y-m-d', $candidateSun)
     ];
 }
+
 
 /**
  * Checks eligible unbatched candidates for an assessment.

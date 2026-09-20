@@ -6,8 +6,10 @@ $rootDir = dirname(__DIR__, 2);
 require_once $rootDir . '/db.php';
 require_once __DIR__ . '/response.php';
 require_once __DIR__ . '/validator.php';
+require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/candidate_resolver.php';
 
-$appEnv = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production';
+$appEnv = get_app_env();
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
@@ -60,6 +62,35 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
 }
 
+/**
+ * Send standard security headers site-wide.
+ */
+function send_security_headers(): void
+{
+    if (headers_sent()) {
+        return;
+    }
+
+    header('X-Frame-Options: DENY');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+
+    // Strict-Transport-Security: only over HTTPS in production
+    $appEnv = function_exists('get_app_env') ? get_app_env() : 'production';
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+        || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+
+    if ($appEnv === 'production' && $isHttps) {
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    }
+
+    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+    header('Content-Security-Policy: ' . $csp);
+}
+
+send_security_headers();
+
 class AdminAccessDeniedException extends RuntimeException {}
 
 function resolve_admin_role(mysqli $conn): ?string
@@ -91,8 +122,8 @@ function resolve_admin_role(mysqli $conn): ?string
         return $user['role'];
     }
 
-    // Deactivated or not found
-    unset($_SESSION['role'], $_SESSION['user_role'], $_SESSION['role_checked_at']);
+    // Deactivated or not found: fully destroy session so user_id doesn't linger
+    destroy_session();
     return null;
 }
 

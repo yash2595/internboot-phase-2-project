@@ -48,7 +48,7 @@ function get_dashboard_stats(mysqli $conn): array
         'level_counts' => $levelCounts,
         'recent_candidates' => get_recent_candidates($conn, 8),
         'upcoming_batch_rows' => get_upcoming_batches($conn, 8),
-        'pending_attempt_count' => (int)q_value($conn, "SELECT COUNT(*) FROM attempts at LEFT JOIN results r ON r.attempt_id=at.id WHERE r.id IS NULL")
+        'pending_attempt_count' => (int)q_value($conn, "SELECT COUNT(*) FROM attempts at LEFT JOIN results r ON r.attempt_id=at.id WHERE r.id IS NULL AND at.start_time IS NOT NULL AND (at.status IN ('submitted', 'expired') OR (at.status = 'in_progress' AND at.end_time IS NOT NULL AND at.end_time <= NOW()))")
     ];
 }
 
@@ -134,6 +134,8 @@ function get_pending_attempts(mysqli $conn): array
       JOIN assessments a ON a.id=at.assessment_id
       LEFT JOIN results r ON r.attempt_id=at.id
       WHERE r.id IS NULL
+        AND at.start_time IS NOT NULL
+        AND (at.status IN ('submitted', 'expired') OR (at.status = 'in_progress' AND at.end_time IS NOT NULL AND at.end_time <= NOW()))
       ORDER BY at.created_at DESC");
 }
 
@@ -346,6 +348,13 @@ function upsert_certificate(mysqli $conn, int $candidateId, int $resultId, int $
 {
     $existing=q_one($conn,'SELECT id, certificate_number, issue_date FROM certificates WHERE result_id=?','i',[$resultId]);
     if($existing) return $existing;
+
+    require_once __DIR__ . '/../m5_batch_slots/queries.php';
+    $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 2);
+    if ($level < $minCertLevel) {
+        throw new InvalidArgumentException("Result level {$level} does not qualify for certificate issuance (minimum Level {$minCertLevel} required).");
+    }
+
     $number='IB-'.date('Y').'-'.str_pad((string)random_int(1,999999),6,'0',STR_PAD_LEFT);
     while(q_one($conn,'SELECT id FROM certificates WHERE certificate_number=?','s',[$number])){
         $number='IB-'.date('Y').'-'.str_pad((string)random_int(1,999999),6,'0',STR_PAD_LEFT);
@@ -630,13 +639,14 @@ function create_exam_slot(mysqli $conn,int $batchId,string $startTime,string $en
 
 function create_admin_log(mysqli $conn, ?int $userId, string $action, ?string $details = null): void
 {
+    $ip = function_exists('get_client_ip') ? get_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? null);
     $stmt = $conn->prepare(
-        'INSERT INTO admin_logs (user_id, action, details, created_at) VALUES (?, ?, ?, NOW())'
+        'INSERT INTO admin_logs (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())'
     );
     if (!$stmt) {
         throw new Exception("Failed to prepare admin log insert query: " . (@$conn->error ?: 'query error'));
     }
-    $stmt->bind_param('iss', $userId, $action, $details);
+    $stmt->bind_param('isss', $userId, $action, $details, $ip);
     $stmt->execute();
     $stmt->close();
 }

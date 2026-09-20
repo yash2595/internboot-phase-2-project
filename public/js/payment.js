@@ -491,3 +491,50 @@ function formatDate(dateStr) {
         return dateStr;
     }
 }
+
+function bindCandidateLogout() {
+    document.querySelectorAll("a.logout, a[href*='logout.php']").forEach((link) => {
+        if (link.dataset.logoutBound) return;
+        link.dataset.logoutBound = "1";
+        link.addEventListener("click", async (e) => {
+            e.preventDefault();
+            try {
+                let token = null;
+                try {
+                    const csrfRes = await fetch("api/auth/csrf.php", {
+                        credentials: "same-origin",
+                        headers: { Accept: "application/json" }
+                    });
+                    const csrfData = await csrfRes.json();
+                    token = csrfData.data?.token || null;
+                } catch {}
+                if (!token) {
+                    const m7Res = await fetch("/api/admin/evaluate.php?action=csrf", {
+                        credentials: "same-origin",
+                        headers: { Accept: "application/json" }
+                    });
+                    const m7Data = await m7Res.json();
+                    token = m7Data.data?.token || null;
+                }
+                await fetch("api/auth/logout.php", {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "X-CSRF-Token": token || ""
+                    }
+                });
+            } catch (err) {
+                console.error("Logout failed:", err);
+            } finally {
+                window.location.href = "/login.php";
+            }
+        });
+    });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindCandidateLogout);
+} else {
+    bindCandidateLogout();
+}
+

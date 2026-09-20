@@ -1,14 +1,38 @@
 <?php
 require_once __DIR__ . '/../src/core/bootstrap.php';
+require_once __DIR__ . '/../src/core/candidate_resolver.php';
 
-if (isset($_SESSION['user_id'])) {
+if (isset($_SESSION['user_id']) || isset($_SESSION['candidate_id'])) {
     $role = $_SESSION['role'] ?? $_SESSION['user_role'] ?? '';
+
     if (in_array($role, ['admin', 'staff'], true)) {
-        header('Location: /admin/index.html');
+        $validatedRole = resolve_admin_role($conn);
+        if ($validatedRole && in_array($validatedRole, ['admin', 'staff'], true)) {
+            header('Location: /admin/index.html');
+            exit;
+        }
+    } elseif ($role === 'candidate' || isset($_SESSION['candidate_id'])) {
+        $validatedCid = validate_candidate_session($conn);
+        if ($validatedCid !== null) {
+            header('Location: /dashboard.html');
+            exit;
+        }
     } else {
-        header('Location: /dashboard.html');
+        // Unknown or unset role: check admin/staff first, then candidate
+        $validatedRole = resolve_admin_role($conn);
+        if ($validatedRole && in_array($validatedRole, ['admin', 'staff'], true)) {
+            header('Location: /admin/index.html');
+            exit;
+        }
+        $validatedCid = validate_candidate_session($conn);
+        if ($validatedCid !== null) {
+            header('Location: /dashboard.html');
+            exit;
+        }
     }
-    exit;
+
+    // If validation failed (deactivated, row missing, or session stale), destroy session entirely
+    destroy_session();
 }
 
 $pageTitle = 'Log In — InternBoot';
@@ -19,7 +43,7 @@ $pageTitle = 'Log In — InternBoot';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= htmlspecialchars($pageTitle) ?></title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="/assets/css/auth.css">
 </head>
 <body>
@@ -73,7 +97,7 @@ $pageTitle = 'Log In — InternBoot';
   </div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="/assets/js/auth.js"></script>
 </body>
 </html>

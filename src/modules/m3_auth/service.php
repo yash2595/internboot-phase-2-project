@@ -4,29 +4,8 @@
 require_once __DIR__ . '/queries.php';
 
 /**
- * Registers a new candidate: creates the `users` row and the `candidates`
- * row together. Password is hashed here — never stored plain text.
- */
-function register_candidate(mysqli $conn, string $fullName, string $email, string $phone, string $password, string $role = 'candidate'): array {
-    if (find_user_by_email($conn, $email)) {
-        return ['success' => false, 'message' => 'An account with this email already exists.', 'code' => 409];
-    }
-    if (candidate_phone_exists($conn, $phone)) {
-        return ['success' => false, 'message' => 'This phone number is already registered.', 'code' => 409];
-    }
-
-    $passwordHash = password_hash($password, PASSWORD_BCRYPT);
-    $result = insert_user_and_candidate($conn, $email, $passwordHash, $fullName, $phone, $role);
-
-    if (!$result['success']) {
-        return $result;
-    }
-
-    return ['success' => true, 'user_id' => $result['user_id']];
-}
-
-/**
  * Verifies email + password against the stored hash, and checks the
+
  * account hasn't been deactivated (users.is_active).
  */
 function authenticate_candidate(mysqli $conn, string $email, string $password): array {

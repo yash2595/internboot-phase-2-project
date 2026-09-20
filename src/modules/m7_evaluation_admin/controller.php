@@ -207,13 +207,9 @@ function m7_handle_request(mysqli $conn): void
             send_json_response('success','Profile saved successfully.');
 
         case 'logout':
-            $_SESSION=[];
-            if (ini_get('session.use_cookies')) {
-                $params=session_get_cookie_params();
-                setcookie(session_name(),'','-42000',$params['path'],$params['domain'],$params['secure'],$params['httponly']);
-            }
-            session_destroy();
-            send_json_response('success','Logged out successfully.');
+            require_once __DIR__ . '/../m3_auth/controller.php';
+            handle_logout_request();
+
 
         default: throw new InvalidArgumentException('Unknown admin action.');
     }

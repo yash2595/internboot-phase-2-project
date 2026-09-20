@@ -37,10 +37,57 @@ try {
     require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
     require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/pdf.php';
 
-    require_admin_access_or_throw($conn);
-
     $resultId = require_positive_int($_GET['result_id'] ?? null, 'result_id');
-    $data = generate_certificate($conn, $resultId);
+    
+    // Fetch ALREADY-ISSUED certificate. No generating rows in GET.
+    $row = q_one($conn, "SELECT ce.id, ce.certificate_number, ce.issue_date,
+        r.level_assigned, r.percentage, c.id candidate_id, c.full_name, u.email, a.title assessment_title
+      FROM certificates ce
+      JOIN results r ON r.id=ce.result_id
+      JOIN attempts at ON at.id=r.attempt_id
+      JOIN candidates c ON c.id=at.candidate_id
+      JOIN users u ON u.id=c.user_id
+      JOIN assessments a ON a.id=at.assessment_id
+      WHERE ce.result_id=?", 'i', [$resultId]);
+
+    if (!$row) {
+        throw new InvalidArgumentException('Certificate not yet issued.');
+    }
+    
+    $levelRow = q_one($conn, 'SELECT level_name FROM levels WHERE level_number=?', 'i', [(int)$row['level_assigned']]);
+    $levelName = $levelRow ? $levelRow['level_name'] : ('Level ' . $row['level_assigned']);
+    
+    $data = [
+        'id' => $row['id'],
+        'certificate_number' => $row['certificate_number'],
+        'issue_date' => $row['issue_date'],
+        'candidate' => $row['full_name'],
+        'email' => $row['email'],
+        'assessment' => $row['assessment_title'],
+        'percentage' => $row['percentage'],
+        'level' => $row['level_assigned'],
+        'level_name' => $levelName,
+        'candidate_id' => $row['candidate_id']
+    ];
+
+    $role = resolve_admin_role($conn);
+    if ($role !== 'admin') {
+        $candidateId = $_SESSION['candidate_id'] ?? 0;
+        if (!$candidateId && isset($_SESSION['user_id'])) {
+            $stmt = $conn->prepare('SELECT id FROM candidates WHERE user_id = ? LIMIT 1');
+            $userId = (int)$_SESSION['user_id'];
+            $stmt->bind_param('i', $userId);
+            $stmt->execute();
+            $cRow = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if ($cRow) $candidateId = (int)$cRow['id'];
+        }
+        
+        if ($candidateId <= 0 || $candidateId !== (int)$data['candidate_id']) {
+            throw new AdminAccessDeniedException('Access denied. You can only view your own certificate.');
+        }
+    }
+
     output_certificate_pdf($data);
 } catch (AdminAccessDeniedException $e) {
     render_certificate_error_page($e->getMessage(), 403);

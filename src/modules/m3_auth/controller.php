@@ -259,5 +259,114 @@ function handle_create_staff_request(array $data, mysqli $conn): void {
         'role'    => $role,
     ], 201);
 }
-?>
 
+function handle_forgot_password_request(array $data, mysqli $conn): void {
+    $email = sanitize_string($data['email'] ?? '');
+    if (!is_valid_email($email)) {
+        send_json_response('error', 'Enter a valid email address.', null, 422);
+    }
+
+    $user = find_user_by_email($conn, $email);
+    if ($user) {
+        $userId = (int)$user['id'];
+        
+        // Check cooldown
+        $stmt = $conn->prepare('SELECT TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age FROM password_resets WHERE user_id = ? ORDER BY id DESC LIMIT 1');
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $resRow = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($resRow && (int)$resRow['age'] < 60) {
+            $remaining = 60 - (int)$resRow['age'];
+            if (!headers_sent()) {
+                header('Retry-After: ' . $remaining);
+            }
+            send_json_response('error', "Please wait {$remaining} seconds before requesting a new link.", null, 429);
+        }
+        
+        $token = bin2hex(random_bytes(32));
+        $tokenHash = hash('sha256', $token);
+        
+        $stmt = $conn->prepare('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 MINUTE))');
+        $stmt->bind_param('is', $userId, $tokenHash);
+        $stmt->execute();
+        $stmt->close();
+        
+        require_once __DIR__ . '/../../core/Mailer.php';
+        $appUrl = rtrim(env_value('APP_URL', 'http://localhost:8080'), '/');
+        $resetLink = "{$appUrl}/reset-password.php?token={$token}&email=" . urlencode($email);
+        
+        $name = $user['full_name'] ?? 'User';
+        send_password_reset_email($email, $name, $resetLink);
+    }
+
+    send_json_response('success', 'If an account exists for this email, a reset link has been sent.', null, 200);
+}
+
+function handle_reset_password_request(array $data, mysqli $conn): void {
+    $email = sanitize_string($data['email'] ?? '');
+    $token = sanitize_string($data['token'] ?? '');
+    $password = (string)($data['new_password'] ?? '');
+    $confirm = (string)($data['confirm_password'] ?? '');
+
+    if ($email === '' || $token === '' || $password === '' || $confirm === '') {
+        send_json_response('error', 'All fields are required.', null, 422);
+    }
+    
+    if (strlen($password) < 8) {
+        send_json_response('error', 'Password must be at least 8 characters.', null, 422);
+    }
+    if ($password !== $confirm) {
+        send_json_response('error', 'Passwords do not match.', null, 422);
+    }
+
+    $user = find_user_by_email($conn, $email);
+    if (!$user) {
+        send_json_response('error', 'Invalid or expired reset link.', null, 400);
+    }
+
+    $userId = (int)$user['id'];
+    
+    $stmt = $conn->prepare('SELECT id, token_hash FROM password_resets WHERE user_id = ? AND is_used = 0 AND expires_at > NOW() ORDER BY id DESC');
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $resRows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    $validResetId = null;
+    $submittedHash = hash('sha256', $token);
+
+    foreach ($resRows as $row) {
+        if (hash_equals($row['token_hash'], $submittedHash)) {
+            $validResetId = (int)$row['id'];
+            break;
+        }
+    }
+
+    if (!$validResetId) {
+        send_json_response('error', 'Invalid or expired reset link.', null, 400);
+    }
+
+    $conn->begin_transaction();
+    try {
+        $newHash = password_hash($password, PASSWORD_BCRYPT);
+        $stmt = $conn->prepare('UPDATE users SET password = ? WHERE id = ?');
+        $stmt->bind_param('si', $newHash, $userId);
+        $stmt->execute();
+        $stmt->close();
+
+        $stmt = $conn->prepare('UPDATE password_resets SET is_used = 1 WHERE user_id = ? AND is_used = 0');
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $stmt->close();
+        
+        $conn->commit();
+    } catch (Throwable $e) {
+        $conn->rollback();
+        send_json_response('error', 'Could not reset password. Please try again.', null, 500);
+    }
+
+    send_json_response('success', 'Password reset successfully. You can now log in.', null, 200);
+}
+?>

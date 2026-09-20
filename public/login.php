@@ -54,7 +54,10 @@ $pageTitle = 'Log In — InternBoot';
         <input type="email" class="ib-input" id="email" name="email" autocomplete="email" required>
       </div>
       <div class="ib-form-row">
-        <label for="password">Password</label>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <label for="password" class="mb-0">Password</label>
+            <a href="/forgot-password.php" class="text-decoration-none" style="font-size: 0.85rem; color: #1E4FD1;">Forgot password?</a>
+        </div>
         <div class="ib-password-wrap">
           <input type="password" class="ib-input" id="password" name="password" autocomplete="current-password" required>
           <button type="button" class="ib-toggle-password" data-target="password" aria-label="Show password">👁️</button>

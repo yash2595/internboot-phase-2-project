@@ -176,3 +176,75 @@ if (loginForm) {
     }
   });
 }
+
+// Forgot Password Form
+const forgotForm = document.getElementById('forgotPasswordForm');
+if (forgotForm) {
+  forgotForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('forgotBtn');
+    const alertBox = document.getElementById('forgotFormAlert');
+
+    const payload = {
+      email: document.getElementById('email').value.trim()
+    };
+
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    try {
+      const data = await postJson('/api/auth/forgot-password.php', payload);
+      if (data.status === 'success') {
+        showAlert(alertBox, 'success', data.message);
+      } else {
+        showAlert(alertBox, 'error', data.message || 'Failed to send reset link.');
+      }
+    } catch (err) {
+      showAlert(alertBox, 'error', 'Something went wrong. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send Reset Link';
+    }
+  });
+}
+
+// Reset Password Form
+const resetForm = document.getElementById('resetPasswordForm');
+if (resetForm) {
+  resetForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('resetBtn');
+    const alertBox = document.getElementById('resetFormAlert');
+
+    const payload = {
+      token: document.getElementById('resetToken').value,
+      email: document.getElementById('resetEmail').value,
+      new_password: document.getElementById('new_password').value,
+      confirm_password: document.getElementById('confirm_password').value
+    };
+
+    if (payload.new_password !== payload.confirm_password) {
+      showAlert(alertBox, 'error', 'Passwords do not match.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Resetting...';
+
+    try {
+      const data = await postJson('/api/auth/reset-password.php', payload);
+      if (data.status === 'success') {
+        showAlert(alertBox, 'success', data.message);
+        setTimeout(() => { window.location.href = '/login.php'; }, 2000);
+      } else {
+        showAlert(alertBox, 'error', data.message || 'Failed to reset password.');
+        btn.disabled = false;
+        btn.textContent = 'Reset Password';
+      }
+    } catch (err) {
+      showAlert(alertBox, 'error', 'Something went wrong. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Reset Password';
+    }
+  });
+}

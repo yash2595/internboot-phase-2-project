@@ -95,4 +95,82 @@ function send_otp_email(string $toEmail, string $toName, string $otp): bool {
         return false;
     }
 }
+
+function send_password_reset_email(string $toEmail, string $toName, string $resetLink): bool {
+    $autoloadPath = dirname(__DIR__, 2) . '/vendor/autoload.php';
+    if (!file_exists($autoloadPath)) {
+        throw new RuntimeException('Mail dependencies not installed. Run composer install.');
+    }
+    require_once $autoloadPath;
+
+    if (!class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
+        throw new RuntimeException('Mail dependencies not installed. Run composer install.');
+    }
+
+    $host = env_value('MAIL_HOST');
+    $fromAddress = env_value('MAIL_FROM_ADDRESS');
+
+    if (empty($host) || empty($fromAddress)) {
+        throw new RuntimeException('Mail is not configured. Set MAIL_* variables in .env.');
+    }
+
+    $port = (int) env_value('MAIL_PORT', '587');
+    if ($port < 1 || $port > 65535) {
+        $port = 587;
+    }
+
+    $username = env_value('MAIL_USERNAME', '');
+    $password = env_value('MAIL_PASSWORD', '');
+    $encryption = strtolower((string) env_value('MAIL_ENCRYPTION', 'tls'));
+    $fromName = env_value('MAIL_FROM_NAME', 'InternBoot');
+
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host       = $host;
+        $mail->SMTPAuth   = !empty($username);
+        if (!empty($username)) {
+            $mail->Username   = $username;
+            $mail->Password   = $password;
+        }
+
+        if ($encryption === 'ssl') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } elseif ($encryption === 'tls') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $mail->SMTPSecure = '';
+            $mail->SMTPAutoTLS = false;
+        }
+
+        $mail->Port       = $port;
+        $mail->Timeout    = 5;
+
+        $mail->setFrom($fromAddress, $fromName);
+        $mail->addAddress($toEmail, $toName);
+
+        $mail->isHTML(true);
+        $mail->Subject = 'Reset your InternBoot password';
+        $mail->Body = "
+            <div style='font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;'>
+                <h2 style='color:#2F6FEB;'>Reset your password</h2>
+                <p>Hi {$toName},</p>
+                <p>Click the link below to reset your InternBoot password. This link expires in 30 minutes.</p>
+                <p><a href='{$resetLink}' style='background:#1E4FD1;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;'>Reset Password</a></p>
+                <p>If you didn't request this, you can safely ignore this email.</p>
+            </div>
+        ";
+        $mail->AltBody = "Reset your InternBoot password: {$resetLink} (expires in 30 minutes)";
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        error_log("Mailer Error: {$mail->ErrorInfo} | Exception: {$e->getMessage()}");
+        return false;
+    } catch (Throwable $e) {
+        error_log("Mailer Unexpected Error: {$e->getMessage()}");
+        return false;
+    }
+}
 ?>

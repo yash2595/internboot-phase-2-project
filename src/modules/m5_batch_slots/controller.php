@@ -2,6 +2,7 @@
 // Path: src/modules/m5_batch_slots/controller.php
 
 require_once __DIR__ . '/service.php';
+require_once __DIR__ . '/../../core/candidate_resolver.php';
 
 /**
  * Validates and parses a positive integer (> 0).
@@ -27,7 +28,7 @@ function parse_positive_int($val): ?int {
  */
 function handle_book_slot_request(array $input, mysqli $conn): void {
     require_csrf();
-    $sessionCandidateId = !empty($_SESSION['candidate_id']) ? (int)$_SESSION['candidate_id'] : null;
+    $sessionCandidateId = validate_candidate_session($conn);
     $role = resolve_admin_role($conn);
 
     $bodyCandidateId = null;
@@ -185,7 +186,7 @@ function handle_auto_batch_request(array $input, mysqli $conn): void {
  * Matches API Contract: GET /api/slots/available.php
  */
 function handle_list_slots_request(array $input, mysqli $conn): void {
-    $sessionCandidateId = !empty($_SESSION['candidate_id']) ? (int)$_SESSION['candidate_id'] : null;
+    $sessionCandidateId = validate_candidate_session($conn);
     $role = resolve_admin_role($conn);
 
     if ($sessionCandidateId === null && $role !== 'admin') {
@@ -241,4 +242,68 @@ function handle_list_slots_request(array $input, mysqli $conn): void {
         return;
     }
 }
-?>
+
+/**
+ * Controller handler for cancelling a candidate's booked exam slot.
+ * Matches API Contract: POST /api/slots/cancel.php
+ */
+function handle_cancel_slot_booking_request(array $input, mysqli $conn): void {
+    require_csrf();
+    $sessionCandidateId = validate_candidate_session($conn);
+    $role = resolve_admin_role($conn);
+
+    $bodyCandidateId = null;
+    if (array_key_exists('candidate_id', $input) && $input['candidate_id'] !== null) {
+        $parsed = parse_positive_int($input['candidate_id']);
+        if ($parsed === null) {
+            send_json_response('error', 'A valid candidate_id is required', null, 400);
+            return;
+        }
+        $bodyCandidateId = $parsed;
+    }
+
+    // 1. IDOR Authentication & Session Cross-Check
+    if ($sessionCandidateId !== null) {
+        if ($bodyCandidateId !== null && $bodyCandidateId !== $sessionCandidateId) {
+            send_json_response('error', 'Forbidden: candidate_id does not match authenticated session', null, 403);
+            return;
+        }
+        $candidateId = $sessionCandidateId;
+    } elseif ($role === 'admin') {
+        if ($bodyCandidateId === null) {
+            send_json_response('error', 'A valid candidate_id is required', null, 400);
+            return;
+        }
+        $candidateId = $bodyCandidateId;
+    } else {
+        // No authenticated session found
+        send_json_response('error', 'Unauthorized: candidate authentication session required', null, 401);
+        return;
+    }
+
+    // 2. Strict Input Validation Checks
+    if (!array_key_exists('assessment_id', $input) || $input['assessment_id'] === null) {
+        send_json_response('error', 'A valid assessment_id is required', null, 400);
+        return;
+    }
+    $assessmentId = parse_positive_int($input['assessment_id']);
+    if ($assessmentId === null) {
+        send_json_response('error', 'A valid assessment_id is required', null, 400);
+        return;
+    }
+
+    try {
+        $cancelled = cancel_slot_booking($candidateId, $assessmentId, $conn);
+        if ($cancelled) {
+            send_json_response('success', 'Slot booking cancelled successfully', null, 200);
+        } else {
+            send_json_response('error', 'No active booking found to cancel', null, 404);
+        }
+        return;
+    } catch (Throwable $e) {
+        $msg = $e->getMessage();
+        error_log("Error cancelling slot booking: " . $msg);
+        send_json_response('error', is_dev_env() ? $msg : 'An internal server error occurred.', null, 500);
+        return;
+    }
+}

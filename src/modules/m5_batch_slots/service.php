@@ -320,4 +320,25 @@ function fetch_available_slots(int $assessmentId, ?int $candidateId, mysqli $con
 
     return get_available_slots_by_assessment($assessmentId, $conn);
 }
-?>
+
+/**
+ * Cancels a candidate's booked slot attempt and restores slot capacity.
+ */
+function cancel_slot_booking(int $candidateId, int $assessmentId, mysqli $conn): bool {
+    $conn->begin_transaction();
+    try {
+        $attempt = get_candidate_booked_attempt_for_update($candidateId, $assessmentId, $conn);
+        if (!$attempt || !in_array($attempt['status'], ['in_progress', 'scheduled'], true)) {
+            $conn->rollback();
+            return false;
+        }
+        $slotId = (int)$attempt['exam_slot_id'];
+        $conn->query("UPDATE exam_slots SET seats_remaining = seats_remaining + 1 WHERE id = $slotId");
+        $conn->query("DELETE FROM attempts WHERE id = " . (int)$attempt['id']);
+        $conn->commit();
+        return true;
+    } catch (Throwable $e) {
+        $conn->rollback();
+        throw $e;
+    }
+}

@@ -72,18 +72,9 @@ try {
 
     $role = resolve_admin_role($conn);
     if ($role !== 'admin') {
-        $candidateId = $_SESSION['candidate_id'] ?? 0;
-        if (!$candidateId && isset($_SESSION['user_id'])) {
-            $stmt = $conn->prepare('SELECT id FROM candidates WHERE user_id = ? LIMIT 1');
-            $userId = (int)$_SESSION['user_id'];
-            $stmt->bind_param('i', $userId);
-            $stmt->execute();
-            $cRow = $stmt->get_result()->fetch_assoc();
-            $stmt->close();
-            if ($cRow) $candidateId = (int)$cRow['id'];
-        }
-        
-        if ($candidateId <= 0 || $candidateId !== (int)$data['candidate_id']) {
+        require_once __DIR__ . '/../../../src/core/candidate_resolver.php';
+        $candidateId = validate_candidate_session($conn);
+        if ($candidateId === null || $candidateId !== (int)$data['candidate_id']) {
             throw new AdminAccessDeniedException('Access denied. You can only view your own certificate.');
         }
     }

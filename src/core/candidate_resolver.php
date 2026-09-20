@@ -131,36 +131,21 @@ function resolve_candidate_id(array $input = []): int {
 
 /**
  * Shared candidate authentication helper for exam endpoints.
- * Resolves candidate_id from session or from candidates table using session user_id.
- * Sends 401 response and exits if candidate authentication is missing.
+ * Enforces active candidate status via validate_candidate_session(), which validates
+ * users.is_active on a 60-second cache TTL and destroys the session upon deactivation.
+ * Sends 401 response and exits if candidate is unauthenticated, deactivated, or missing.
  */
 function require_candidate_auth(?mysqli $conn = null): int {
     if ($conn === null) {
         global $conn;
     }
 
-    if (
-        (!isset($_SESSION['candidate_id']) || !is_numeric($_SESSION['candidate_id'])) &&
-        isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id']) &&
-        isset($conn) && $conn instanceof mysqli
-    ) {
-        $userStmt = $conn->prepare("SELECT id FROM candidates WHERE user_id = ? LIMIT 1");
-        if ($userStmt) {
-            $uId = (int)$_SESSION['user_id'];
-            $userStmt->bind_param("i", $uId);
-            $userStmt->execute();
-            $userRes = $userStmt->get_result()->fetch_assoc();
-            $userStmt->close();
-            if ($userRes) {
-                $_SESSION['candidate_id'] = (int)$userRes['id'];
-            }
-        }
-    }
-
-    if (!isset($_SESSION['candidate_id']) || !is_numeric($_SESSION['candidate_id'])) {
+    $candidateId = validate_candidate_session($conn);
+    if ($candidateId === null) {
         send_json_response('error', 'Candidate authentication required', null, 401);
     }
 
-    return (int)$_SESSION['candidate_id'];
+    return $candidateId;
 }
+
 

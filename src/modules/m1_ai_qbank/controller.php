@@ -32,12 +32,14 @@ function handle_add_question_request(array $input, mysqli $conn): void {
         send_json_response('error', 'Exactly 4 options must be provided in an array', null, 400);
     }
 
-    $approvalStatus = $input['approval_status'] ?? 'pending';
-    if ($approvalStatus === 'rejected') {
-        send_json_response('error', "Cannot create a question with 'rejected' status", null, 400);
-    }
-    if (!in_array($approvalStatus, ['pending', 'approved'], true)) {
+    $role = resolve_admin_role($conn);
+    if ($role !== 'admin') {
         $approvalStatus = 'pending';
+    } else {
+        $approvalStatus = $input['approval_status'] ?? 'pending';
+        if (!in_array($approvalStatus, ['pending', 'approved', 'rejected'], true)) {
+            $approvalStatus = 'pending';
+        }
     }
 
     try {
@@ -52,14 +54,15 @@ function handle_add_question_request(array $input, mysqli $conn): void {
  * Controller handler for listing approved questions of a qbank.
  */
 function handle_list_questions_request(array $input, mysqli $conn): void {
-    require_admin_only($conn);
+    require_admin_access($conn);
     $qbankId = (int)($input['question_bank_id'] ?? ($_GET['question_bank_id'] ?? 0));
 
     if ($qbankId <= 0) {
         send_json_response('error', 'Valid question_bank_id parameter is required', null, 400);
     }
 
-    $isAdmin = true; // Guaranteed by require_admin_only
+    $role = resolve_admin_role($conn);
+    $isAdmin = $role === 'admin';
 
     try {
         $data = fetch_approved_qbank_questions($qbankId, $conn, $isAdmin);

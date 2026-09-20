@@ -283,6 +283,8 @@ function generate_questions_via_ai(
 
     foreach ($items as $idx => $item) {
         $itemNum = $idx + 1;
+        $itemValid = true;
+
         if (!is_array($item)) {
             $validationErrors[] = "Item #{$itemNum} is not a valid question object";
             continue;
@@ -291,6 +293,8 @@ function generate_questions_via_ai(
         $questionText = isset($item['question_text']) ? trim((string)$item['question_text']) : '';
         if ($questionText === '') {
             $validationErrors[] = "Item #{$itemNum} is missing or has empty 'question_text'";
+            $itemValid = false;
+            continue;
         }
 
         $difficulty = isset($item['difficulty']) ? strtolower(trim((string)$item['difficulty'])) : 'medium';
@@ -298,6 +302,8 @@ function generate_questions_via_ai(
             $difficulty = 'medium';
         } elseif (!in_array($difficulty, $allowedDifficulties, true)) {
             $validationErrors[] = "Item #{$itemNum} has invalid difficulty '{$difficulty}' (must be easy, medium, or hard)";
+            $itemValid = false;
+            continue;
         }
 
         $options = $item['options'] ?? null;
@@ -313,12 +319,15 @@ function generate_questions_via_ai(
             $optNum = $optIdx + 1;
             if (!is_array($opt)) {
                 $validationErrors[] = "Item #{$itemNum} option #{$optNum} is invalid";
+                $itemValid = false;
                 continue;
             }
 
             $optText = isset($opt['option_text']) ? trim((string)$opt['option_text']) : '';
             if ($optText === '') {
                 $validationErrors[] = "Item #{$itemNum} option #{$optNum} has empty text";
+                $itemValid = false;
+                continue;
             }
 
             $isCorrect = false;
@@ -336,8 +345,13 @@ function generate_questions_via_ai(
             ];
         }
 
+        if (!$itemValid) {
+            continue;
+        }
+
         if ($correctCount !== 1) {
             $validationErrors[] = "Item #{$itemNum} has {$correctCount} correct options (exactly 1 is required)";
+            continue;
         }
 
         $validatedQuestions[] = [

@@ -7,6 +7,8 @@ require_once __DIR__ . '/service.php';
  * Controller handler for adding a manual question.
  */
 function handle_add_question_request(array $input, mysqli $conn): void {
+    require_admin_access($conn);
+    require_csrf();
     $qbankId = (int)($input['question_bank_id'] ?? 0);
     $questionText = trim($input['question_text'] ?? '');
     $difficulty = strtolower(trim($input['difficulty'] ?? 'medium'));
@@ -50,6 +52,7 @@ function handle_add_question_request(array $input, mysqli $conn): void {
  * Controller handler for listing approved questions of a qbank.
  */
 function handle_list_questions_request(array $input, mysqli $conn): void {
+    require_admin_access($conn);
     $qbankId = (int)($input['question_bank_id'] ?? ($_GET['question_bank_id'] ?? 0));
 
     if ($qbankId <= 0) {
@@ -71,6 +74,8 @@ function handle_list_questions_request(array $input, mysqli $conn): void {
  * Controller handler for AI-backed question generation.
  */
 function handle_generate_questions_request(array $input, mysqli $conn): void {
+    require_admin_access($conn);
+    require_csrf();
     $qbankId = (int)($input['question_bank_id'] ?? 0);
     $topic = trim((string)($input['topic'] ?? ''));
     $count = (int)($input['count'] ?? 5);

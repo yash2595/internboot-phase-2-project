@@ -64,19 +64,36 @@ class AdminAccessDeniedException extends RuntimeException {}
 
 function resolve_admin_role(mysqli $conn): ?string
 {
-    $role = $_SESSION['role'] ?? $_SESSION['user_role'] ?? null;
     $userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
-
-    if ($userId > 0 && !$role) {
-        $stmt = $conn->prepare('SELECT role,is_active FROM users WHERE id=? LIMIT 1');
-        $stmt->bind_param('i', $userId);
-        $stmt->execute();
-        $user = $stmt->get_result()->fetch_assoc() ?: null;
-        $stmt->close();
-        if ($user && (int)$user['is_active'] === 1) $role = $user['role'];
+    if ($userId <= 0) {
+        return null;
     }
 
-    return $role;
+    $now = time();
+    $lastCheck = $_SESSION['role_checked_at'] ?? 0;
+
+    // Cache hit and within 60s TTL
+    if (($now - $lastCheck) < 60 && !empty($_SESSION['role'])) {
+        return $_SESSION['role'];
+    }
+
+    // Cache miss or TTL expired: check DB
+    $stmt = $conn->prepare('SELECT role, is_active FROM users WHERE id=? LIMIT 1');
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc() ?: null;
+    $stmt->close();
+
+    if ($user && (int)$user['is_active'] === 1) {
+        $_SESSION['role'] = $user['role'];
+        $_SESSION['user_role'] = $user['role'];
+        $_SESSION['role_checked_at'] = $now;
+        return $user['role'];
+    }
+
+    // Deactivated or not found
+    unset($_SESSION['role'], $_SESSION['user_role'], $_SESSION['role_checked_at']);
+    return null;
 }
 
 function is_admin_authenticated(mysqli $conn): bool

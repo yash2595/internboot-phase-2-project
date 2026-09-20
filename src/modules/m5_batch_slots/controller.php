@@ -27,7 +27,7 @@ function parse_positive_int($val): ?int {
  */
 function handle_book_slot_request(array $input, mysqli $conn): void {
     $sessionCandidateId = !empty($_SESSION['candidate_id']) ? (int)$_SESSION['candidate_id'] : null;
-    $role = $_SESSION['role'] ?? $_SESSION['user_role'] ?? null;
+    $role = resolve_admin_role($conn);
 
     $bodyCandidateId = null;
     if (array_key_exists('candidate_id', $input) && $input['candidate_id'] !== null) {
@@ -112,7 +112,7 @@ function handle_book_slot_request(array $input, mysqli $conn): void {
  */
 function handle_auto_batch_request(array $input, mysqli $conn): void {
     // RBAC Security Check: Strictly Admin Access Only
-    $role = $_SESSION['role'] ?? $_SESSION['user_role'] ?? null;
+    $role = resolve_admin_role($conn);
     if ($role !== 'admin') {
         send_json_response('error', 'Unauthorized: admin access required', null, 403);
         return;
@@ -187,7 +187,7 @@ function handle_auto_batch_request(array $input, mysqli $conn): void {
  */
 function handle_list_slots_request(array $input, mysqli $conn): void {
     $sessionCandidateId = !empty($_SESSION['candidate_id']) ? (int)$_SESSION['candidate_id'] : null;
-    $role = $_SESSION['role'] ?? $_SESSION['user_role'] ?? null;
+    $role = resolve_admin_role($conn);
 
     if ($sessionCandidateId === null && $role !== 'admin') {
         send_json_response('error', 'Unauthorized: candidate authentication required', null, 401);

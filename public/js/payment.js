@@ -202,7 +202,7 @@ function applyPaymentUnpaidState(enrollment) {
     const payButton = document.getElementById("btn-pay");
     if (payButton) {
         payButton.disabled = false;
-        payButton.innerHTML = `Pay Registration Fee (${formatCurrency(currentFeeAmount)})`;
+        payButton.innerHTML = `(Demo Payment) Pay Registration Fee (${formatCurrency(currentFeeAmount)})`;
     }
 }
 

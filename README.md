@@ -25,6 +25,12 @@ InternBoot manages the candidate assessment lifecycle from user registration and
 
 ---
 
+## 3. ⚠️ IMPORTANT: Mock Payment Flow
+
+> **TODO / PRE-PRODUCTION BLOCKER:** The current payment gateway integration (`public/api/payment/payment.php`) is a **mock flow for development and testing only**. It blindly accepts payments in demo mode. Before real production launch, this MUST be replaced with a real gateway (e.g., PayU, Easebuzz, Razorpay) featuring a secure, server-to-server webhook signature verification.
+
+---
+
 ## 3. Local Environment Setup
 
 Follow these steps to set up and run the platform locally:

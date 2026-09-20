@@ -32,10 +32,15 @@ if (!$action) {
     $action = $_SERVER['REQUEST_METHOD'] === 'GET' ? 'details' : 'create';
 }
 
-if (($action === 'create' || $action === 'verify') && demo_mode()) {
-    $appEnv = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production';
-    if ($appEnv === 'production') {
-        send_json_response('error', 'Demo payments are disabled in production environment.', null, 403);
+// TODO: This is a mock payment flow for development/testing only.
+// It MUST be replaced with a real gateway (e.g., PayU, Easebuzz, Razorpay)
+// with server-to-server signature verification before real production launch.
+if ($action === 'create' || $action === 'verify') {
+    $demoMode = ($_ENV['M4_DEMO_MODE'] ?? getenv('M4_DEMO_MODE') ?? '0') === '1';
+    $demoSecret = trim($_ENV['M4_DEMO_SECRET'] ?? getenv('M4_DEMO_SECRET') ?? '');
+    
+    if (!$demoMode || empty($demoSecret)) {
+        send_json_response('error', 'Payment gateway not configured. Mock payment is disabled.', null, 403);
     }
 }
 
@@ -117,9 +122,11 @@ try {
             ]);
         }
 
-        $amount = isset($input['amount']) && is_numeric($input['amount']) && (float)$input['amount'] > 0
-            ? (float)$input['amount']
-            : get_fee($conn);
+        $expectedFee = get_fee($conn);
+        if (isset($input['amount']) && (float)$input['amount'] !== $expectedFee) {
+            send_json_response('error', 'Invalid payment amount supplied.', null, 400);
+        }
+        $amount = $expectedFee;
 
         $ref = 'IB-PAY-' . date('YmdHis') . '-' . strtoupper(bin2hex(random_bytes(3)));
         $s = $conn->prepare("INSERT INTO payments (candidate_id, assessment_id, amount, status, reference_number) VALUES (?, ?, ?, 'pending', ?)");

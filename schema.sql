@@ -1,4 +1,9 @@
 -- ============================================================================
+-- WARNING: THIS FILE IS DESTRUCTIVE
+-- Do NOT run this file directly on the production database.
+-- It contains DROP TABLE statements that will destroy all data.
+-- To apply schema changes safely, use `php scripts/apply-schema.php` instead.
+-- ============================================================================
 -- InternBoot Platform - Complete Single-File Production MySQL Database Schema
 -- Database Engine: MySQL 8.0+ / MariaDB 10.3+ (InnoDB Engine)
 -- File: schema.sql

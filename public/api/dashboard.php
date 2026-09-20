@@ -149,7 +149,19 @@ try {
         $stmt->close();
     }
 
-    /* 3. Combined Result + Certificate query */
+    /* 3. Placement record (LEFT JOIN — only Level 1-2 candidates have a row) */
+    $stmt = $conn->prepare(
+        'SELECT placement_status, company_name, notes, updated_at
+         FROM placement_records
+         WHERE candidate_id = ?
+         ORDER BY updated_at DESC LIMIT 1'
+    );
+    $stmt->bind_param('i', $candidateId);
+    $stmt->execute();
+    $placementRow = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    /* 4. Combined Result + Certificate query */
     $stmt = $conn->prepare(
         'SELECT 
             r.id AS result_id, r.total_score, r.percentage, r.level_assigned, r.attempt_id,
@@ -323,6 +335,33 @@ try {
         ];
     }
 
+    $placementStatusLabels = [
+        'eligible'     => 'Eligible',
+        'shortlisted'  => 'Shortlisted',
+        'interviewing' => 'Interviewing',
+        'placed'       => 'Placed',
+        'not_placed'   => 'Not Placed',
+    ];
+    $placement = [
+        'applicable' => false,
+        'status'     => null,
+        'statusLabel'=> null,
+        'company'    => null,
+        'notes'      => null,
+        'updated_at' => null,
+    ];
+    if ($placementRow) {
+        $rawStatus = $placementRow['placement_status'] ?? '';
+        $placement = [
+            'applicable'  => true,
+            'status'      => $rawStatus,
+            'statusLabel' => $placementStatusLabels[$rawStatus] ?? ucfirst(str_replace('_', ' ', $rawStatus)),
+            'company'     => $placementRow['company_name'] ?: null,
+            'notes'       => $placementRow['notes'] ?: null,
+            'updated_at'  => !empty($placementRow['updated_at']) ? date('d M Y', strtotime($placementRow['updated_at'])) : null,
+        ];
+    }
+
     $profileStatus = !empty($candidate['profile_details']) ? 'Verified' : 'Basic Profile';
 
     send_json_response('success', 'Dashboard data retrieved successfully', [
@@ -343,7 +382,8 @@ try {
         'batch' => $batch,
         'exam' => $exam,
         'result' => $result,
-        'certificate' => $certificate
+        'certificate' => $certificate,
+        'placement' => $placement
     ]);
 } catch (Throwable $e) {
     error_log('InternBoot dashboard error: ' . $e->getMessage());

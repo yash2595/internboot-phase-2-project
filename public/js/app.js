@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         fillSection("exam", source.exam);
         fillSection("result", source.result);
         fillSection("certificate", source.certificate);
+        fillSection("placement", source.placement);
 
         updateAvatar(source.candidate?.name);
         updateStatusCards(source);
@@ -109,7 +110,10 @@ function updateLearningJourney(source) {
         batch: source.batch?.status,
         exam: source.exam?.status,
         result: source.result?.status,
-        certificate: source.certificate?.status
+        certificate: source.certificate?.status,
+        placement: source.placement?.applicable
+            ? (source.placement.statusLabel || source.placement.status || 'Eligible')
+            : 'Not Applicable'
     };
 
     Object.entries(statuses).forEach(([key, status]) => {
@@ -135,13 +139,15 @@ function journeyLabel(key, status) {
     if (key === "exam") return status === "Completed" ? "Completed" : status;
     if (key === "result") return status === "Completed" ? "Completed" : status;
     if (key === "certificate") return status === "Issued" ? "Completed" : status;
+    if (key === "placement") return status;
 
     return status;
 }
 
 function journeyClass(status) {
-    if (["Paid", "Enrolled", "Assigned", "Completed", "Issued"].includes(status)) return "green";
-    if (["Upcoming", "Scheduled", "In Progress"].includes(status)) return "blue";
+    if (["Paid", "Enrolled", "Assigned", "Completed", "Issued", "Placed"].includes(status)) return "green";
+    if (["Upcoming", "Scheduled", "In Progress", "Eligible", "Shortlisted", "Interviewing"].includes(status)) return "blue";
+    if (["Not Applicable"].includes(status)) return "gray";
     return "gray";
 }
 
@@ -152,7 +158,8 @@ function isCompleted(key, status) {
         (key === "batch" && status === "Assigned") ||
         (key === "exam" && status === "Completed") ||
         (key === "result" && status === "Completed") ||
-        (key === "certificate" && status === "Issued")
+        (key === "certificate" && status === "Issued") ||
+        (key === "placement" && status === "Placed")
     );
 }
 

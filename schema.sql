@@ -457,16 +457,16 @@ INSERT INTO `settings` (`setting_key`, `setting_value`, `description`) VALUES
 ('negative_marking_enabled', '0', 'Boolean flag (1/0) indicating whether negative marking is active'),
 ('negative_marking_value', '0.25', 'Marks deducted per wrong (attempted) answer when negative_marking_enabled is 1'),
 ('retake_allowed', '0', 'Boolean flag (1/0) indicating whether candidates can re-attempt exams'),
-('min_certificate_level', '2', 'Minimum level required for certificate issuance (default Level 2 / Elementary, 40%)'),
+('min_certificate_level', '4', 'Minimum level required for certificate issuance (default Level 4 / Basic Knowledge, 40%)'),
 ('min_certificate_percentage', '40.00', 'Minimum score percentage required for certificate issuance');
 
 -- Sample Initial Level Mapping Configurations (Levels 1 to 5)
 INSERT INTO `levels` (`level_number`, `level_name`, `min_percentage`, `max_percentage`, `description`) VALUES
-(1, 'Beginner', 0.00, 39.99, 'Foundation level skills requiring additional training'),
-(2, 'Elementary', 40.00, 54.99, 'Basic understanding of core concepts'),
-(3, 'Intermediate', 55.00, 69.99, 'Competent skill level ready for standard entry-level roles'),
-(4, 'Advanced', 70.00, 84.99, 'Strong proficiency across topics'),
-(5, 'Expert', 85.00, 100.00, 'Top tier mastery eligible for premium placement tracks');
+(1, 'Top / Excellent', 85.00, 100.00, 'Top tier mastery eligible for premium placement tracks'),
+(2, 'Intermediate', 70.00, 84.99, 'Strong proficiency across topics'),
+(3, 'Basic / Employable', 55.00, 69.99, 'Competent skill level ready for standard entry-level roles'),
+(4, 'Basic Knowledge', 40.00, 54.99, 'Basic understanding of core concepts'),
+(5, 'Needs Training', 0.00, 39.99, 'Foundation level skills requiring additional training');
 
 -- ----------------------------------------------------------------------------
 -- Table 23: login_attempts

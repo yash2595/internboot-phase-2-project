@@ -100,9 +100,9 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
 
         $certificate=null;
         if($generateCertificate){
-            $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 2);
+            $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 4);
             $minCertPct = (float)(get_setting_value('min_certificate_percentage', $conn) ?? 40.0);
-            if ((int)$level['level_number'] >= $minCertLevel && $percentage >= $minCertPct) {
+            if ((int)$level['level_number'] <= $minCertLevel && $percentage >= $minCertPct) {
                 $certificate=upsert_certificate($conn,(int)$attempt['candidate_id'],$resultId,(int)$level['level_number']);
             }
         }
@@ -143,13 +143,13 @@ function generate_certificate(mysqli $conn,int $resultId): array
     if(!$row) throw new InvalidArgumentException('Result not found.');
 
     require_once __DIR__ . '/../m5_batch_slots/queries.php';
-    $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 2);
+    $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 4);
     $minCertPct = (float)(get_setting_value('min_certificate_percentage', $conn) ?? 40.0);
 
-    if ((int)$row['level_assigned'] < $minCertLevel || (float)$row['percentage'] < $minCertPct) {
+    if ((int)$row['level_assigned'] > $minCertLevel || (float)$row['percentage'] < $minCertPct) {
         throw new InvalidArgumentException(
             sprintf(
-                'Candidate result does not qualify for certificate issuance. Requires Level %d+ (minimum %.1f%% score), but achieved Level %d (%.2f%%).',
+                'Candidate result does not qualify for certificate issuance. Requires Level %d or better (minimum %.1f%% score), but achieved Level %d (%.2f%%).',
                 $minCertLevel,
                 $minCertPct,
                 (int)$row['level_assigned'],
@@ -179,13 +179,13 @@ function generate_certificate(mysqli $conn,int $resultId): array
 function generate_next_certificate(mysqli $conn): array
 {
     require_once __DIR__ . '/../m5_batch_slots/queries.php';
-    $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 2);
+    $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 4);
     $minCertPct = (float)(get_setting_value('min_certificate_percentage', $conn) ?? 40.0);
 
     $row=q_one($conn,"SELECT r.id
         FROM results r
         LEFT JOIN certificates c ON c.result_id=r.id
-        WHERE c.id IS NULL AND r.level_assigned >= ? AND r.percentage >= ?
+        WHERE c.id IS NULL AND r.level_assigned <= ? AND r.percentage >= ?
         ORDER BY r.created_at ASC
         LIMIT 1", 'id', [$minCertLevel, $minCertPct]);
 

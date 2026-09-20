@@ -20,15 +20,15 @@ const IB_CONFIG = {
   /* --- result --- */
   resultTiming: "within a few minutes of submission",
   retake:       "No, you can only take the test once per drive.",
-  placementLevels: "4 and 5",
+  placementLevels: "1 and 2",
 
   /* --- levels: name, score range, what it says about the candidate --- */
   levels: [
-    { level: 1, name: "Foundation", range: "0 – 39%",   desc: "Basics are in place. Recommended to revise fundamentals before the next drive." },
-    { level: 2, name: "Developing", range: "40 – 54%",  desc: "Working knowledge of core concepts, with room to build speed and depth." },
-    { level: 3, name: "Proficient", range: "55 – 69%",  desc: "Solid grasp of fundamentals. Ready for entry-level internship roles." },
-    { level: 4, name: "Advanced",   range: "70 – 84%",  desc: "Strong across sections. Shared with the placement team on priority." },
-    { level: 5, name: "Expert",     range: "85 – 100%", desc: "Top band. Shortlisted first for interviews and pre-placement offers." }
+    { level: 1, name: "Top / Excellent",     range: "85 – 100%", desc: "Top tier mastery eligible for premium placement tracks. Shortlisted first for interviews." },
+    { level: 2, name: "Intermediate",        range: "70 – 84%",  desc: "Strong proficiency across topics. Shared with the placement team on priority." },
+    { level: 3, name: "Basic / Employable",  range: "55 – 69%",  desc: "Solid grasp of fundamentals. Ready for entry-level internship roles." },
+    { level: 4, name: "Basic Knowledge",     range: "40 – 54%",  desc: "Working knowledge of core concepts, with room to build speed and depth." },
+    { level: 5, name: "Needs Training",      range: "0 – 39%",   desc: "Foundation level skills requiring additional training." }
   ]
 };
 
@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (ladder) {
     ladder.innerHTML = IB_CONFIG.levels.map(l => `
       <div class="rung" data-level="${l.level}" title="Score ${l.range}">
-        <span class="rung-no">${l.level === 5 ? '<i class="bi bi-trophy-fill"></i>' : l.level}</span>
+        <span class="rung-no">${l.level === 1 ? '<i class="bi bi-trophy-fill"></i>' : l.level}</span>
         <span class="rung-name">
           ${l.name}
     
@@ -59,12 +59,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (grid) {
     grid.innerHTML = IB_CONFIG.levels.map(l => `
       <div class="col-md-6 col-lg-4">
-        <div class="level-card ${l.level === 5 ? "is-top" : ""}" data-level-card="${l.level}">
+        <div class="level-card ${l.level === 1 ? "is-top" : ""}" data-level-card="${l.level}">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="level-badge">
               <i class="bi bi-layers-fill"></i> Level ${l.level}
             </span>
-            ${l.level >= 4 ? `
+            ${l.level <= 2 ? `
               <span class="level-priority-tag">
                 <i class="bi bi-lightning-charge-fill"></i>
               </span>` : ''}
@@ -88,21 +88,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!scoreDisplay) return;
     scoreDisplay.textContent = score + "%";
 
-    let matched = IB_CONFIG.levels[0];
+    let matched = IB_CONFIG.levels[4];
     if (score >= 85) {
-      matched = IB_CONFIG.levels[4];
+      matched = IB_CONFIG.levels[0];
     } else if (score >= 70) {
-      matched = IB_CONFIG.levels[3];
+      matched = IB_CONFIG.levels[1];
     } else if (score >= 55) {
       matched = IB_CONFIG.levels[2];
     } else if (score >= 40) {
-      matched = IB_CONFIG.levels[1];
+      matched = IB_CONFIG.levels[3];
     } else {
-      matched = IB_CONFIG.levels[0];
+      matched = IB_CONFIG.levels[4];
     }
 
     if (levelBadgeDisplay) {
-      const isPriority = matched.level >= 4;
+      const isPriority = matched.level <= 2;
       levelBadgeDisplay.innerHTML = `
         <span class="badge ${isPriority ? 'bg-warning text-dark' : 'bg-primary'} px-3 py-2 rounded-pill">
           Level ${matched.level}: ${matched.name} ${isPriority ? '★ Priority' : ''}

@@ -201,7 +201,7 @@ function get_certificates(mysqli $conn): array
 
 function sync_placement_records(mysqli $conn): void
 {
-    $results=q_all($conn,"SELECT r.id result_id,at.candidate_id FROM results r JOIN attempts at ON at.id=r.attempt_id LEFT JOIN placement_records pr ON pr.result_id=r.id WHERE pr.id IS NULL AND r.level_assigned >= 4");
+    $results=q_all($conn,"SELECT r.id result_id,at.candidate_id FROM results r JOIN attempts at ON at.id=r.attempt_id LEFT JOIN placement_records pr ON pr.result_id=r.id WHERE pr.id IS NULL AND r.level_assigned <= 2");
     if(!$results) return;
     $stmt=$conn->prepare("INSERT INTO placement_records(candidate_id,result_id,placement_status) VALUES(?,?,'eligible')");
     foreach($results as $row){
@@ -376,8 +376,8 @@ function upsert_certificate(mysqli $conn, int $candidateId, int $resultId, int $
     if($existing) return $existing;
 
     require_once __DIR__ . '/../m5_batch_slots/queries.php';
-    $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 2);
-    if ($level < $minCertLevel) {
+    $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 4);
+    if ($level > $minCertLevel) {
         throw new InvalidArgumentException("Result level {$level} does not qualify for certificate issuance (minimum Level {$minCertLevel} required).");
     }
 
@@ -420,7 +420,7 @@ function update_setting(mysqli $conn, string $key, string $value): void
 function ensure_placement_record(mysqli $conn, int $candidateId, int $resultId): void
 {
     $res=q_one($conn,'SELECT level_assigned FROM results WHERE id=?','i',[$resultId]);
-    if(!$res || (int)$res['level_assigned'] < 4) return;
+    if(!$res || (int)$res['level_assigned'] > 2) return;
     $existing=q_one($conn,'SELECT id FROM placement_records WHERE result_id=?','i',[$resultId]);
     if($existing) return;
     $stmt=$conn->prepare("INSERT INTO placement_records(candidate_id,result_id,placement_status) VALUES(?,?,'eligible')");

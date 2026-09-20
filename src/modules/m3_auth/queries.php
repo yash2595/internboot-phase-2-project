@@ -218,4 +218,34 @@ function mark_pending_registration_used(mysqli $conn, int $id): void {
     $stmt->close();
 }
 
+function check_login_rate_limit(mysqli $conn, string $email, string $ipAddress): bool {
+    $stmt = $conn->prepare(
+        'SELECT COUNT(*) AS failed_count 
+         FROM login_attempts 
+         WHERE email = ? AND ip_address = ? 
+           AND created_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)'
+    );
+    $stmt->bind_param('ss', $email, $ipAddress);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    
+    return ((int)$row['failed_count'] >= 5);
+}
+
+function record_failed_login(mysqli $conn, string $email, string $ipAddress): void {
+    $stmt = $conn->prepare('INSERT INTO login_attempts (email, ip_address) VALUES (?, ?)');
+    $stmt->bind_param('ss', $email, $ipAddress);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function clear_failed_logins(mysqli $conn, string $email, string $ipAddress): void {
+    $stmt = $conn->prepare('DELETE FROM login_attempts WHERE email = ? AND ip_address = ?');
+    $stmt->bind_param('ss', $email, $ipAddress);
+    $stmt->execute();
+    $stmt->close();
+}
+
 ?>

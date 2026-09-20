@@ -111,6 +111,7 @@ function handle_login_request(array $data, mysqli $conn): void {
     $email        = sanitize_string($data['email'] ?? '');
     $password     = (string) ($data['password'] ?? '');
     $expectedRole = sanitize_string($data['role'] ?? '');
+    $ipAddress    = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
     if ($email === '' || $password === '') {
         send_json_response('error', 'Email and password are required.', null, 422);
@@ -119,9 +120,14 @@ function handle_login_request(array $data, mysqli $conn): void {
         send_json_response('error', 'Enter a valid email address.', null, 422);
     }
 
+    if (check_login_rate_limit($conn, $email, $ipAddress)) {
+        send_json_response('error', 'Too many failed login attempts. Please try again in 15 minutes.', null, 429);
+    }
+
     $result = authenticate_candidate($conn, $email, $password);
 
     if (!$result['success']) {
+        record_failed_login($conn, $email, $ipAddress);
         send_json_response('error', $result['message'], null, 401);
     }
 
@@ -135,9 +141,12 @@ function handle_login_request(array $data, mysqli $conn): void {
     }
 
     if (!$roleMatch) {
+        record_failed_login($conn, $email, $ipAddress);
         $label = $expectedRole === 'admin' ? 'an Admin' : 'a Student';
         send_json_response('error', "This account is not registered as {$label}.", null, 403);
     }
+
+    clear_failed_logins($conn, $email, $ipAddress);
 
     session_regenerate_id(true);
 

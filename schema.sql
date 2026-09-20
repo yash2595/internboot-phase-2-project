@@ -459,3 +459,17 @@ INSERT INTO `levels` (`level_number`, `level_name`, `min_percentage`, `max_perce
 (3, 'Intermediate', 55.00, 69.99, 'Competent skill level ready for standard entry-level roles'),
 (4, 'Advanced', 70.00, 84.99, 'Strong proficiency across topics'),
 (5, 'Expert', 85.00, 100.00, 'Top tier mastery eligible for premium placement tracks');
+
+-- ----------------------------------------------------------------------------
+-- Table 23: login_attempts
+-- Purpose: Tracking failed logins for rate limiting
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `login_attempts`;
+CREATE TABLE `login_attempts` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `email` VARCHAR(255) NOT NULL,
+  `ip_address` VARCHAR(45) NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_login_attempts_email_ip` (`email`, `ip_address`),
+  INDEX `idx_login_attempts_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

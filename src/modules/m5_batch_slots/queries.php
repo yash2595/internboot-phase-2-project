@@ -177,9 +177,11 @@ function get_candidate_enrollment(int $candidateId, int $assessmentId, mysqli $c
  * Checks if a candidate already has an active or booked exam attempt for an assessment.
  */
 function get_candidate_booked_attempt(int $candidateId, int $assessmentId, mysqli $conn): ?array {
+    $retakeAllowed = get_setting_value('retake_allowed', $conn) === '1';
+    $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted'";
     $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status 
             FROM attempts 
-            WHERE candidate_id = ? AND assessment_id = ? AND status IN ('in_progress','submitted') 
+            WHERE candidate_id = ? AND assessment_id = ? AND status IN ($statusFilter) 
             LIMIT 1";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
@@ -222,9 +224,11 @@ function get_candidate_enrollment_for_update(int $candidateId, int $assessmentId
  * Prevents parallel race condition across different slots.
  */
 function get_candidate_booked_attempt_for_update(int $candidateId, int $assessmentId, mysqli $conn): ?array {
+    $retakeAllowed = get_setting_value('retake_allowed', $conn) === '1';
+    $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted'";
     $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status 
             FROM attempts 
-            WHERE candidate_id = ? AND assessment_id = ? AND status IN ('in_progress','submitted') 
+            WHERE candidate_id = ? AND assessment_id = ? AND status IN ($statusFilter) 
             LIMIT 1 
             FOR UPDATE";
     $stmt = $conn->prepare($sql);

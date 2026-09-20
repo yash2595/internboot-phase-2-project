@@ -347,7 +347,7 @@ function generate_questions_via_ai(
         ];
     }
 
-    if (!empty($validationErrors)) {
+    if (empty($validatedQuestions)) {
         $errCount = count($validationErrors);
         $reasonStr = implode("; ", array_slice($validationErrors, 0, 5));
         throw new RuntimeException("AI generation validation failed ({$errCount} error(s)): {$reasonStr}");
@@ -358,26 +358,43 @@ function generate_questions_via_ai(
     $questionIds = [];
 
     try {
+        $existingTexts = [];
+        $stmt = $conn->prepare("SELECT question_text FROM questions WHERE question_bank_id = ?");
+        $stmt->bind_param('i', $qbankId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) {
+            $existingTexts[strtolower(trim($row['question_text']))] = true;
+        }
+        $stmt->close();
+
         foreach ($validatedQuestions as $q) {
-            $qId = insert_question($qbankId, $q['question_text'], $q['difficulty'], $conn, 'pending');
-            if ($qId > 0) {
-                foreach ($q['options'] as $opt) {
-                    insert_question_option($qId, $opt['option_text'], $opt['is_correct'], $conn);
-                }
-                $questionIds[] = $qId;
+            $normalized = strtolower(trim($q['question_text']));
+            if (isset($existingTexts[$normalized])) {
+                $validationErrors[] = "Duplicate question skipped: \"" . substr($q['question_text'], 0, 60) . "\"";
+                continue;
             }
+            $existingTexts[$normalized] = true;
+
+            $qId = insert_question($qbankId, $q['question_text'], $q['difficulty'], $conn, 'pending');
+            foreach ($q['options'] as $opt) {
+                insert_question_option($qId, $opt['option_text'], $opt['is_correct'], $conn);
+            }
+            $questionIds[] = $qId;
+        }
+
+        if (empty($questionIds)) {
+            throw new Exception("No new questions were inserted — all items were either invalid or duplicates.");
         }
 
         $conn->commit();
 
-        if (empty($questionIds)) {
-            throw new Exception("No new questions generated; all were duplicates.");
-        }
-
         return [
             'requested' => $count,
             'inserted' => count($questionIds),
-            'question_ids' => $questionIds
+            'question_ids' => $questionIds,
+            'skipped' => count($validationErrors),
+            'skipped_reasons' => array_slice($validationErrors, 0, 10)
         ];
     } catch (Throwable $e) {
         $conn->rollback();

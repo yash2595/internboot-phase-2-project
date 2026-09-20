@@ -11,7 +11,7 @@ function insert_question(int $qbankId, string $questionText, string $difficulty,
         throw new InvalidArgumentException("Invalid approval status");
     }
 
-    $sql = "INSERT IGNORE INTO questions (question_bank_id, question_text, type, difficulty, approval_status, created_at) 
+    $sql = "INSERT INTO questions (question_bank_id, question_text, type, difficulty, approval_status, created_at) 
             VALUES (?, ?, 'MCQ', ?, ?, NOW())";
     $stmt = $conn->prepare($sql);
     

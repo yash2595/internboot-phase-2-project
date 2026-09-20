@@ -68,7 +68,10 @@ function m7_handle_request(mysqli $conn): void
     if($method!=='POST') send_json_response('error','Method not allowed.',null,405);
     require_csrf();
 
-    if (in_array($action, ['setting', 'batch', 'slot', 'allocate'], true)) {
+    if (in_array($action, [
+        'setting', 'batch', 'slot', 'allocate',
+        'evaluate', 'certificate', 'certificate-next', 'placement', 'question-status'
+    ], true)) {
         require_admin_only($conn);
     }
 

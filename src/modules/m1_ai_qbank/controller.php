@@ -52,15 +52,14 @@ function handle_add_question_request(array $input, mysqli $conn): void {
  * Controller handler for listing approved questions of a qbank.
  */
 function handle_list_questions_request(array $input, mysqli $conn): void {
-    require_admin_access($conn);
+    require_admin_only($conn);
     $qbankId = (int)($input['question_bank_id'] ?? ($_GET['question_bank_id'] ?? 0));
 
     if ($qbankId <= 0) {
         send_json_response('error', 'Valid question_bank_id parameter is required', null, 400);
     }
 
-    // Determine if requester is Admin
-    $isAdmin = (!empty($_SESSION['role']) && $_SESSION['role'] === 'admin');
+    $isAdmin = true; // Guaranteed by require_admin_only
 
     try {
         $data = fetch_approved_qbank_questions($qbankId, $conn, $isAdmin);

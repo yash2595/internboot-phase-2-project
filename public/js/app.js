@@ -34,6 +34,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateAvatar(source.candidate?.name);
         updateStatusCards(source);
         updateLearningJourney(source);
+        renderCertificateState(source);
+if (source.demo_mode) {
+            let alertBox = document.getElementById('demo-mode-alert');
+            if (!alertBox) {
+                const contentDiv = document.querySelector('.content');
+                if (contentDiv) {
+                    alertBox = document.createElement('div');
+                    alertBox.id = 'demo-mode-alert';
+                    alertBox.className = 'alert alert-warning text-center fw-bold mb-4';
+                    alertBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i> TEST MODE: Demo Mode Active. Payment data shown is simulated.';
+                    contentDiv.insertBefore(alertBox, contentDiv.firstChild);
+                }
+            }
+        }
     } catch (error) {
         console.error("Dashboard API Error:", error);
 
@@ -208,4 +222,55 @@ if (document.readyState === "loading") {
 } else {
     bindCandidateLogout();
 }
+
+function renderCertificateState(source) {
+    const certStateContainer = document.getElementById("certificate-state-container");
+    const certPreviewContainer = document.getElementById("certificate-preview-container");
+    const dashCertDownload = document.getElementById("dashboard-certificate-download");
+
+    if (source.certificate && source.certificate.status === "Issued" && source.result && source.result.id) {
+        const downloadUrl = `api/admin/certificate_pdf.php?result_id=${source.result.id}`;
+        
+        if (certStateContainer) {
+            certStateContainer.innerHTML = `
+                <div class='empty' style='padding: 40px;'>
+                    <div style='font-size:42px'>🎓</div>
+                    <h2 style='color:#17243a; margin-top: 10px;'>Certificate Issued</h2>
+                    <p style='margin-bottom: 20px;'>Congratulations! Your certificate is ready to download.</p>
+                    <a href="${downloadUrl}" class="button" target="_blank" style="background: #1652d6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Download Certificate (PDF)</a>
+                </div>
+            `;
+        }
+
+        if (certPreviewContainer) {
+            certPreviewContainer.style.display = "flex";
+            const badge = document.getElementById("certificate-status-badge");
+            if (badge) {
+                badge.textContent = "Issued";
+                badge.className = "badge green";
+            }
+        }
+
+        if (dashCertDownload) {
+            dashCertDownload.innerHTML = `<a href="${downloadUrl}" target="_blank" style="color: #1652d6; font-weight: bold;">(Download)</a>`;
+        }
+    } else {
+        if (certStateContainer) {
+            certStateContainer.innerHTML = `
+                <div class='empty'>
+                    <div style='font-size:42px'>🏅</div>
+                    <h2 style='color:#17243a'>No Certificate Issued</h2>
+                    <p>Your certificate will appear here after successful evaluation and level assignment.</p>
+                </div>
+            `;
+        }
+        if (certPreviewContainer) {
+            certPreviewContainer.style.display = "none";
+        }
+        if (dashCertDownload) {
+            dashCertDownload.innerHTML = "";
+        }
+    }
+}
+
 

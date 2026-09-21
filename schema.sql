@@ -4,7 +4,7 @@
 -- File: schema.sql
 --
 -- SAFE TO RE-RUN: All CREATE TABLE IF NOT EXISTS statements use IF NOT EXISTS.
--- Re-running against an existing database will not drop or alter existing data.
+-- Running this file directly creates missing tables and does NOT drop or alter existing data.
 -- To apply this schema: php scripts/apply-schema.php
 --
 -- To FORCE a full destructive reinstall (drops all tables and data):
@@ -18,7 +18,6 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- Table 1: users
 -- Purpose: Authentication & core user account records with role permissions
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `users`;
 CREATE TABLE IF NOT EXISTS `users` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `email` VARCHAR(255) NOT NULL UNIQUE,
@@ -35,13 +34,12 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Table 2: candidates
 -- Purpose: Candidate personal background, contact info, and profile details
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `candidates`;
 CREATE TABLE IF NOT EXISTS `candidates` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `user_id` BIGINT UNSIGNED NOT NULL UNIQUE,
   `full_name` VARCHAR(150) NOT NULL,
   `phone` VARCHAR(20) NOT NULL UNIQUE,
-  `profile_details` TEXT DEFAULT NULL COMMENT 'JSON/Text profile metadata; presence alone drives dashboard Verified status flag',
+  `profile_details` TEXT DEFAULT NULL COMMENT 'JSON/Text profile metadata presence alone drives dashboard Verified status flag',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_candidates_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -53,7 +51,6 @@ CREATE TABLE IF NOT EXISTS `candidates` (
 -- Table 3: payments
 -- Purpose: Financial transaction history for candidate assessment registrations
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `payments`;
 CREATE TABLE IF NOT EXISTS `payments` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `candidate_id` BIGINT UNSIGNED NOT NULL,
@@ -76,7 +73,6 @@ CREATE TABLE IF NOT EXISTS `payments` (
 -- Table 4: assessments
 -- Purpose: Assessment test configurations (duration, question counts, status)
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `assessments`;
 CREATE TABLE IF NOT EXISTS `assessments` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `title` VARCHAR(255) NOT NULL,
@@ -93,7 +89,6 @@ CREATE TABLE IF NOT EXISTS `assessments` (
 -- Table 5: batches
 -- Purpose: Candidate groupings formed together once threshold capacity is met
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `batches`;
 CREATE TABLE IF NOT EXISTS `batches` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `batch_number` VARCHAR(50) NOT NULL UNIQUE,
@@ -111,7 +106,6 @@ CREATE TABLE IF NOT EXISTS `batches` (
 -- Purpose: Links candidate to assessment, eligibility status, payment & batch
 -- Architecture Note: uk_candidate_assessment ensures a candidate has exactly ONE active registration per assessment. Retakes (if settings.retake_allowed = 1) create new rows in `attempts`, NOT new enrollments.
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `enrollments`;
 CREATE TABLE IF NOT EXISTS `enrollments` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `candidate_id` BIGINT UNSIGNED NOT NULL,
@@ -137,7 +131,6 @@ CREATE TABLE IF NOT EXISTS `enrollments` (
 -- Table 7: exam_schedules
 -- Purpose: Scheduling dates for batch exams (Business logic restricts dates to Sat/Sun)
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `exam_schedules`;
 CREATE TABLE IF NOT EXISTS `exam_schedules` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `batch_id` BIGINT UNSIGNED NOT NULL,
@@ -155,7 +148,6 @@ CREATE TABLE IF NOT EXISTS `exam_schedules` (
 -- Purpose: Specific time slots, total capacity, and seat management per schedule.
 -- Concurrency Note: Booking updates MUST execute as `UPDATE exam_slots SET seats_remaining = seats_remaining - 1 WHERE id = ? AND seats_remaining > 0` to prevent overselling.
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `exam_slots`;
 CREATE TABLE IF NOT EXISTS `exam_slots` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `exam_schedule_id` BIGINT UNSIGNED NOT NULL,
@@ -174,7 +166,6 @@ CREATE TABLE IF NOT EXISTS `exam_slots` (
 -- Table 9: question_banks
 -- Purpose: Named collections of AI-generated/curated questions per assessment
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `question_banks`;
 CREATE TABLE IF NOT EXISTS `question_banks` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `assessment_id` BIGINT UNSIGNED NOT NULL,
@@ -192,7 +183,6 @@ CREATE TABLE IF NOT EXISTS `question_banks` (
 -- Purpose: Individual test questions linked to a question bank.
 -- Exam Engine Note: Only questions with approval_status = 'approved' should be delivered in exams.
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `questions`;
 CREATE TABLE IF NOT EXISTS `questions` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `question_bank_id` BIGINT UNSIGNED NOT NULL,
@@ -212,7 +202,6 @@ CREATE TABLE IF NOT EXISTS `questions` (
 -- Table 11: options
 -- Purpose: Multiple-choice answer options per question with correctness flag
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `options`;
 CREATE TABLE IF NOT EXISTS `options` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `question_id` BIGINT UNSIGNED NOT NULL,
@@ -230,7 +219,6 @@ CREATE TABLE IF NOT EXISTS `options` (
 -- Purpose: Execution details of candidate exam sessions, status & timings.
 -- Constraint: exam_slot_id is NOT NULL with RESTRICT to ensure no NULL-bypass race conditions.
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `attempts`;
 CREATE TABLE IF NOT EXISTS `attempts` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `candidate_id` BIGINT UNSIGNED NOT NULL,
@@ -240,6 +228,8 @@ CREATE TABLE IF NOT EXISTS `attempts` (
   `start_time` DATETIME DEFAULT NULL,
   `end_time` DATETIME DEFAULT NULL COMMENT 'Server-side calculated mandatory completion deadline',
   `submitted_at` DATETIME DEFAULT NULL,
+  `violations` INT UNSIGNED NOT NULL DEFAULT 0,
+  `violations` INT UNSIGNED NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY `uk_candidate_exam_slot` (`candidate_id`, `exam_slot_id`),
@@ -256,7 +246,6 @@ CREATE TABLE IF NOT EXISTS `attempts` (
 -- Table 13: answers
 -- Purpose: Candidate selected options per question for an exam attempt
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `answers`;
 CREATE TABLE IF NOT EXISTS `answers` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `attempt_id` BIGINT UNSIGNED NOT NULL,
@@ -278,7 +267,6 @@ CREATE TABLE IF NOT EXISTS `answers` (
 -- Table 14: results
 -- Purpose: Final calculated score, percentage, and assigned level for an attempt
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `results`;
 CREATE TABLE IF NOT EXISTS `results` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `attempt_id` BIGINT UNSIGNED NOT NULL UNIQUE,
@@ -297,7 +285,6 @@ CREATE TABLE IF NOT EXISTS `results` (
 -- Table 15: levels
 -- Purpose: Configurable score range to Level (1-5) assignment rules
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `levels`;
 CREATE TABLE IF NOT EXISTS `levels` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `level_number` TINYINT UNSIGNED NOT NULL UNIQUE COMMENT 'Level rank (1 to 5)',
@@ -317,7 +304,6 @@ CREATE TABLE IF NOT EXISTS `levels` (
 -- Table 16: certificates
 -- Purpose: Issued certificates for candidates based on evaluated results
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `certificates`;
 CREATE TABLE IF NOT EXISTS `certificates` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `certificate_number` VARCHAR(100) NOT NULL UNIQUE,
@@ -338,7 +324,6 @@ CREATE TABLE IF NOT EXISTS `certificates` (
 -- Table 17: placement_records
 -- Purpose: Post-assessment candidate recruitment status, result link, and employer notes
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `placement_records`;
 CREATE TABLE IF NOT EXISTS `placement_records` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `candidate_id` BIGINT UNSIGNED NOT NULL,
@@ -359,7 +344,6 @@ CREATE TABLE IF NOT EXISTS `placement_records` (
 -- Table 18: admin_logs
 -- Purpose: System audit trail for security tracking of administrative actions
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `admin_logs`;
 CREATE TABLE IF NOT EXISTS `admin_logs` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `user_id` BIGINT UNSIGNED DEFAULT NULL,
@@ -378,7 +362,6 @@ CREATE TABLE IF NOT EXISTS `admin_logs` (
 -- Table 19: settings
 -- Purpose: Global system configurations stored as key-value pairs
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `settings`;
 CREATE TABLE IF NOT EXISTS `settings` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `setting_key` VARCHAR(100) NOT NULL UNIQUE,
@@ -393,7 +376,6 @@ CREATE TABLE IF NOT EXISTS `settings` (
 -- Table 20: email_verifications
 -- Purpose: Staging table for pending registrations & OTP email verification (M3 Auth)
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `email_verifications`;
 CREATE TABLE IF NOT EXISTS `email_verifications` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `email` VARCHAR(255) NOT NULL,
@@ -422,7 +404,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ============================================================================
 
 -- Trigger 1: Prevent negative seats on UPDATE
-DROP TRIGGER IF EXISTS `trg_prevent_negative_seats_update`;
+DELIMITER $$
+DROP TRIGGER IF EXISTS `trg_prevent_negative_seats_update`$$
 CREATE TRIGGER `trg_prevent_negative_seats_update`
 BEFORE UPDATE ON `exam_slots`
 FOR EACH ROW
@@ -431,10 +414,10 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Concurrency Error: seats_remaining cannot be negative';
     END IF;
-END;
+END$$
 
 -- Trigger 2: Prevent negative seats on INSERT
-DROP TRIGGER IF EXISTS `trg_prevent_negative_seats_insert`;
+DROP TRIGGER IF EXISTS `trg_prevent_negative_seats_insert`$$
 CREATE TRIGGER `trg_prevent_negative_seats_insert`
 BEFORE INSERT ON `exam_slots`
 FOR EACH ROW
@@ -443,8 +426,11 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Validation Error: Initial seats_remaining cannot be negative';
     END IF;
-END;
+END$$
 
+
+
+DELIMITER ;
 
 -- ============================================================================
 -- INITIAL DATA SEEDING
@@ -472,7 +458,6 @@ INSERT INTO `levels` (`level_number`, `level_name`, `min_percentage`, `max_perce
 -- Table 23: login_attempts
 -- Purpose: Tracking failed logins for rate limiting
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `login_attempts`;
 CREATE TABLE IF NOT EXISTS `login_attempts` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `email` VARCHAR(255) NOT NULL,
@@ -488,7 +473,6 @@ CREATE TABLE IF NOT EXISTS `login_attempts` (
 -- Purpose: Frozen snapshot of the exact questions served to one attempt,
 --          in fixed order, so the paper cannot change mid-exam.
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `attempt_questions`;
 CREATE TABLE IF NOT EXISTS `attempt_questions` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `attempt_id` BIGINT UNSIGNED NOT NULL,
@@ -506,7 +490,6 @@ CREATE TABLE IF NOT EXISTS `attempt_questions` (
 -- Table 25: password_resets
 -- Purpose: One-time tokens for the forgot-password flow.
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `password_resets`;
 CREATE TABLE IF NOT EXISTS `password_resets` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `user_id` BIGINT UNSIGNED NOT NULL,
@@ -523,7 +506,6 @@ CREATE TABLE IF NOT EXISTS `password_resets` (
 -- Table 26: certificate_verification_attempts
 -- Purpose: Tracking public certificate lookups for rate limiting (enumeration prevention)
 -- ----------------------------------------------------------------------------
-DROP TABLE IF EXISTS `certificate_verification_attempts`;
 CREATE TABLE IF NOT EXISTS `certificate_verification_attempts` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `ip_address` VARCHAR(45) NOT NULL,

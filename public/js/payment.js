@@ -332,7 +332,10 @@ async function handlePaymentSubmit(event) {
         };
 
         applyPaymentSuccessState(verifiedPayment, verifiedEnrollment);
-        showAlert("success", "Payment verified server-side! Your assessment registration and enrollment are now confirmed.");
+        showAlert(
+            "success",
+            "Demo payment verified. Your assessment registration and enrollment are now confirmed (test mode — no real payment was processed)."
+        );
 
     } catch (error) {
         console.error("Payment flow error:", error);

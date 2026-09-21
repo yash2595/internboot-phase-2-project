@@ -368,7 +368,8 @@ try {
         'exam' => $exam,
         'result' => $result,
         'certificate' => $certificate,
-        'placement' => $placement
+        'placement' => $placement,
+        'demo_mode' => demo_mode()
     ]);
 } catch (Throwable $e) {
     error_log('InternBoot dashboard error: ' . $e->getMessage());

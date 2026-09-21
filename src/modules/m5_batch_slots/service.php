@@ -101,10 +101,31 @@ function check_and_create_batch(int $assessmentId, mysqli $conn, ?int $customThr
 
         // Dynamic slot configuration: 2 slots per day, 4 total slots across weekend
         // Minimum 50 seats per slot, or scaled to ensure capacity >= batch threshold
-        $slotCapacity = max(50, (int)ceil($threshold / 4));
+        // Fetch Assessment duration
+        $stmt = $conn->prepare("SELECT duration_minutes FROM assessments WHERE id = ?");
+        $stmt->bind_param('i', $assessmentId);
+        $stmt->execute();
+        $assData = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        $duration = (int)($assData['duration_minutes'] ?? 60);
+
+        // Fetch Grace Period and Capacity from settings
+        $grace = (int)(get_setting_value('slot_grace_minutes', $conn) ?? 30);
+        $slotCapacity = (int)(get_setting_value('slot_capacity_floor', $conn) ?? 50);
+        $slotCapacity = max($slotCapacity, (int)ceil($threshold / 4)); // Still scale up if threshold is huge
+
+        $totalMinutes = $duration + $grace;
+
+        // Fetch start times from settings or use defaults
+        $startTime1 = get_setting_value('slot_start_time_1', $conn) ?? '10:00:00';
+        $startTime2 = get_setting_value('slot_start_time_2', $conn) ?? '14:00:00';
+
+        $end1 = date('H:i:s', strtotime($startTime1) + ($totalMinutes * 60));
+        $end2 = date('H:i:s', strtotime($startTime2) + ($totalMinutes * 60));
+
         $slotTimings = [
-            ['start' => '10:00:00', 'end' => '11:00:00', 'capacity' => $slotCapacity],
-            ['start' => '14:00:00', 'end' => '15:00:00', 'capacity' => $slotCapacity],
+            ['start' => $startTime1, 'end' => $end1, 'capacity' => $slotCapacity],
+            ['start' => $startTime2, 'end' => $end2, 'capacity' => $slotCapacity],
         ];
 
         $createdSchedules = [];

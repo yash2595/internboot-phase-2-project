@@ -19,6 +19,7 @@ try {
     /*
      * 2. Attempt ID
      */
+    require_once __DIR__ . '/../../../src/core/helpers.php';
     $attemptId = isset($_GET['attempt_id'])
         ? (int) $_GET['attempt_id']
         : 0;
@@ -119,7 +120,7 @@ try {
 
         require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
         try {
-            evaluate_attempt($conn, $attemptId, false);
+            evaluate_attempt($conn, $attemptId, true);
         } catch (Throwable $evalError) {
             error_log('Auto-evaluation failed for attempt ' . $attemptId . ': ' . $evalError->getMessage());
         }
@@ -193,22 +194,61 @@ try {
         $snapStmt->close();
 
         if (empty($fetchedQuestions)) {
-            // First call for this attempt — build the snapshot once from the live pool.
+            // 4.1 & 4.2: Pool check and Stratification
+            $ratioEasy = (int) get_setting_value('question_ratio_easy', $conn);
+            $ratioMed = (int) get_setting_value('question_ratio_medium', $conn);
+            $ratioHard = (int) get_setting_value('question_ratio_hard', $conn);
+            if ($ratioEasy <= 0 && $ratioMed <= 0 && $ratioHard <= 0) {
+                $ratioEasy = 30; $ratioMed = 40; $ratioHard = 30;
+            }
+            $totalRatio = $ratioEasy + $ratioMed + $ratioHard;
+            $numEasy = (int) round(($ratioEasy / $totalRatio) * $totalQuestions);
+            $numHard = (int) round(($ratioHard / $totalRatio) * $totalQuestions);
+            $numMed = $totalQuestions - $numEasy - $numHard;
+
+            $countSql = "SELECT difficulty, COUNT(*) FROM questions q INNER JOIN question_banks qb ON qb.id = q.question_bank_id WHERE qb.assessment_id = ? AND q.type = 'MCQ' AND q.approval_status = 'approved' GROUP BY difficulty";
+            $countStmt = $conn->prepare($countSql);
+            $countStmt->bind_param("i", $attempt['assessment_id']);
+            $countStmt->execute();
+            $counts = ['easy' => 0, 'medium' => 0, 'hard' => 0];
+            $res = $countStmt->get_result();
+            while ($r = $res->fetch_row()) $counts[$r[0]] = (int)$r[1];
+            $countStmt->close();
+
+            if ($counts['easy'] < $numEasy || $counts['medium'] < $numMed || $counts['hard'] < $numHard) {
+                send_json_response('error', "This assessment is not ready — the approved question pool lacks enough questions for stratification (Required: {$numEasy} Easy, {$numMed} Medium, {$numHard} Hard). Contact support.", null, 422);
+            }
+
             $poolSql = "
-                SELECT q.id AS question_id, q.question_text, q.type, q.difficulty
-                FROM questions q
-                INNER JOIN question_banks qb ON qb.id = q.question_bank_id
-                WHERE qb.assessment_id = ?
-                  AND q.type = 'MCQ'
-                  AND q.approval_status = 'approved'
-                ORDER BY MD5(CONCAT(?, ':', q.id))
-                LIMIT ?
+                (SELECT q.id AS question_id, q.question_text, q.type, q.difficulty
+                 FROM questions q INNER JOIN question_banks qb ON qb.id = q.question_bank_id
+                 WHERE qb.assessment_id = ? AND q.type = 'MCQ' AND q.approval_status = 'approved' AND q.difficulty = 'easy'
+                 ORDER BY MD5(CONCAT(?, ':', q.id)) LIMIT ?)
+                UNION ALL
+                (SELECT q.id AS question_id, q.question_text, q.type, q.difficulty
+                 FROM questions q INNER JOIN question_banks qb ON qb.id = q.question_bank_id
+                 WHERE qb.assessment_id = ? AND q.type = 'MCQ' AND q.approval_status = 'approved' AND q.difficulty = 'medium'
+                 ORDER BY MD5(CONCAT(?, ':', q.id)) LIMIT ?)
+                UNION ALL
+                (SELECT q.id AS question_id, q.question_text, q.type, q.difficulty
+                 FROM questions q INNER JOIN question_banks qb ON qb.id = q.question_bank_id
+                 WHERE qb.assessment_id = ? AND q.type = 'MCQ' AND q.approval_status = 'approved' AND q.difficulty = 'hard'
+                 ORDER BY MD5(CONCAT(?, ':', q.id)) LIMIT ?)
             ";
             $poolStmt = $conn->prepare($poolSql);
-            $poolStmt->bind_param("iii", $attempt['assessment_id'], $attemptId, $totalQuestions);
+            $poolStmt->bind_param("iiiiiiiii",
+                $attempt['assessment_id'], $attemptId, $numEasy,
+                $attempt['assessment_id'], $attemptId, $numMed,
+                $attempt['assessment_id'], $attemptId, $numHard
+            );
             $poolStmt->execute();
             $fetchedQuestions = $poolStmt->get_result()->fetch_all(MYSQLI_ASSOC);
             $poolStmt->close();
+
+            // Shuffle the unioned array deterministically so easy/med/hard are mixed
+            srand($attemptId);
+            shuffle($fetchedQuestions);
+            srand(); // reset seed
 
             $insertSql = "INSERT INTO attempt_questions (attempt_id, question_id, position) VALUES (?, ?, ?)";
             $insertStmt = $conn->prepare($insertSql);

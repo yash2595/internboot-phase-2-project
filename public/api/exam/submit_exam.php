@@ -122,7 +122,7 @@ try {
     require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
     $evaluationDone = false;
     try {
-        evaluate_attempt($conn, $attemptId, false);
+        evaluate_attempt($conn, $attemptId, true);
         $evaluationDone = true;
     } catch (Throwable $evalError) {
         error_log('Auto-evaluation failed for attempt ' . $attemptId . ': ' . $evalError->getMessage());

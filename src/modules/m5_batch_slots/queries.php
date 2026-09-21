@@ -178,7 +178,7 @@ function get_candidate_enrollment(int $candidateId, int $assessmentId, mysqli $c
  */
 function get_candidate_booked_attempt(int $candidateId, int $assessmentId, mysqli $conn): ?array {
     $retakeAllowed = get_setting_value('retake_allowed', $conn) === '1';
-    $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted'";
+    $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted','expired'";
     $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status, start_time 
             FROM attempts 
             WHERE candidate_id = ? AND assessment_id = ? AND status IN ($statusFilter) 
@@ -226,7 +226,7 @@ function get_candidate_enrollment_for_update(int $candidateId, int $assessmentId
  */
 function get_candidate_booked_attempt_for_update(int $candidateId, int $assessmentId, mysqli $conn): ?array {
     $retakeAllowed = get_setting_value('retake_allowed', $conn) === '1';
-    $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted'";
+    $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted','expired'";
     $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status, start_time 
             FROM attempts 
             WHERE candidate_id = ? AND assessment_id = ? AND status IN ($statusFilter) 

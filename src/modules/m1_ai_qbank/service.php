@@ -416,3 +416,35 @@ function generate_questions_via_ai(
     }
 }
 ?>
+
+
+function edit_manual_question(int $questionId, string $questionText, string $difficulty, array $options, mysqli $conn): void {
+    $correctCount = 0;
+    foreach ($options as $opt) {
+        if (trim($opt['option_text']) === '') throw new InvalidArgumentException("Option text empty");
+        if (!empty($opt['is_correct'])) $correctCount++;
+    }
+    if ($correctCount !== 1) throw new InvalidArgumentException("Exactly 1 correct option required");
+
+    $conn->begin_transaction();
+    try {
+        $stmt = $conn->prepare("UPDATE questions SET question_text=?, difficulty=? WHERE id=?");
+        $stmt->bind_param('ssi', $questionText, $difficulty, $questionId);
+        $stmt->execute();
+        $stmt->close();
+
+        $delStmt = $conn->prepare("DELETE FROM options WHERE question_id=?");
+        $delStmt->bind_param('i', $questionId);
+        $delStmt->execute();
+        $delStmt->close();
+
+        foreach ($options as $opt) {
+            $isCorrect = !empty($opt['is_correct']) ? 1 : 0;
+            insert_question_option($questionId, trim($opt['option_text']), $isCorrect, $conn);
+        }
+        $conn->commit();
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
+    }
+}

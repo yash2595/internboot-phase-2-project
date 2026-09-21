@@ -35,6 +35,7 @@ try {
             a.start_time,
             a.end_time,
             a.submitted_at,
+            a.violations,
 
             es.start_time AS slot_start_time,
             es.end_time AS slot_end_time,
@@ -120,7 +121,7 @@ try {
 
         require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
         try {
-            evaluate_attempt($conn, $attemptId, false);
+            evaluate_attempt($conn, $attemptId, true);
         } catch (Throwable $evalError) {
             error_log('Auto-evaluation failed for attempt ' . $attemptId . ': ' . $evalError->getMessage());
         }

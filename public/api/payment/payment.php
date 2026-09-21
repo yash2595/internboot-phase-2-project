@@ -112,6 +112,14 @@ try {
             if ($row) $assessmentId = (int)$row['id'];
         }
         if ($assessmentId < 1) send_json_response('error', 'Assessment is required.', null, 400);
+$s = $conn->prepare("SELECT id FROM assessments WHERE id = ?");
+        $s->bind_param('i', $assessmentId);
+        $s->execute();
+        $exists = $s->get_result()->fetch_assoc();
+        $s->close();
+        if (!$exists) {
+            send_json_response('error', 'Assessment not found.', null, 404);
+        }
 
         $s = $conn->prepare("SELECT id, amount, status, reference_number, payment_date FROM payments WHERE candidate_id = ? AND assessment_id = ? AND status = 'success' ORDER BY id DESC LIMIT 1");
         $s->bind_param('ii', $candidateId, $assessmentId);

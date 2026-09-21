@@ -160,7 +160,10 @@ try {
 
             if ($slotStartTime !== null && $slotEndTime !== null) {
                 $slotStart = new DateTime($examDate . ' ' . $slotStartTime);
+                $grace = (int) get_setting_value('slot_grace_minutes', $conn);
+                if ($grace <= 0) $grace = 30;
                 $slotEnd = new DateTime($examDate . ' ' . $slotEndTime);
+                $slotEnd->modify("+\{$grace\} minutes");
 
                 if ($now < $slotStart) {
                     send_json_response('error', "Your exam slot opens at {$slotStartTime}.", null, 403);
@@ -199,7 +202,9 @@ try {
 
         // Cap actual end_time at slot's scheduled end_time if a slot boundary exists
         if (!empty($attempt['exam_date']) && !empty($attempt['slot_end_time'])) {
-            $slotEndTimestamp = strtotime($attempt['exam_date'] . ' ' . $attempt['slot_end_time']);
+            $grace = (int) get_setting_value('slot_grace_minutes', $conn);
+            if ($grace <= 0) $grace = 30;
+            $slotEndTimestamp = strtotime($attempt['exam_date'] . ' ' . $attempt['slot_end_time']) + ($grace * 60);
             if ($slotEndTimestamp !== false && $slotEndTimestamp < $calculatedEnd) {
                 $calculatedEnd = $slotEndTimestamp;
             }
@@ -303,7 +308,7 @@ try {
 
         require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
         try {
-            evaluate_attempt($conn, $attemptId, false);
+            evaluate_attempt($conn, $attemptId, true);
         } catch (Throwable $evalError) {
             error_log('Auto-evaluation failed for attempt ' . $attemptId . ': ' . $evalError->getMessage());
         }

@@ -12,7 +12,7 @@ function m7_question_banks(mysqli $conn): array { return get_all_question_banks(
 function m7_batches(mysqli $conn): array { return get_batches($conn); }
 function m7_settings(mysqli $conn): array { return get_settings($conn); }
 
-function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificate=false): array
+function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificate=false, bool $forceRegrade=false): array
 {
     $conn->begin_transaction();
     try {
@@ -22,16 +22,20 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
         if($attempt['status']==='submitted'){
             $existing=q_one($conn,'SELECT r.*, c.full_name FROM results r JOIN attempts a ON a.id=r.attempt_id JOIN candidates c ON c.id=a.candidate_id WHERE r.attempt_id=?','i',[$attemptId]);
             if ($existing) {
-                $conn->commit();
-                return ['result'=>$existing,'already_evaluated'=>true];
+                if (!$forceRegrade) {
+                    $conn->commit();
+                    return ['result'=>$existing,'already_evaluated'=>true];
+                }
             }
         }
 
         if ($attempt['status'] === 'expired') {
             $existing = q_one($conn, 'SELECT r.*, c.full_name FROM results r JOIN attempts a ON a.id=r.attempt_id JOIN candidates c ON c.id=a.candidate_id WHERE r.attempt_id=?', 'i', [$attemptId]);
             if ($existing) {
-                $conn->commit();
-                return ['result' => $existing, 'already_evaluated' => true];
+                if (!$forceRegrade) {
+                    $conn->commit();
+                    return ['result' => $existing, 'already_evaluated' => true];
+                }
             }
         }
 
@@ -96,6 +100,11 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
 
         $resultId=upsert_result($conn,$attemptId,(float)$score,$percentage,(int)$level['level_number']);
         mark_attempt_evaluated($conn,$attemptId);
+        $existingResult = null;
+        if ($forceRegrade) {
+            $existingResult = q_one($conn, 'SELECT * FROM results WHERE attempt_id=?', 'i', [$attemptId]);
+        }
+        $resultId=upsert_result($conn,$attemptId,$score,$percentage,(int)$level['level_number']);
         ensure_placement_record($conn,(int)$attempt['candidate_id'],$resultId);
 
         $certificate=null;
@@ -104,6 +113,17 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
             $minCertPct = (float)(get_setting_value('min_certificate_percentage', $conn) ?? 40.0);
             if ((int)$level['level_number'] <= $minCertLevel && $percentage >= $minCertPct) {
                 $certificate=upsert_certificate($conn,(int)$attempt['candidate_id'],$resultId,(int)$level['level_number']);
+            } else if ($forceRegrade && $existingResult) {
+                $existingCert = q_one($conn, 'SELECT * FROM certificates WHERE result_id=?', 'i', [$existingResult['id']]);
+                if ($existingCert) {
+                    create_admin_log($conn, $_SESSION['user_id'] ?? null, 're_grade_certificate_conflict', json_encode([
+                        'attempt_id' => $attemptId,
+                        'old_percentage' => (float)$existingResult['percentage'],
+                        'old_level' => (int)$existingResult['level_assigned'],
+                        'new_percentage' => $percentage,
+                        'new_level' => (int)$level['level_number']
+                    ]));
+                }
             }
         }
 

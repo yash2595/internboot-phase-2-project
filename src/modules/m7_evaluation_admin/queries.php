@@ -381,9 +381,9 @@ function upsert_certificate(mysqli $conn, int $candidateId, int $resultId, int $
         throw new InvalidArgumentException("Result level {$level} does not qualify for certificate issuance (minimum Level {$minCertLevel} required).");
     }
 
-    $number='IB-'.date('Y').'-'.str_pad((string)random_int(1,999999),6,'0',STR_PAD_LEFT);
+    $number='IB-'.date('Y').'-'.strtoupper(bin2hex(random_bytes(5)));
     while(q_one($conn,'SELECT id FROM certificates WHERE certificate_number=?','s',[$number])){
-        $number='IB-'.date('Y').'-'.str_pad((string)random_int(1,999999),6,'0',STR_PAD_LEFT);
+        $number='IB-'.date('Y').'-'.strtoupper(bin2hex(random_bytes(5)));
     }
     $stmt=$conn->prepare('INSERT INTO certificates(certificate_number,candidate_id,result_id,level,issue_date) VALUES(?,?,?,?,CURDATE())');
     $stmt->bind_param('siii',$number,$candidateId,$resultId,$level); $stmt->execute(); $id=$stmt->insert_id; $stmt->close();

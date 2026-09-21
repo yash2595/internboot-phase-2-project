@@ -10,6 +10,11 @@ require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/candidate_resolver.php';
 
 $appEnv = get_app_env();
+
+if ($appEnv === 'production' && demo_mode()) {
+    die("FATAL: M4_DEMO_MODE cannot be enabled in production environment.");
+}
+
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');

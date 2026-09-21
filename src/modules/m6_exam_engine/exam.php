@@ -1468,6 +1468,17 @@ document.addEventListener(
         if (document.visibilityState === "hidden") {
 
             violationCount++;
+            try {
+                const response = await fetch(getApiUrl("log_violation.php"), {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-CSRF-Token": getCsrfToken() },
+                    body: JSON.stringify({ attempt_id: attemptData.attempt_id })
+                });
+                const resData = await response.json();
+                if (resData.data && resData.data.violations) {
+                    violationCount = parseInt(resData.data.violations);
+                }
+            } catch(e) {}
 
             if (violationCount >= MAX_VIOLATIONS) {
 
@@ -1528,48 +1539,38 @@ function startPeriodicAutosave() {
 }
 
 async function syncCurrentAnswers() {
-
-    const entries = Object.entries(answerMap);
-
-    if (entries.length === 0) {
-        return;
-    }
+    if (dirtyAnswers.size === 0) return;
+    const entries = Array.from(dirtyAnswers).map(qid => [qid, answerMap[qid] || 0]);
 
     for (const [questionId, optionId] of entries) {
-
-        if (examSubmitted) {
-            return;
-        }
-
+        if (examSubmitted) return;
         try {
-
-            const response = await fetch(
-                getApiUrl("save_answer.php"),
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                    },
-                    body: JSON.stringify({
-                        attempt_id: attemptId,
-                        question_id: Number(questionId),
-                        selected_option_id: Number(optionId)
-                    })
+            const response = await fetch(getApiUrl("save_answer.php"), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": getCsrfToken()
+                },
+                body: JSON.stringify({
+                    attempt_id: attemptData.attempt_id,
+                    question_id: questionId,
+                    selected_option_id: optionId
+                })
+            });
+            if (!response.ok) {
+                if (response.status === 403) {
+                    examSubmitted = true;
+                    window.location.href = "/dashboard.html";
                 }
-            );
-
-            const data = await response.json();
-            const isAutosaveSuccess = data.status === 'success' || data.success === true;
-
-            if (!isAutosaveSuccess) {
-                console.warn(
-                    "Autosave failed:",
-                    data.message
-                );
+                console.error("Autosave failed for question", questionId);
+            } else {
+                dirtyAnswers.delete(questionId);
             }
-
-        } catch (error) {
+        } catch (err) {
+            console.error("Autosave network error", err);
+        }
+    }
+} catch (error) {
 
             console.warn(
                 "Autosave connection error:",

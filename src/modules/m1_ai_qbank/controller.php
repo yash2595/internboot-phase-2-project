@@ -138,3 +138,46 @@ function handle_ai_status_request(mysqli $conn): void {
     send_json_response('success', 'AI status retrieved', ['provider' => $provider, 'configured' => $configured], 200);
 }
 ?>
+
+
+function handle_edit_question_request(array $input, mysqli $conn): void {
+    require_admin_access($conn);
+    require_csrf();
+    $questionId = (int)($input['question_id'] ?? 0);
+    $questionText = trim($input['question_text'] ?? '');
+    $difficulty = strtolower(trim($input['difficulty'] ?? 'medium'));
+    $options = $input['options'] ?? [];
+    if ($questionId <= 0 || empty($questionText)) {
+        send_json_response('error', 'Valid question_id and text required', null, 400);
+    }
+    if (!in_array($difficulty, ['easy', 'medium', 'hard'], true)) {
+        send_json_response('error', 'Invalid difficulty', null, 400);
+    }
+    if (count($options) !== 4) {
+        send_json_response('error', 'Exactly 4 options must be provided', null, 400);
+    }
+    try {
+        edit_manual_question($questionId, $questionText, $difficulty, $options, $conn);
+        send_json_response('success', 'Question edited', null, 200);
+    } catch (Exception $e) {
+        send_json_response('error', $e->getMessage(), null, 400);
+    }
+}
+
+function handle_delete_question_request(array $input, mysqli $conn): void {
+    require_admin_access($conn);
+    require_csrf();
+    $questionId = (int)($input['question_id'] ?? 0);
+    if ($questionId <= 0) {
+        send_json_response('error', 'Valid question_id required', null, 400);
+    }
+    try {
+        $stmt = $conn->prepare("UPDATE questions SET approval_status = 'rejected' WHERE id = ?");
+        $stmt->bind_param('i', $questionId);
+        $stmt->execute();
+        $stmt->close();
+        send_json_response('success', 'Question soft-deleted', null, 200);
+    } catch (Exception $e) {
+        send_json_response('error', $e->getMessage(), null, 400);
+    }
+}

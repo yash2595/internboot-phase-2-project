@@ -1,4 +1,11 @@
 <?php
+if (!function_exists('env_value')) {
+    function env_value(string $key, ?string $default = null): ?string {
+        $val = getenv($key);
+        if ($val !== false) return $val;
+        return $_ENV[$key] ?? $_SERVER[$key] ?? $default;
+    }
+}
 /**
  * src/core/helpers.php
  *
@@ -6,68 +13,206 @@
  */
 
 /**
- * Resolve the real client IP address.
+ * Check whether an IP address falls within a given CIDR range or matches an exact IP.
+ * Supports IPv4 and IPv6, including CIDR subnets (e.g. 10.0.0.0/8, 172.16.0.0/12, ::1).
  *
- * Railway (and most reverse-proxy deployments) append the original client IP
- * to the X-Forwarded-For header. The format is a comma-separated list where
- * the *left-most* entry is the originating client and each subsequent entry
- * is a proxy hop:
+ * @param string $ip     The IP address to check.
+ * @param string $range  An exact IP address or CIDR notation (e.g. 192.168.0.0/16).
+ * @return bool True if $ip matches or falls inside $range.
+ */
+function ip_in_range(string $ip, string $range): bool
+{
+    $ip = trim($ip);
+    $range = trim($range);
+
+    if ($range === '' || $ip === '') {
+        return false;
+    }
+
+    if (str_starts_with(strtolower($ip), '::ffff:')) {
+        $ip = substr($ip, 7);
+    }
+
+    if ($ip === $range) {
+        return true;
+    }
+
+    if (str_contains($range, '/')) {
+        [$subnet, $bitsStr] = explode('/', $range, 2);
+        if (!is_numeric($bitsStr)) {
+            return false;
+        }
+        $bits = (int)$bitsStr;
+
+        // IPv4 CIDR matching
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) && filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            if ($bits < 0 || $bits > 32) {
+                return false;
+            }
+            $ipLong = ip2long($ip);
+            $subnetLong = ip2long($subnet);
+            if ($ipLong === false || $subnetLong === false) {
+                return false;
+            }
+            $mask = $bits === 0 ? 0 : (~0 << (32 - $bits));
+            return ($ipLong & $mask) === ($subnetLong & $mask);
+        }
+
+        // IPv6 CIDR matching
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) && filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            if ($bits < 0 || $bits > 128) {
+                return false;
+            }
+            $ipBin = inet_pton($ip);
+            $subnetBin = inet_pton($subnet);
+            if ($ipBin === false || $subnetBin === false) {
+                return false;
+            }
+
+            $bytes = (int)($bits / 8);
+            $extraBits = $bits % 8;
+
+            if ($bytes > 0 && substr($ipBin, 0, $bytes) !== substr($subnetBin, 0, $bytes)) {
+                return false;
+            }
+
+            if ($extraBits > 0) {
+                $mask = chr((0xFF << (8 - $extraBits)) & 0xFF);
+                if ((ord($ipBin[$bytes]) & ord($mask)) !== (ord($subnetBin[$bytes]) & ord($mask))) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Resolve the real client IP address for security and rate-limiting decisions.
  *
- *   X-Forwarded-For: <client>, <proxy1>, <proxy2>
+ * SECURITY MODEL & TRUST ASSUMPTIONS:
+ * - Direct Connections (No Reverse Proxy):
+ *   Headers like X-Forwarded-For and X-Real-IP are client-supplied HTTP headers.
+ *   An attacker can set them to arbitrary values to rotate their apparent IP on every
+ *   request and bypass IP-based rate limiting. When connecting directly or when the
+ *   immediate peer ($_SERVER['REMOTE_ADDR']) is NOT a configured trusted proxy,
+ *   all client-supplied proxy headers are strictly ignored and REMOTE_ADDR is used.
  *
- * Because Railway is a single trusted hop we take index [0] (the first /
- * left-most IP). We validate it is a valid IP before trusting it; if
- * validation fails or the header is absent we fall back to REMOTE_ADDR.
+ * - Behind a Known Reverse Proxy (e.g. Nginx, Cloudflare, AWS ALB, Railway Edge):
+ *   When the immediate connecting peer ($_SERVER['REMOTE_ADDR']) matches an entry in
+ *   the TRUSTED_PROXIES configuration (IP or CIDR range), we trust that the proxy has
+ *   appended the legitimate connecting IP to the X-Forwarded-For header.
+ *   Because client-side proxies or attackers prepend entries to the left:
+ *     X-Forwarded-For: <attacker_spoofed_ip>, <real_client_ip>, <trusted_proxy_hop>
+ *   we inspect the chain from RIGHT to LEFT. We skip intermediate trusted proxy IPs,
+ *   and select the first untrusted IP encountered from the right. This is the genuine
+ *   client IP that connected to the edge proxy, completely defeating spoofed entries.
+ *   If X-Forwarded-For is absent, X-Real-IP set by the trusted proxy is inspected.
  *
- * Reference: Railway documentation — "Railway injects X-Forwarded-For with
- * the client's IP address." (https://docs.railway.app/reference/private-networking)
+ * Configuration:
+ *   TRUSTED_PROXIES: Comma-separated list of trusted proxy IPs or CIDR ranges.
+ *                    e.g. '127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16'
+ *                    If empty, no proxy headers are trusted (direct connection mode).
+ *   TRUST_PROXY_HEADERS: Legacy flag. If explicitly set to '0', disables proxy header
+ *                        trust regardless of proxy configuration.
  *
- * In local development (no proxy) REMOTE_ADDR is the real client IP and
- * X-Forwarded-For is typically absent, so the fallback is correct there too.
- *
- * SECURITY NOTE / ACCEPTED RISK:
- * When TRUST_PROXY_HEADERS=1 is set, this function blindly trusts the right-most
- * entry in X-Forwarded-For without verifying if REMOTE_ADDR belongs to a known proxy.
- * This is an accepted risk tied exclusively to Railway.app's network guarantees:
- * Railway containers are only reachable via their edge proxy (or internal network).
- * Direct-to-origin public access is impossible by design on Railway, making an IP
- * allowlist unnecessary.
- * 
- * WARNING: If the application is migrated to a host where the origin port CAN be
- * reached directly from the internet, an attacker could hit the origin directly
- * and spoof X-Forwarded-For. In that case, this function MUST be upgraded to
- * explicitly validate REMOTE_ADDR against a proxy IP allowlist.
- *
- * @return string  A valid dotted-decimal IPv4 or compressed IPv6 address.
+ * @return string A valid IPv4 or IPv6 address.
  */
 function get_client_ip(): string
 {
-    // Trust proxy headers only if explicitly enabled in the environment
-    $trustProxy = (env_value('TRUST_PROXY_HEADERS', '0') === '1');
+    $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
-    if ($trustProxy) {
-        $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    // Normalize IPv6-mapped IPv4 prefix if present (::ffff:1.2.3.4 -> 1.2.3.4)
+    if (str_starts_with(strtolower($remoteAddr), '::ffff:')) {
+        $remoteAddr = substr($remoteAddr, 7);
+    }
 
-        if ($forwarded !== '') {
-            $parts = explode(',', $forwarded);
-            
-            // Take the RIGHT-MOST entry in the X-Forwarded-For chain
-            // This is the hop closest to our trusted proxy, defeating client-prepended fakes.
-            $rightMost = trim(end($parts));
+    // Retrieve trusted proxies list from configuration
+    $trustedProxiesRaw = (string)(env_value('TRUSTED_PROXIES', ''));
+    $trustedProxies = array_filter(array_map('trim', explode(',', $trustedProxiesRaw)));
 
-            // Strip IPv6-mapped IPv4 prefix if present (::ffff:1.2.3.4)
-            if (str_starts_with(strtolower($rightMost), '::ffff:')) {
-                $rightMost = substr($rightMost, 7);
+    // Legacy flag: if explicitly '0', never trust proxy headers
+    if (env_value('TRUST_PROXY_HEADERS', null) === '0') {
+        return filter_var($remoteAddr, FILTER_VALIDATE_IP) ? $remoteAddr : '127.0.0.1';
+    }
+
+    // If no trusted proxies are configured, assume direct connection and ignore headers
+    if (empty($trustedProxies)) {
+        return filter_var($remoteAddr, FILTER_VALIDATE_IP) ? $remoteAddr : '127.0.0.1';
+    }
+
+    // Check whether the immediate connecting peer is a trusted proxy
+    $isRemoteTrusted = false;
+    foreach ($trustedProxies as $trustedProxy) {
+        if (ip_in_range($remoteAddr, $trustedProxy)) {
+            $isRemoteTrusted = true;
+            break;
+        }
+    }
+
+    // If REMOTE_ADDR is not in the trusted proxy allowlist, do NOT trust any headers
+    if (!$isRemoteTrusted) {
+        return filter_var($remoteAddr, FILTER_VALIDATE_IP) ? $remoteAddr : '127.0.0.1';
+    }
+
+    // REMOTE_ADDR is a trusted proxy: inspect X-Forwarded-For
+    $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    if ($forwarded !== '') {
+        $parts = array_map('trim', explode(',', $forwarded));
+
+        // Traverse backwards from right to left (closest to our trusted proxy first).
+        // Skip any hops that are themselves trusted proxies; the rightmost untrusted
+        // IP encountered is the genuine client IP appended by our proxy.
+        for ($i = count($parts) - 1; $i >= 0; $i--) {
+            $candidate = $parts[$i];
+            if (str_starts_with(strtolower($candidate), '::ffff:')) {
+                $candidate = substr($candidate, 7);
             }
 
-            // Validate; only trust it if it is a well-formed IP address
-            if (filter_var($rightMost, FILTER_VALIDATE_IP)) {
-                return $rightMost;
+            if (!filter_var($candidate, FILTER_VALIDATE_IP)) {
+                continue;
+            }
+
+            $isHopTrusted = false;
+            foreach ($trustedProxies as $trustedProxy) {
+                if (ip_in_range($candidate, $trustedProxy)) {
+                    $isHopTrusted = true;
+                    break;
+                }
+            }
+
+            if (!$isHopTrusted) {
+                return $candidate;
+            }
+        }
+
+        // Fallback: if every entry in X-Forwarded-For was in the trusted proxy list,
+        // take the leftmost valid IP.
+        foreach ($parts as $candidate) {
+            if (str_starts_with(strtolower($candidate), '::ffff:')) {
+                $candidate = substr($candidate, 7);
+            }
+            if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+                return $candidate;
             }
         }
     }
 
-    return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    // If X-Forwarded-For was absent, inspect X-Real-IP set by the trusted proxy
+    $realIp = trim((string)($_SERVER['HTTP_X_REAL_IP'] ?? ''));
+    if ($realIp !== '') {
+        if (str_starts_with(strtolower($realIp), '::ffff:')) {
+            $realIp = substr($realIp, 7);
+        }
+        if (filter_var($realIp, FILTER_VALIDATE_IP)) {
+            return $realIp;
+        }
+    }
+
+    return filter_var($remoteAddr, FILTER_VALIDATE_IP) ? $remoteAddr : '127.0.0.1';
 }
 
 /**

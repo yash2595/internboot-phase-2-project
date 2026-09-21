@@ -469,6 +469,17 @@ CREATE TABLE IF NOT EXISTS `login_attempts` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
+-- Table 23b: registration_attempts
+-- Purpose: Tracking registration requests for rate limiting
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `registration_attempts` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `ip_address` VARCHAR(45) NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_registration_attempts_ip` (`ip_address`),
+  INDEX `idx_registration_attempts_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- ----------------------------------------------------------------------------
 -- Table 24: attempt_questions
 -- Purpose: Frozen snapshot of the exact questions served to one attempt,
 --          in fixed order, so the paper cannot change mid-exam.

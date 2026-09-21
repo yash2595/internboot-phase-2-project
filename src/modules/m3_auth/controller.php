@@ -7,6 +7,16 @@ require_once __DIR__ . '/service.php';
  * Handles POST /api/auth/register.php
  */
 function handle_register_request(array $data, mysqli $conn): void {
+    $ipAddress = get_client_ip();
+    if (check_registration_rate_limit($conn, $ipAddress)) {
+        if (!headers_sent()) {
+            header('Retry-After: 900');
+        }
+        send_json_response('error', 'Too many registration attempts. Please try again later.', null, 429);
+    }
+
+    record_registration_attempt($conn, $ipAddress);
+
     $fullName = sanitize_string($data['full_name'] ?? '');
     $email    = sanitize_string($data['email'] ?? '');
     $phone    = sanitize_string($data['phone'] ?? '');
@@ -39,7 +49,7 @@ function handle_register_request(array $data, mysqli $conn): void {
         send_json_response('error', $result['message'], null, $result['code'] ?? 409);
     }
 
-    send_json_response('success', 'Verification code sent to your email.', ['email' => $email], 200);
+    send_json_response('success', $result['message'] ?? 'Verification code sent to your email.', ['email' => $email], 200);
 }
 
 function handle_verify_otp_request(array $data, mysqli $conn): void {

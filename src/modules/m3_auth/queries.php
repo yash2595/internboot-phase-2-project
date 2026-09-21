@@ -322,4 +322,38 @@ function clear_failed_logins(mysqli $conn, string $email, string $ipAddress): vo
     $stmt->close();
 }
 
+/**
+ * Checks if a specific IP has exceeded the registration rate limit.
+ * Limits to 10 attempts per 15 minutes.
+ *
+ * @return bool  true → caller should reject with 429
+ */
+function check_registration_rate_limit(mysqli $conn, string $ipAddress): bool
+{
+    $stmt = $conn->prepare(
+        'SELECT COUNT(*) AS cnt
+         FROM registration_attempts
+         WHERE ip_address = ?
+           AND created_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)'
+    );
+    $stmt->bind_param('s', $ipAddress);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $row = $res->fetch_assoc();
+    $stmt->close();
+
+    return (int)$row['cnt'] >= 10;
+}
+
+/**
+ * Records a failed or successful registration attempt for rate limiting.
+ */
+function record_registration_attempt(mysqli $conn, string $ipAddress): void
+{
+    $stmt = $conn->prepare('INSERT INTO registration_attempts (ip_address) VALUES (?)');
+    $stmt->bind_param('s', $ipAddress);
+    $stmt->execute();
+    $stmt->close();
+}
+
 ?>

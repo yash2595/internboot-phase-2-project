@@ -11,7 +11,12 @@ require_once __DIR__ . '/queries.php';
 function authenticate_candidate(mysqli $conn, string $email, string $password): array {
     $user = find_user_by_email($conn, $email);
 
-    if (!$user || !password_verify($password, $user['password'])) {
+    $dummyHash = '$2y$10$abcdefghijklmnopqrstuvabcdefghijklmnopqrstuvwxyza'; // valid-length dummy bcrypt hash
+
+    $hashToVerify = $user ? $user['password'] : $dummyHash;
+    $passwordMatched = password_verify($password, $hashToVerify);
+
+    if (!$user || !$passwordMatched) {
         // Same generic message either way — don't reveal whether the email exists.
         return ['success' => false, 'message' => 'Incorrect email or password.'];
     }
@@ -25,11 +30,10 @@ function authenticate_candidate(mysqli $conn, string $email, string $password): 
 }
 
 function initiate_registration(mysqli $conn, string $fullName, string $email, string $phone, string $password, string $role): array {
-    if (find_user_by_email($conn, $email)) {
-        return ['success' => false, 'message' => 'An account with this email already exists.', 'code' => 409];
-    }
-    if (candidate_phone_exists($conn, $phone)) {
-        return ['success' => false, 'message' => 'This phone number is already registered.', 'code' => 409];
+    $successResponse = ['success' => true, 'message' => "If this email or phone isn't already registered, we've sent a verification code.", 'code' => 200];
+
+    if (find_user_by_email($conn, $email) || candidate_phone_exists($conn, $phone)) {
+        return $successResponse;
     }
 
     $pending = find_latest_pending_verification($conn, $email);
@@ -70,7 +74,7 @@ function initiate_registration(mysqli $conn, string $fullName, string $email, st
         return ['success' => false, 'message' => 'Registration succeeded but verification email could not be sent. Contact support with your registration email.', 'code' => 500];
     }
 
-    return ['success' => true];
+    return $successResponse;
 }
 
 function complete_registration_with_otp(mysqli $conn, string $email, string $otp): array {

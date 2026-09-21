@@ -17,6 +17,13 @@
     }
   </script>
   <script src="https://unpkg.com/lucide@0.383.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+  <style>
+    .flatpickr-day.flatpickr-disabled {
+      opacity: 0.35;
+      text-decoration: line-through;
+    }
+  </style>
 </head>
 <body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden">
 
@@ -101,7 +108,7 @@
                             <input id="batchName" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" placeholder="e.g. BATCH-2024-Q1">
                         </label>
                         <label class="block text-sm text-slate-700 font-medium">Exam Date
-                            <input id="batchDate" required type="date" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2">
+                            <input id="batchDate" required type="text" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" placeholder="Select weekend date...">
                             <span id="batchDateMessage" class="block mt-1 text-xs text-amber-600">Must be a Saturday or Sunday.</span>
                         </label>
                         <label class="block text-sm text-slate-700 font-medium">Max Capacity
@@ -115,7 +122,7 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden h-full flex flex-col">
                     <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="font-semibold text-slate-800">Exam Slots</h3>
-                        <button id="createSlotButton" class="text-sm font-medium text-intern-blue hover:underline">+ Add Slot</button>
+                        
                     </div>
                     <div class="overflow-x-auto flex-1">
                         <table class="w-full text-left text-sm text-slate-600">

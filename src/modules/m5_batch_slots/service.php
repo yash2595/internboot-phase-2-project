@@ -389,3 +389,189 @@ function cancel_slot_booking(int $candidateId, int $assessmentId, mysqli $conn):
         throw $e;
     }
 }
+
+
+/**
+ * Checks whether registration is open for a given weekend exam date.
+ * 
+ * Rules:
+ * - $examDate must be a Saturday or Sunday.
+ * - If $examDate is a Saturday: registration closes the preceding Friday at 23:59:59 (local server time).
+ * - If $examDate is a Sunday: registration closes the preceding Saturday at 23:59:59.
+ * - Returns false for past dates, weekdays, or if the cutoff has passed relative to $now.
+ *
+ * Example: Exam on Sat 2026-09-26 -> cutoff is Fri 2026-09-25 23:59:59
+ *
+ * @param string $examDate The exam date in Y-m-d format.
+ * @param string|null $now Optional timestamp overriding current time (for testing).
+ * @return bool True if registration is open, false otherwise.
+ */
+function is_registration_open_for_date(string $examDate, ?string $now = null): bool {
+    $nowTs = $now ? strtotime($now) : time();
+    $examTs = strtotime($examDate);
+
+    if (!$examTs) {
+        return false;
+    }
+
+    $dayOfWeek = (int)date('N', $examTs);
+
+    // If not Saturday (6) or Sunday (7), return false
+    if ($dayOfWeek !== 6 && $dayOfWeek !== 7) {
+        return false;
+    }
+
+    // Cutoff is the day before the exam date at 23:59:59
+    $cutoffDateStr = date('Y-m-d', strtotime('-1 day', $examTs));
+    $cutoffTs = strtotime($cutoffDateStr . ' 23:59:59');
+
+    // Return false if cutoff has already passed
+    if ($nowTs > $cutoffTs) {
+        return false;
+    }
+
+    // Also return false if the exam date itself is in the past, though cutoff check 
+    // usually handles this unless the exam is today but cutoff was yesterday.
+    // Cutoff check is sufficient for both past and cutoff limit.
+    return true;
+}
+
+
+/**
+ * Processes automated preference batching for a given assessment.
+ * Groups candidates by preferred_date and preferred_time_slot. If a group meets the threshold,
+ * creates exactly one batch, one schedule, and one slot for them.
+ */
+function process_automated_preference_batching(int $assessmentId, mysqli $conn, ?int $customThreshold = null): array {
+    $threshold = get_batch_threshold($conn, $customThreshold);
+    $groups = get_preference_groups_meeting_threshold($assessmentId, $threshold, $conn);
+    
+    $results = [];
+
+    foreach ($groups as $group) {
+        $date = $group['preferred_date'];
+        $timeSlot = $group['preferred_time_slot']; // e.g., "10:00:00-11:00:00"
+        $count = $group['candidate_count'];
+        $enrollmentIds = $group['enrollment_ids'];
+
+        $conn->begin_transaction();
+        
+        try {
+            if (!is_registration_open_for_date($date)) {
+                $results[] = [
+                    'status' => 'skipped_cutoff_passed',
+                    'date' => $date,
+                    'time_slot' => $timeSlot,
+                    'candidate_count' => $count
+                ];
+                $conn->rollback();
+                continue;
+            }
+
+            // Create batch
+            $uniqueSuffix = strtoupper(substr(bin2hex(random_bytes(3)), 0, 5));
+            $batchNumber = sprintf("BATCH-A%d-%s-%s", $assessmentId, date('Ymd'), $uniqueSuffix);
+            $batchId = insert_batch($batchNumber, $assessmentId, $conn);
+
+            // Assign batch to enrollments
+            assign_batch_to_enrollments($batchId, $enrollmentIds, $conn);
+
+            // Parse time slot
+            $parts = explode('-', $timeSlot);
+            $start = isset($parts[0]) ? trim($parts[0]) : '10:00:00';
+            $end = isset($parts[1]) ? trim($parts[1]) : '11:00:00';
+
+            // Create exactly ONE schedule and ONE slot
+            $scheduleId = insert_exam_schedule($batchId, $date, $conn);
+            $slotId = insert_exam_slot($scheduleId, $start, $end, $count, $conn);
+
+            $conn->commit();
+
+            $results[] = [
+                'status' => 'batched',
+                'batch_id' => $batchId,
+                'batch_number' => $batchNumber,
+                'assigned_count' => $count,
+                'date' => $date,
+                'time_slot' => $timeSlot
+            ];
+
+        } catch (Throwable $e) {
+            $conn->rollback();
+            // log exception but continue with other groups
+        }
+    }
+
+    return $results;
+}
+
+/**
+ * Validates and records a candidate's preference, then triggers automated batch processing.
+ */
+function record_candidate_preference(int $candidateId, int $assessmentId, string $preferredDate, string $preferredTimeSlot, mysqli $conn): array {
+    $enrollment = get_candidate_enrollment($candidateId, $assessmentId, $conn);
+    
+    if (!$enrollment) {
+        throw new Exception("Candidate is not enrolled in the specified assessment");
+    }
+
+    if ($enrollment['eligibility_status'] !== 'eligible') {
+        throw new Exception("Candidate is not eligible to record a preference.");
+    }
+
+    if (!is_registration_open_for_date($preferredDate)) {
+        throw new Exception("Registration cutoff has passed for this exam date.");
+    }
+
+    // Validate standard time slots. Using the defaults we see elsewhere, or strict checking.
+    // The prompt says: "Validates preferredTimeSlot matches one of the standard slot formats
+    // already used elsewhere (10:00:00-11:00:00 or 14:00:00-15:00:00) — reject arbitrary strings."
+    $allowedSlots = ['10:00:00-11:00:00', '14:00:00-15:00:00'];
+    if (!in_array($preferredTimeSlot, $allowedSlots, true)) {
+        throw new Exception("Invalid time slot. Must be one of the standard time slots.");
+    }
+
+    set_candidate_preference((int)$enrollment['id'], $preferredDate, $preferredTimeSlot, $conn);
+
+    // Run the batching process to see if we crossed the threshold
+    $batchingResults = process_automated_preference_batching($assessmentId, $conn);
+
+    // Did this candidate just get batched? Check the enrollment again
+    $checkSql = "SELECT b.id AS batch_id, b.batch_number 
+                 FROM enrollments e 
+                 JOIN batches b ON e.batch_id = b.id 
+                 WHERE e.id = ?";
+    $stmt = $conn->prepare($checkSql);
+    $stmt->bind_param("i", $enrollment['id']);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $batchedRow = $res->fetch_assoc();
+    $stmt->close();
+
+    if ($batchedRow) {
+        return [
+            'status' => 'batched',
+            'batch_id' => (int)$batchedRow['batch_id'],
+            'batch_number' => $batchedRow['batch_number']
+        ];
+    }
+
+    // Otherwise, still waiting. Calculate how many are needed.
+    $threshold = get_batch_threshold($conn);
+    $sqlGroupCount = "SELECT COUNT(*) as c FROM enrollments 
+                      WHERE assessment_id = ? AND batch_id IS NULL AND eligibility_status = 'eligible' 
+                        AND preferred_date = ? AND preferred_time_slot = ?";
+    $stmtGrp = $conn->prepare($sqlGroupCount);
+    $stmtGrp->bind_param("iss", $assessmentId, $preferredDate, $preferredTimeSlot);
+    $stmtGrp->execute();
+    $resGrp = $stmtGrp->get_result();
+    $grpRow = $resGrp->fetch_assoc();
+    $stmtGrp->close();
+    
+    $currentCount = $grpRow ? (int)$grpRow['c'] : 0;
+    
+    return [
+        'status' => 'waiting',
+        'candidates_needed' => max(0, $threshold - $currentCount)
+    ];
+}

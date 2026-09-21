@@ -409,4 +409,74 @@ function get_available_slots_by_assessment(int $assessmentId, mysqli $conn): arr
 
     return $rows;
 }
-?>
+
+
+
+/**
+ * Fetches preference groups that have reached the threshold.
+ */
+function get_preference_groups_meeting_threshold(int $assessmentId, int $threshold, mysqli $conn): array {
+    $sql = "SELECT preferred_date, preferred_time_slot, COUNT(*) as candidate_count, GROUP_CONCAT(id) as enrollment_ids 
+            FROM enrollments 
+            WHERE assessment_id = ? 
+              AND batch_id IS NULL 
+              AND eligibility_status = 'eligible' 
+              AND preferred_date IS NOT NULL 
+            GROUP BY preferred_date, preferred_time_slot 
+            HAVING COUNT(*) >= ?";
+            
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        throw new Exception("Database query preparation failed: " . (@$conn->error ?: 'query error'));
+    }
+    $stmt->bind_param("ii", $assessmentId, $threshold);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $rows = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    $groups = [];
+    foreach ($rows as $row) {
+        $groups[] = [
+            'preferred_date' => $row['preferred_date'],
+            'preferred_time_slot' => $row['preferred_time_slot'],
+            'candidate_count' => (int)$row['candidate_count'],
+            'enrollment_ids' => explode(',', $row['enrollment_ids'])
+        ];
+    }
+    
+    return $groups;
+}
+
+/**
+ * Sets a candidate's preference for an enrollment if they aren't batched yet.
+ */
+function set_candidate_preference(int $enrollmentId, string $preferredDate, string $preferredTimeSlot, mysqli $conn): void {
+    $sql = "UPDATE enrollments 
+            SET preferred_date = ?, preferred_time_slot = ?, updated_at = NOW() 
+            WHERE id = ? AND batch_id IS NULL";
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        throw new Exception("Failed to prepare set_candidate_preference query: " . (@$conn->error ?: 'query error'));
+    }
+    $stmt->bind_param("ssi", $preferredDate, $preferredTimeSlot, $enrollmentId);
+    $stmt->execute();
+    $affected = $stmt->affected_rows;
+    $stmt->close();
+    
+    if ($affected === 0) {
+        // We do a quick check to see if they're already batched or don't exist
+        $sqlCheck = "SELECT batch_id FROM enrollments WHERE id = ?";
+        $stmtCheck = $conn->prepare($sqlCheck);
+        if ($stmtCheck) {
+            $stmtCheck->bind_param("i", $enrollmentId);
+            $stmtCheck->execute();
+            $res = $stmtCheck->get_result();
+            if ($row = $res->fetch_assoc()) {
+                if ($row['batch_id'] !== null) {
+                    throw new Exception("Candidate is already assigned to a batch. Cannot change preference.");
+                }
+            }
+        }
+    }
+}

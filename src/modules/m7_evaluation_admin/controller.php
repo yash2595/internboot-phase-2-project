@@ -166,7 +166,9 @@ function m7_handle_request(mysqli $conn): void
             $capacity=require_positive_int($body['capacity']??null,'capacity');
             $name=trim((string)($body['batch_number']??('BATCH-'.date('Ymd-His'))));
             $assessmentId=!empty($body['assessment_id']) ? require_positive_int($body['assessment_id'],'assessment_id') : 0;
-            $data=create_batch($conn,$name,$assessmentId,$date,$capacity);
+            $startTime = !empty($body['start_time']) ? trim((string)$body['start_time']) : null;
+            $endTime = !empty($body['end_time']) ? trim((string)$body['end_time']) : null;
+            $data=create_batch($conn,$name,$assessmentId,$date,$capacity,$startTime,$endTime);
             create_admin_log($conn,$_SESSION['user_id']??null,'create_batch',json_encode($data));
             send_json_response('success','Batch and exam slots created successfully.',$data,201);
 

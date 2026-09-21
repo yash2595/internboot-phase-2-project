@@ -442,7 +442,7 @@ function verify_certificate(mysqli $conn, string $certificateNumber): ?array
       WHERE ce.certificate_number=? LIMIT 1",'s',[$certificateNumber]);
 }
 
-function create_batch(mysqli $conn, string $batchNumber, int $assessmentId, string $examDate, int $capacity): array
+function create_batch(mysqli $conn, string $batchNumber, int $assessmentId, string $examDate, int $capacity, ?string $startTime = null, ?string $endTime = null): array
 {
     $batchNumber=trim($batchNumber);
     if($batchNumber==='' || strlen($batchNumber)>50) throw new InvalidArgumentException('Batch name must be between 1 and 50 characters.');

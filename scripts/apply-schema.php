@@ -140,7 +140,9 @@ foreach ($statements as $stmt) {
     } catch (Exception $e) {
         $msg = $e->getMessage();
         $benign = stripos($msg, 'Duplicate entry') !== false
-               || stripos($msg, 'already exists') !== false;
+               || stripos($msg, 'already exists') !== false
+               || stripos($msg, 'Duplicate column') !== false
+               || stripos($msg, 'Duplicate key') !== false;
         if (!$benign) {
             echo "[WARN] Exception: {$msg}\n";
             echo "       " . substr(str_replace(["\n", "\r"], ' ', $stmtNoComments), 0, 70) . "\n";

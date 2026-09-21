@@ -513,3 +513,12 @@ CREATE TABLE IF NOT EXISTS `certificate_verification_attempts` (
   INDEX `idx_cert_verif_ip` (`ip_address`),
   INDEX `idx_cert_verif_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- M5 preference batching migration
+-- ----------------------------------------------------------------------------
+ALTER TABLE `enrollments` 
+  ADD COLUMN `preferred_date` DATE NULL COMMENT 'Candidate preferred exam date (Saturday or Sunday)',
+  ADD COLUMN `preferred_time_slot` VARCHAR(50) NULL COMMENT 'Candidate preferred time slot (e.g. 10:00:00-11:00:00)';
+
+ALTER TABLE `enrollments` ADD INDEX `idx_pref` (`preferred_date`, `preferred_time_slot`);

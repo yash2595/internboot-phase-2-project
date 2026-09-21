@@ -98,9 +98,10 @@ function check_and_create_batch(int $assessmentId, mysqli $conn, ?int $customThr
 
         // Determine next weekend exam dates
         $weekends = calculate_next_weekend_dates();
+        
+        // Use Saturday by default for automated non-preference batches
+        $examDate = $weekends['saturday'];
 
-        // Dynamic slot configuration: 2 slots per day, 4 total slots across weekend
-        // Minimum 50 seats per slot, or scaled to ensure capacity >= batch threshold
         // Fetch Assessment duration
         $stmt = $conn->prepare("SELECT duration_minutes FROM assessments WHERE id = ?");
         $stmt->bind_param('i', $assessmentId);
@@ -109,65 +110,33 @@ function check_and_create_batch(int $assessmentId, mysqli $conn, ?int $customThr
         $stmt->close();
         $duration = (int)($assData['duration_minutes'] ?? 60);
 
-        // Fetch Grace Period and Capacity from settings
+        // Fetch Grace Period from settings
         $grace = (int)(get_setting_value('slot_grace_minutes', $conn) ?? 30);
-        $slotCapacity = (int)(get_setting_value('slot_capacity_floor', $conn) ?? 50);
-        $slotCapacity = max($slotCapacity, (int)ceil($threshold / 4)); // Still scale up if threshold is huge
-
         $totalMinutes = $duration + $grace;
 
-        // Fetch start times from settings or use defaults
-        $startTime1 = get_setting_value('slot_start_time_1', $conn) ?? '10:00:00';
-        $startTime2 = get_setting_value('slot_start_time_2', $conn) ?? '14:00:00';
+        // Fetch start time from settings or use defaults
+        $startTime = get_setting_value('slot_start_time_1', $conn) ?? '10:00:00';
+        $endTime = date('H:i:s', strtotime($startTime) + ($totalMinutes * 60));
 
-        $end1 = date('H:i:s', strtotime($startTime1) + ($totalMinutes * 60));
-        $end2 = date('H:i:s', strtotime($startTime2) + ($totalMinutes * 60));
-
-        $slotTimings = [
-            ['start' => $startTime1, 'end' => $end1, 'capacity' => $slotCapacity],
-            ['start' => $startTime2, 'end' => $end2, 'capacity' => $slotCapacity],
-        ];
+        // Capacity is exactly the number of assigned enrollments
+        $slotCapacity = count($enrollmentIds);
 
         $createdSchedules = [];
 
-        // 1. Saturday Schedule & Slots
-        $satScheduleId = insert_exam_schedule($batchId, $weekends['saturday'], $conn);
-        $satSlots = [];
-        foreach ($slotTimings as $slot) {
-            $slotId = insert_exam_slot($satScheduleId, $slot['start'], $slot['end'], $slot['capacity'], $conn);
-            $satSlots[] = [
-                'slot_id' => $slotId,
-                'start_time' => $slot['start'],
-                'end_time' => $slot['end'],
-                'capacity' => $slot['capacity'],
-                'seats_remaining' => $slot['capacity']
-            ];
-        }
-        $createdSchedules[] = [
-            'schedule_id' => $satScheduleId,
-            'exam_date' => $weekends['saturday'],
-            'day' => 'Saturday',
-            'slots' => $satSlots
-        ];
+        $scheduleId = insert_exam_schedule($batchId, $examDate, $conn);
+        $slotId = insert_exam_slot($scheduleId, $startTime, $endTime, $slotCapacity, $conn);
 
-        // 2. Sunday Schedule & Slots
-        $sunScheduleId = insert_exam_schedule($batchId, $weekends['sunday'], $conn);
-        $sunSlots = [];
-        foreach ($slotTimings as $slot) {
-            $slotId = insert_exam_slot($sunScheduleId, $slot['start'], $slot['end'], $slot['capacity'], $conn);
-            $sunSlots[] = [
-                'slot_id' => $slotId,
-                'start_time' => $slot['start'],
-                'end_time' => $slot['end'],
-                'capacity' => $slot['capacity'],
-                'seats_remaining' => $slot['capacity']
-            ];
-        }
         $createdSchedules[] = [
-            'schedule_id' => $sunScheduleId,
-            'exam_date' => $weekends['sunday'],
-            'day' => 'Sunday',
-            'slots' => $sunSlots
+            'schedule_id' => $scheduleId,
+            'exam_date' => $examDate,
+            'day' => 'Saturday',
+            'slots' => [[
+                'slot_id' => $slotId,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'capacity' => $slotCapacity,
+                'seats_remaining' => $slotCapacity
+            ]]
         ];
 
         // Commit batch and scheduling transaction

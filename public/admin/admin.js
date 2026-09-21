@@ -1103,19 +1103,17 @@
     const batchDateMessage = $("#batchDateMessage");
     if (batchDate && !batchDate.dataset.bound) {
       batchDate.dataset.bound = "1";
-      const validateBatchDate = () => {
-        if (!batchDate.value) return false;
-        const d = new Date(`${batchDate.value}T00:00:00`);
-        const valid = !Number.isNaN(d.getTime()) && (d.getDay() === 0 || d.getDay() === 6);
-        if (batchDateMessage) {
-          batchDateMessage.textContent = valid
-            ? "Weekend date selected."
-            : "Assessment can be scheduled only on Saturday or Sunday.";
-        }
-        return valid;
-      };
-      batchDate.addEventListener("change", validateBatchDate);
-      batchDate.addEventListener("input", validateBatchDate);
+      if (typeof flatpickr !== 'undefined') {
+        flatpickr("#batchDate", {
+          minDate: "today",
+          disable: [(date) => date.getDay() !== 0 && date.getDay() !== 6],
+          dateFormat: "Y-m-d",
+          onChange: function(selectedDates, dateStr) {
+            const msg = document.getElementById("batchDateMessage");
+            if (msg) msg.textContent = "Weekend date selected.";
+          }
+        });
+      }
     }
 
     const form = $("#createBatchForm");
@@ -1125,7 +1123,10 @@
         e.preventDefault();
         const name = $("#batchName")?.value.trim(),
           date = $("#batchDate")?.value,
-          capacity = Number($("#batchCapacity")?.value || 0);
+          capacity = Number($("#batchCapacity")?.value || 0),
+          start_time = $("#batchStartTime")?.value,
+          end_time = $("#batchEndTime")?.value;
+          
         const selectedDate = date ? new Date(`${date}T00:00:00`) : null;
         const isWeekend =
           selectedDate &&
@@ -1140,14 +1141,21 @@
           );
           return;
         }
+        
+        let payload = { batch_number: name, exam_date: date, capacity };
+        if (start_time) payload.start_time = start_time + ':00';
+        if (end_time) payload.end_time = end_time + ':00';
+        
         try {
           await api("batch", {
             method: "POST",
-            body: { batch_number: name, exam_date: date, capacity },
+            body: payload,
           });
           notify("Batch created successfully.");
           form.reset();
           $("#batchCapacity").value = 100;
+          if ($("#batchStartTime")) $("#batchStartTime").value = "10:00";
+          if ($("#batchEndTime")) $("#batchEndTime").value = "11:00";
           await loadBatches();
         } catch (err) {
           notify(err.message, true);

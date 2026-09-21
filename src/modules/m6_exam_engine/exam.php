@@ -1459,7 +1459,7 @@ document.addEventListener(
 
 document.addEventListener(
     "visibilitychange",
-    function () {
+    async function () {
 
         if (examSubmitted) {
             return;
@@ -1568,14 +1568,6 @@ async function syncCurrentAnswers() {
             }
         } catch (err) {
             console.error("Autosave network error", err);
-        }
-    }
-} catch (error) {
-
-            console.warn(
-                "Autosave connection error:",
-                error
-            );
         }
     }
 }

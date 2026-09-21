@@ -114,6 +114,14 @@
                         <label class="block text-sm text-slate-700 font-medium">Max Capacity
                             <input id="batchCapacity" required type="number" min="100" value="100" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2">
                         </label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="block text-sm text-slate-700 font-medium">Start Time
+                                <input id="batchStartTime" type="time" value="10:00" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2">
+                            </label>
+                            <label class="block text-sm text-slate-700 font-medium">End Time
+                                <input id="batchEndTime" type="time" value="11:00" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2">
+                            </label>
+                        </div>
                         <button type="submit" class="w-full rounded-lg bg-intern-blue px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700">Create Batch</button>
                     </form>
                 </div>
@@ -155,6 +163,7 @@
     </main>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

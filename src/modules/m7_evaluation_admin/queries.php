@@ -475,8 +475,6 @@ function create_batch(mysqli $conn, string $batchNumber, int $assessmentId, stri
     if($duplicate) throw new InvalidArgumentException('A batch with this name already exists.');
 
     $duration=max(1,(int)$assessment['duration_minutes']);
-    $firstCapacity=(int)ceil($capacity/2);
-    $secondCapacity=$capacity-$firstCapacity;
 
     $conn->begin_transaction();
     try{
@@ -486,19 +484,15 @@ function create_batch(mysqli $conn, string $batchNumber, int $assessmentId, stri
         $stmt=$conn->prepare("INSERT INTO exam_schedules(batch_id,exam_date,status) VALUES(?,?,'scheduled')");
         $stmt->bind_param('is',$batchId,$examDate); $stmt->execute(); $scheduleId=$stmt->insert_id; $stmt->close();
 
-        $start1='10:00:00';
-        $end1=(new DateTime('2000-01-01 10:00:00'))->modify("+{$duration} minutes")->format('H:i:s');
-        $start2=(new DateTime('2000-01-01 '.$end1))->modify('+30 minutes')->format('H:i:s');
-        $end2=(new DateTime('2000-01-01 '.$start2))->modify("+{$duration} minutes")->format('H:i:s');
+        $start1 = $startTime ?? '10:00:00';
+        $end1 = $endTime ?? (new DateTime('2000-01-01 ' . $start1))->modify("+{$duration} minutes")->format('H:i:s');
 
         $stmt=$conn->prepare('INSERT INTO exam_slots(exam_schedule_id,start_time,end_time,capacity,seats_remaining) VALUES(?,?,?,?,?)');
-        $stmt->bind_param('issii',$scheduleId,$start1,$end1,$firstCapacity,$firstCapacity); $stmt->execute(); $slot1=$stmt->insert_id;
-        $stmt->bind_param('issii',$scheduleId,$start2,$end2,$secondCapacity,$secondCapacity); $stmt->execute(); $slot2=$stmt->insert_id; $stmt->close();
+        $stmt->bind_param('issii',$scheduleId,$start1,$end1,$capacity,$capacity); $stmt->execute(); $slot1=$stmt->insert_id; $stmt->close();
 
         $conn->commit();
         return ['batch_id'=>$batchId,'batch_number'=>$batchNumber,'assessment_id'=>$assessmentId,'assessment_title'=>$assessment['title'],'schedule_id'=>$scheduleId,'exam_date'=>$examDate,'capacity'=>$capacity,'slots'=>[
-            ['slot_id'=>$slot1,'start_time'=>$start1,'end_time'=>$end1,'capacity'=>$firstCapacity],
-            ['slot_id'=>$slot2,'start_time'=>$start2,'end_time'=>$end2,'capacity'=>$secondCapacity]
+            ['slot_id'=>$slot1,'start_time'=>$start1,'end_time'=>$end1,'capacity'=>$capacity]
         ]];
     }catch(Throwable $e){$conn->rollback();throw $e;}
 }

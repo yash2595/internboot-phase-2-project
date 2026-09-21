@@ -15,6 +15,7 @@ try {
      * 1. Candidate authentication
      */
     $candidateId = require_candidate_auth($conn);
+    require_csrf();
 
     /*
      * 2. Only POST is allowed.

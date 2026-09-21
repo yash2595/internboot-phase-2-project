@@ -15,7 +15,7 @@ $pageTitle = 'Register — InternBoot';
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= htmlspecialchars($pageTitle) ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-<link rel="stylesheet" href="/assets/css/auth.css">
+<link rel="stylesheet" href="assets/css/auth.css">
 </head>
 <body>
 
@@ -23,7 +23,7 @@ $pageTitle = 'Register — InternBoot';
   <div class="ib-auth-grid">
 
     <section class="ib-brand-panel">
-      <img src="/assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-brand-logo">
+      <img src="assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-brand-logo">
       <h2 class="ib-brand-title">Launch your career with InternBoot</h2>
       <p class="ib-brand-sub">Register, take the verified assessment, and earn your official Level 1–5 certificate</p>
       <ul class="ib-brand-features">
@@ -35,7 +35,7 @@ $pageTitle = 'Register — InternBoot';
 
     <section class="ib-form-panel">
       <div class="ib-auth-card">
-        <img src="/assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-mobile-logo">
+        <img src="assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-mobile-logo">
 
         <h1 class="ib-auth-title">Welcome Back to <span class="ib-gradient-text">InternBoot</span> </h1>
         <p class="ib-auth-sub text-center">Register to start your journey</p>
@@ -99,7 +99,7 @@ $pageTitle = 'Register — InternBoot';
           <button type="button" id="resendOtpBtn" class="ib-btn-primary" style="background: transparent; color: var(--ib-blue); margin-top: 12px; box-shadow: none;">Resend Code</button>
         </form>
 
-        <p class="ib-auth-footer">Already registered? <a href="/login.php">Log in</a></p>
+        <p class="ib-auth-footer">Already registered? <a href="login.php">Log in</a></p>
       </div>
     </section>
 
@@ -107,6 +107,6 @@ $pageTitle = 'Register — InternBoot';
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-<script src="/assets/js/auth.js"></script>
+<script src="assets/js/auth.js"></script>
 </body>
 </html>

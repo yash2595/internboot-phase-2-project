@@ -74,8 +74,8 @@ function get_unbatched_eligible_enrollments(int $assessmentId, int $limit, mysql
  * Inserts a new batch record into the batches table.
  */
 function insert_batch(string $batchNumber, int $assessmentId, mysqli $conn): int {
-    $sql = "INSERT INTO batches (batch_number, assessment_id, creation_date, created_at) 
-            VALUES (?, ?, NOW(), NOW())";
+    $sql = "INSERT INTO batches (batch_number, assessment_id) 
+            VALUES (?, ?)";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         throw new Exception("Failed to prepare batch insert query: " . (@$conn->error ?: 'query error'));

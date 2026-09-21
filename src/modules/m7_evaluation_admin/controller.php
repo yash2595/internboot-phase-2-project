@@ -26,10 +26,14 @@ function m7_handle_request(mysqli $conn): void
     if ($method === 'GET') {
         switch ($action) {
             case 'dashboard': send_json_response('success','Dashboard data loaded',m7_dashboard($conn));
+            case 'ai-status': 
+                require_once __DIR__ . '/../m1_ai_qbank/controller.php';
+                handle_ai_status_request($conn);
+                break;
             case 'candidates': send_json_response('success','Candidates loaded',['candidates'=>m7_candidates($conn)]);
             case 'candidate':
                 $id=require_positive_int($_GET['id']??null,'id');
-                $data=get_candidate($conn,$id);
+                $data=m7_get_candidate($conn,$id);
                 if(!$data) throw new InvalidArgumentException('Candidate not found.');
                 send_json_response('success','Candidate loaded',$data);
             case 'results': send_json_response('success','Results loaded',['results'=>m7_results($conn)]);
@@ -195,8 +199,41 @@ function m7_handle_request(mysqli $conn): void
             $value=trim((string)($body['value']??''));
             if($key==='' || strlen($key)>100) throw new InvalidArgumentException('Invalid setting key.');
             if(strlen($value)>255) throw new InvalidArgumentException('Setting value is too long.');
+
+            // Server-side validation for known business-rule keys.
+            // Rejects out-of-range values even if the client UI is bypassed.
+            $knownBoolKeys = ['negative_marking_enabled', 'retake_allowed'];
+            if (in_array($key, $knownBoolKeys, true)) {
+                if ($value !== '0' && $value !== '1') {
+                    throw new InvalidArgumentException("Setting '{$key}' must be '0' or '1'.");
+                }
+            } elseif ($key === 'batch_threshold') {
+                if (!ctype_digit($value) || (int)$value < 1) {
+                    throw new InvalidArgumentException("batch_threshold must be a positive integer (>= 1).");
+                }
+            } elseif ($key === 'exam_fee') {
+                if (!is_numeric($value) || (float)$value <= 0) {
+                    throw new InvalidArgumentException("exam_fee must be a positive number.");
+                }
+            } elseif ($key === 'min_certificate_level') {
+                $lvl = (int)$value;
+                if (!ctype_digit(ltrim($value, '0') ?: '0') || $lvl < 1 || $lvl > 5) {
+                    throw new InvalidArgumentException("min_certificate_level must be an integer between 1 and 5.");
+                }
+            } elseif ($key === 'min_certificate_percentage') {
+                if (!is_numeric($value) || (float)$value < 0 || (float)$value > 100) {
+                    throw new InvalidArgumentException("min_certificate_percentage must be between 0 and 100.");
+                }
+            } elseif ($key === 'negative_marking_value') {
+                if (!is_numeric($value) || (float)$value < 0 || (float)$value > 1) {
+                    throw new InvalidArgumentException("negative_marking_value must be between 0 and 1.");
+                }
+            }
+
             update_setting($conn,$key,$value);
+            create_admin_log($conn,$_SESSION['user_id']??null,'update_setting',json_encode(['key'=>$key,'value'=>$value]));
             send_json_response('success','Setting saved successfully.');
+
 
         case 'profile':
             $name=trim((string)($body['full_name']??''));

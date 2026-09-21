@@ -282,7 +282,7 @@ if ($searched) {
         <p class="verify-sub">Verify the authenticity of credentials issued by the InternBoot Assessment Engine.</p>
       </div>
 
-      <form method="GET" action="/verify-certificate.php" class="row g-2">
+      <form method="GET" action="verify-certificate.php" class="row g-2">
         <div class="col-sm-8">
           <input type="text"
                  name="certificate_number"
@@ -346,7 +346,7 @@ if ($searched) {
   </div>
 
   <footer>
-    &copy; <?= date('Y') ?> InternBoot Platform. All rights reserved. &bull; <a href="/login.php" class="text-secondary text-decoration-none">Login</a>
+    &copy; <?= date('Y') ?> InternBoot Platform. All rights reserved. &bull; <a href="login.php" class="text-secondary text-decoration-none">Login</a>
   </footer>
 </body>
 </html>

@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `candidates` (
   `user_id` BIGINT UNSIGNED NOT NULL UNIQUE,
   `full_name` VARCHAR(150) NOT NULL,
   `phone` VARCHAR(20) NOT NULL UNIQUE,
-  `profile_details` TEXT DEFAULT NULL COMMENT 'JSON/Text for education, skills, resume link',
+  `profile_details` TEXT DEFAULT NULL COMMENT 'JSON/Text profile metadata; presence alone drives dashboard Verified status flag',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_candidates_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS `batches` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `batch_number` VARCHAR(50) NOT NULL UNIQUE,
   `assessment_id` BIGINT UNSIGNED NOT NULL,
-  `creation_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_batches_assessment` FOREIGN KEY (`assessment_id`) REFERENCES `assessments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,

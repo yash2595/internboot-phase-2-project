@@ -229,12 +229,14 @@ try {
 
     $questions = [];
 
-    foreach ($fetchedQuestions as $question) {
+    $questions = [];
+    $questionIds = array_column($fetchedQuestions, 'question_id');
 
-        $questionId = (int) $question['question_id'];
-
+    if (!empty($questionIds)) {
+        $inClause = implode(',', array_fill(0, count($questionIds), '?'));
+        
         /*
-         * 8. Get options.
+         * 8. Batch get options.
          *
          * IMPORTANT:
          * is_correct is NEVER returned.
@@ -242,95 +244,87 @@ try {
         $optionSql = "
             SELECT
                 id AS option_id,
-                option_text
+                option_text,
+                question_id
             FROM options
-            WHERE question_id = ?
-            ORDER BY MD5(CONCAT(?, ':', id))
+            WHERE question_id IN ($inClause)
         ";
 
         $optionStmt = $conn->prepare($optionSql);
-
         if (!$optionStmt) {
             throw new Exception('Failed to prepare option query');
         }
-
-        $optionStmt->bind_param(
-            "ii",
-            $questionId,
-            $attemptId
-        );
-
+        
+        $types = str_repeat('i', count($questionIds));
+        $optionStmt->bind_param($types, ...$questionIds);
         $optionStmt->execute();
-
         $optionResult = $optionStmt->get_result();
 
-        $options = [];
-
-        while ($option = $optionResult->fetch_assoc()) {
-
-            $options[] = [
-                'option_id' => (int) $option['option_id'],
-                'option_text' => $option['option_text']
+        $allOptions = [];
+        while ($opt = $optionResult->fetch_assoc()) {
+            $allOptions[$opt['question_id']][] = [
+                'option_id' => (int)$opt['option_id'],
+                'option_text' => $opt['option_text']
             ];
         }
-
         $optionStmt->close();
 
+        // Sort options per question using the same logic as ORDER BY MD5(CONCAT(?, ':', id))
+        foreach ($allOptions as $qid => &$opts) {
+            usort($opts, function($a, $b) use ($attemptId) {
+                $hashA = md5($attemptId . ':' . $a['option_id']);
+                $hashB = md5($attemptId . ':' . $b['option_id']);
+                return strcmp($hashA, $hashB);
+            });
+        }
+        unset($opts);
+
         /*
-         * 9. Load previously saved answer.
+         * 9. Batch load previously saved answers.
          *
          * Only selected_option_id is returned.
          * is_correct remains server-side for M7.
          */
         $answerSql = "
             SELECT
+                question_id,
                 selected_option_id
             FROM answers
             WHERE attempt_id = ?
-              AND question_id = ?
-            LIMIT 1
+              AND question_id IN ($inClause)
         ";
 
         $answerStmt = $conn->prepare($answerSql);
-
         if (!$answerStmt) {
             throw new Exception('Failed to prepare answer query');
         }
 
-        $answerStmt->bind_param(
-            "ii",
-            $attemptId,
-            $questionId
-        );
-
+        $answerTypes = 'i' . $types;
+        $answerParams = array_merge([$attemptId], $questionIds);
+        $answerStmt->bind_param($answerTypes, ...$answerParams);
         $answerStmt->execute();
-
         $answerResult = $answerStmt->get_result();
 
-        $savedAnswer = $answerResult->fetch_assoc();
-
-        $answerStmt->close();
-
-        $selectedOptionId = null;
-
-        if (
-            $savedAnswer &&
-            $savedAnswer['selected_option_id'] !== null
-        ) {
-            $selectedOptionId = (int) $savedAnswer['selected_option_id'];
+        $allAnswers = [];
+        while ($ans = $answerResult->fetch_assoc()) {
+            $allAnswers[$ans['question_id']] = $ans['selected_option_id'] !== null ? (int)$ans['selected_option_id'] : null;
         }
+        $answerStmt->close();
 
         /*
          * 10. Build question response.
          */
-        $questions[] = [
-            'question_id' => $questionId,
-            'question_text' => $question['question_text'],
-            'type' => $question['type'],
-            'difficulty' => $question['difficulty'],
-            'options' => $options,
-            'selected_option_id' => $selectedOptionId
-        ];
+        foreach ($fetchedQuestions as $question) {
+            $questionId = (int) $question['question_id'];
+            $questions[] = [
+                'question_id' => $questionId,
+                'question_text' => $question['question_text'],
+                'type' => $question['type'],
+                'difficulty' => $question['difficulty'],
+                'options' => $allOptions[$questionId] ?? [],
+                'selected_option_id' => $allAnswers[$questionId] ?? null
+            ];
+        }
     }
 
     /*

@@ -647,8 +647,7 @@
             <div><p class="text-slate-400">Payment</p><p>${badge(label(c.payment_status), typeForStatus(c.payment_status === "success" ? "success" : c.payment_status))}</p></div>
             <div><p class="text-slate-400">Enrollment</p><p>${badge(c.enrollment_status === "eligible" ? "Enrolled" : "Pending", c.enrollment_status === "eligible" ? "green" : "amber")}</p></div>
             <div><p class="text-slate-400">Assessment</p><p class="font-medium text-slate-900">${escapeHtml(c.assessment_title || "—")}</p></div>
-          </div>
-          <div class="mt-5 rounded-xl bg-slate-50 p-4 text-sm"><p class="font-medium text-slate-700">Profile</p><pre class="mt-2 whitespace-pre-wrap text-xs text-slate-500">${escapeHtml(c.profile_details || "No profile details available.")}</pre></div>`,
+          </div>`,
           );
         } catch (e) {
           notify(e.message, true);
@@ -1667,6 +1666,15 @@
           `;
 
           modal("Generate Questions with AI", html);
+
+          api("ai-status").then(res => {
+            if (res && res.data && !res.data.configured) {
+              const banner = document.createElement("div");
+              banner.className = "mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 font-medium border border-amber-200";
+              banner.innerHTML = "AI Provider: Not Configured";
+              $("#generateAiForm").prepend(banner);
+            }
+          }).catch(console.error);
 
           const form = $("#generateAiForm");
           form.onsubmit = async (e) => {

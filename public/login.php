@@ -44,14 +44,14 @@ $pageTitle = 'Log In — InternBoot';
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= htmlspecialchars($pageTitle) ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-<link rel="stylesheet" href="/assets/css/auth.css">
+<link rel="stylesheet" href="assets/css/auth.css">
 </head>
 <body>
 
 <main class="ib-auth-page-rich">
   <div class="ib-auth-card-full">
 
-    <img src="/assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-form-logo">
+    <img src="assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-form-logo">
 
     <h1 class="ib-auth-title text-center">Welcome back to <span class="ib-gradient-text">InternBoot</span></h1>
     <p class="ib-auth-sub text-center">Log in to continue your assessment journey.</p>
@@ -80,7 +80,7 @@ $pageTitle = 'Log In — InternBoot';
       <div class="ib-form-row">
         <div class="d-flex justify-content-between align-items-center mb-1">
             <label for="password" class="mb-0">Password</label>
-            <a href="/forgot-password.php" class="text-decoration-none" style="font-size: 0.85rem; color: #1E4FD1;">Forgot password?</a>
+            <a href="forgot-password.php" class="text-decoration-none" style="font-size: 0.85rem; color: #1E4FD1;">Forgot password?</a>
         </div>
         <div class="ib-password-wrap">
           <input type="password" class="ib-input" id="password" name="password" autocomplete="current-password" required>
@@ -93,11 +93,11 @@ $pageTitle = 'Log In — InternBoot';
       <button type="submit" class="ib-btn-primary" id="loginBtn">Log in</button>
     </form>
 
-    <p class="ib-auth-footer text-center">New to InternBoot? <a href="/register.php">Register now</a></p>
+    <p class="ib-auth-footer text-center">New to InternBoot? <a href="register.php">Register now</a></p>
   </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-<script src="/assets/js/auth.js"></script>
+<script src="assets/js/auth.js"></script>
 </body>
 </html>

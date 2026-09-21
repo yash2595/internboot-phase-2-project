@@ -12,6 +12,7 @@ if (file_exists(dirname(__DIR__, 3) . '/src/core/bootstrap.php')) {
 try {
 
     $candidateId = require_candidate_auth($conn);
+    require_csrf();
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         send_json_response('error', 'POST request required', null, 405);

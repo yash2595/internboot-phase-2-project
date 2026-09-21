@@ -12,20 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 require_once __DIR__ . '/../../src/core/candidate_resolver.php';
 
-function get_candidate(int $candidateId): ?array {
-    global $conn;
-    $stmt = $conn->prepare(
-        'SELECT c.id, c.user_id, c.full_name, c.phone, c.profile_details, c.created_at, u.email
-         FROM candidates c
-         LEFT JOIN users u ON u.id = c.user_id
-         WHERE c.id = ? LIMIT 1'
-    );
-    $stmt->bind_param('i', $candidateId);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    return $row ?: null;
-}
+
 
 function get_assessment(int $assessmentId): ?array {
     global $conn;
@@ -369,9 +356,7 @@ try {
             'name' => $candidate['full_name'],
             'email' => $candidate['email'] ?? '—',
             'phone' => $candidate['phone'] ?: '—',
-            'dateOfBirth' => $profile['dateOfBirth'] ?? $profile['date_of_birth'] ?? '—',
-            'gender' => $profile['gender'] ?? '—',
-            'address' => $profile['address'] ?? '—',
+
             'candidateId' => 'IB-CAN-' . $candidate['id'],
             'registrationDate' => !empty($candidate['created_at']) ? date('d M Y', strtotime($candidate['created_at'])) : '—',
             'level' => $resultRow && $resultRow['level_assigned'] !== null ? 'Level ' . $resultRow['level_assigned'] : '—',

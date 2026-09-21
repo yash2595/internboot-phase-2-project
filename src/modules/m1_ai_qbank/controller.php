@@ -118,4 +118,23 @@ function handle_generate_questions_request(array $input, mysqli $conn): void {
         }
     }
 }
+/**
+ * Controller handler for AI status check.
+ */
+function handle_ai_status_request(mysqli $conn): void {
+    require_admin_access($conn);
+    
+    $provider = strtolower(trim((string)env_value('AI_PROVIDER', 'gemini')));
+    $configured = false;
+    
+    if ($provider === 'gemini') {
+        $apiKey = trim((string)env_value('GEMINI_API_KEY', ''));
+        $configured = $apiKey !== '' && $apiKey !== 'YOUR_GEMINI_API_KEY';
+    } elseif ($provider === 'openai') {
+        $apiKey = trim((string)env_value('OPENAI_API_KEY', ''));
+        $configured = $apiKey !== '' && $apiKey !== 'YOUR_OPENAI_API_KEY';
+    }
+    
+    send_json_response('success', 'AI status retrieved', ['provider' => $provider, 'configured' => $configured], 200);
+}
 ?>

@@ -111,7 +111,7 @@ function resolve_candidate_id(array $input = []): int {
     }
 
     // FAIL-SAFE GUARD: Require a dedicated secret to prevent accidental impersonation if APP_ENV is misconfigured
-    $expectedSecret = $_ENV['M4_DEMO_SECRET'] ?? getenv('M4_DEMO_SECRET') ?: '';
+    $expectedSecret = (string)env_value('M4_DEMO_SECRET', '');
     $providedSecret = $input['demo_secret'] ?? $_GET['demo_secret'] ?? '';
 
     if (

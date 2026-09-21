@@ -99,7 +99,7 @@ function get_candidates(mysqli $conn): array
       ORDER BY c.created_at DESC");
 }
 
-function get_candidate(mysqli $conn, int $candidateId): ?array
+function m7_get_candidate(mysqli $conn, int $candidateId): ?array
 {
     return q_one($conn, "SELECT c.id,c.full_name,c.phone,c.profile_details,u.email,u.created_at,
         COALESCE((SELECT p.status FROM payments p WHERE p.candidate_id=c.id ORDER BY p.id DESC LIMIT 1),'pending') payment_status,
@@ -480,7 +480,7 @@ function create_batch(mysqli $conn, string $batchNumber, int $assessmentId, stri
 
     $conn->begin_transaction();
     try{
-        $stmt=$conn->prepare('INSERT INTO batches(batch_number,assessment_id,creation_date) VALUES(?,?,NOW())');
+        $stmt=$conn->prepare('INSERT INTO batches(batch_number,assessment_id) VALUES(?,?)');
         $stmt->bind_param('si',$batchNumber,$assessmentId); $stmt->execute(); $batchId=$stmt->insert_id; $stmt->close();
 
         $stmt=$conn->prepare("INSERT INTO exam_schedules(batch_id,exam_date,status) VALUES(?,?,'scheduled')");

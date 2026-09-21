@@ -23,12 +23,12 @@ $pageTitle = 'Reset Password — InternBoot';
 <meta name="referrer" content="no-referrer">
 <title><?= htmlspecialchars($pageTitle) ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-<link rel="stylesheet" href="/assets/css/auth.css">
+<link rel="stylesheet" href="assets/css/auth.css">
 </head>
 <body>
 <main class="ib-auth-page-rich">
   <div class="ib-auth-card-full">
-    <img src="/assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-form-logo">
+    <img src="assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-form-logo">
     <h1 class="ib-auth-title text-center">Create new <span class="ib-gradient-text">Password</span></h1>
     <p class="ib-auth-sub text-center">Enter your new password below.</p>
 
@@ -58,6 +58,6 @@ $pageTitle = 'Reset Password — InternBoot';
   </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-<script src="/assets/js/auth.js"></script>
+<script src="assets/js/auth.js"></script>
 </body>
 </html>

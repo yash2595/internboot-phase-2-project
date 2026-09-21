@@ -1548,7 +1548,8 @@ async function syncCurrentAnswers() {
                 {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                     },
                     body: JSON.stringify({
                         attempt_id: attemptId,
@@ -2017,8 +2018,8 @@ async function saveAnswer(
                     method: "POST",
 
                     headers: {
-                        "Content-Type":
-                            "application/json"
+                        "Content-Type": "application/json",
+                        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                     },
 
                     body: JSON.stringify({
@@ -2186,8 +2187,8 @@ async function submitExam(
                     method: "POST",
 
                     headers: {
-                        "Content-Type":
-                            "application/json"
+                        "Content-Type": "application/json",
+                        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                     },
 
                     body: JSON.stringify({

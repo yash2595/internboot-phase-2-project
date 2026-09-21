@@ -96,7 +96,7 @@ function complete_registration_with_otp(mysqli $conn, string $email, string $otp
         return ['success' => false, 'message' => 'Invalid or expired verification code.', 'code' => 400];
     }
 
-    if (!hash_equals((string)$pending['otp_code'], (string)$otp)) {
+    if (!hash_equals((string)$pending['otp_hash'], hash_otp($otp))) {
         return ['success' => false, 'message' => 'Invalid or expired verification code.', 'code' => 400];
     }
 
@@ -113,7 +113,7 @@ function complete_registration_with_otp(mysqli $conn, string $email, string $otp
         return $result;
     }
 
-    mark_pending_registration_used($conn, $id);
+    delete_pending_registration($conn, $id);
 
     return ['success' => true, 'user_id' => $result['user_id']];
 }

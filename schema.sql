@@ -379,7 +379,7 @@ CREATE TABLE IF NOT EXISTS `settings` (
 CREATE TABLE IF NOT EXISTS `email_verifications` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `email` VARCHAR(255) NOT NULL,
-  `otp_code` VARCHAR(10) NOT NULL,
+  `otp_hash` VARCHAR(64) NOT NULL,
   `full_name` VARCHAR(150) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
@@ -390,7 +390,7 @@ CREATE TABLE IF NOT EXISTS `email_verifications` (
   `expires_at` DATETIME NOT NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX `idx_email_verifications_email` (`email`),
-  INDEX `idx_email_verifications_lookup` (`email`, `otp_code`, `is_used`, `expires_at`)
+  INDEX `idx_email_verifications_lookup` (`email`, `is_used`, `expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks after table creation

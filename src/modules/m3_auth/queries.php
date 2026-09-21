@@ -181,19 +181,27 @@ function save_pending_registration(mysqli $conn, string $email, string $otp, str
     $del->execute();
     $del->close();
 
+    $otpHash = hash_otp($otp);
+
     $stmt = $conn->prepare(
-        'INSERT INTO email_verifications (email, otp_code, full_name, phone, password_hash, role, resend_count, expires_at)
+        'INSERT INTO email_verifications (email, otp_hash, full_name, phone, password_hash, role, resend_count, expires_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))'
     );
-    $stmt->bind_param('ssssssi', $email, $otp, $fullName, $phone, $passwordHash, $role, $resendCount);
+    $stmt->bind_param('ssssssi', $email, $otpHash, $fullName, $phone, $passwordHash, $role, $resendCount);
     $result = $stmt->execute();
     $stmt->close();
     return $result;
 }
 
 function find_latest_pending_verification(mysqli $conn, string $email): ?array {
+    // Lazy purge expired attempts
+    $purge = $conn->prepare('DELETE FROM email_verifications WHERE email = ? AND expires_at < NOW()');
+    $purge->bind_param('s', $email);
+    $purge->execute();
+    $purge->close();
+
     $stmt = $conn->prepare(
-        'SELECT id, email, otp_code, full_name, phone, password_hash, role, is_used, attempts, resend_count, expires_at, created_at,
+        'SELECT id, email, otp_hash, full_name, phone, password_hash, role, is_used, attempts, resend_count, expires_at, created_at,
                 TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_seconds,
                 (expires_at > NOW()) AS is_unexpired
          FROM email_verifications
@@ -222,8 +230,8 @@ function consume_verification_attempt(mysqli $conn, int $id): int {
     return $affected;
 }
 
-function mark_pending_registration_used(mysqli $conn, int $id): void {
-    $stmt = $conn->prepare('UPDATE email_verifications SET is_used = 1 WHERE id = ?');
+function delete_pending_registration(mysqli $conn, int $id): void {
+    $stmt = $conn->prepare('DELETE FROM email_verifications WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $stmt->close();

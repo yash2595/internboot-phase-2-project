@@ -63,7 +63,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start([
         'cookie_httponly' => true,
         'cookie_samesite' => 'Lax',
-        'cookie_secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        'cookie_secure' => is_request_https()
     ]);
 }
 
@@ -82,9 +82,7 @@ function send_security_headers(): void
 
     // Strict-Transport-Security: only over HTTPS in production
     $appEnv = function_exists('get_app_env') ? get_app_env() : 'production';
-    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
-        || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+    $isHttps = is_request_https();
 
     if ($appEnv === 'production' && $isHttps) {
         header('Strict-Transport-Security: max-age=31536000; includeSubDomains');

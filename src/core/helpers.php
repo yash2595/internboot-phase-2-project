@@ -281,3 +281,22 @@ function get_attempt_served_question_count(mysqli $conn, int $attemptId): int
     return $row ? (int)$row['cnt'] : 0;
 }
 
+/**
+ * Determine if the current request is served over HTTPS, checking direct connection
+ * and proxy headers.
+ */
+function is_request_https(): bool
+{
+    return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+        || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+}
+
+/**
+ * Generate a SHA-256 hash of an OTP using a server-side pepper.
+ */
+function hash_otp(string $otp): string
+{
+    $pepper = env_value('OTP_PEPPER', 'default_pepper_if_unset');
+    return hash('sha256', $otp . $pepper);
+}

@@ -175,7 +175,11 @@ function m7_handle_request(mysqli $conn): void
 
         case 'evaluate':
             $id=require_positive_int($body['attempt_id']??null,'attempt_id');
-            $data=evaluate_attempt($conn,$id,(bool)($body['generate_certificate']??false));
+            $forceRegrade=(bool)($body['force_regrade']??false);
+            // Certificate auto-issue is unconditional inside evaluate_attempt();
+            // eligibility is checked there against min_certificate_level/percentage settings.
+            $data=evaluate_attempt($conn,$id,true,$forceRegrade);
+            create_admin_log($conn,$_SESSION['user_id']??null,'evaluate_attempt_request',json_encode(['attempt_id'=>$id,'force_regrade'=>$forceRegrade]));
             send_json_response('success','Attempt evaluated successfully.',$data);
 
         case 'certificate':

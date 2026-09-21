@@ -107,23 +107,54 @@ function evaluate_attempt(mysqli $conn, int $attemptId, bool $generateCertificat
         $resultId=upsert_result($conn,$attemptId,$score,$percentage,(int)$level['level_number']);
         ensure_placement_record($conn,(int)$attempt['candidate_id'],$resultId);
 
-        $certificate=null;
-        if($generateCertificate){
-            $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 4);
-            $minCertPct = (float)(get_setting_value('min_certificate_percentage', $conn) ?? 40.0);
-            if ((int)$level['level_number'] <= $minCertLevel && $percentage >= $minCertPct) {
-                $certificate=upsert_certificate($conn,(int)$attempt['candidate_id'],$resultId,(int)$level['level_number']);
-            } else if ($forceRegrade && $existingResult) {
-                $existingCert = q_one($conn, 'SELECT * FROM certificates WHERE result_id=?', 'i', [$existingResult['id']]);
-                if ($existingCert) {
-                    create_admin_log($conn, $_SESSION['user_id'] ?? null, 're_grade_certificate_conflict', json_encode([
-                        'attempt_id' => $attemptId,
-                        'old_percentage' => (float)$existingResult['percentage'],
-                        'old_level' => (int)$existingResult['level_assigned'],
-                        'new_percentage' => $percentage,
-                        'new_level' => (int)$level['level_number']
-                    ]));
-                }
+        $certificate = null;
+        $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 4);
+        $minCertPct   = (float)(get_setting_value('min_certificate_percentage', $conn) ?? 40.0);
+        $isEligible   = ((int)$level['level_number'] <= $minCertLevel && $percentage >= $minCertPct);
+
+        if ($isEligible) {
+            // Check before upserting so we can distinguish a fresh issuance from
+            // a no-op idempotent call (both return the same array shape).
+            $certAlreadyExisted = (bool)q_one($conn, 'SELECT id FROM certificates WHERE result_id=?', 'i', [$resultId]);
+
+            // upsert_certificate() is idempotent: returns existing row if present,
+            // so re-evaluating the same attempt never creates duplicate cert rows.
+            $certificate = upsert_certificate(
+                $conn,
+                (int)$attempt['candidate_id'],
+                $resultId,
+                (int)$level['level_number']
+            );
+
+            if (!$certAlreadyExisted) {
+                // Freshly auto-issued — log with a distinct action label for audit.
+                create_admin_log(
+                    $conn,
+                    $_SESSION['user_id'] ?? null,
+                    'auto_generate_certificate',
+                    json_encode([
+                        'attempt_id'         => $attemptId,
+                        'result_id'          => $resultId,
+                        'certificate_id'     => $certificate['id'],
+                        'certificate_number' => $certificate['certificate_number'],
+                        'percentage'         => $percentage,
+                        'level'              => (int)$level['level_number'],
+                    ])
+                );
+            }
+        } elseif ($forceRegrade && $existingResult) {
+            // Re-grade dropped this candidate below the threshold.
+            // Certificate already issued (if any) is NOT revoked per product decision,
+            // but we log the conflict so admins can review it manually.
+            $existingCert = q_one($conn, 'SELECT * FROM certificates WHERE result_id=?', 'i', [$existingResult['id']]);
+            if ($existingCert) {
+                create_admin_log($conn, $_SESSION['user_id'] ?? null, 're_grade_certificate_conflict', json_encode([
+                    'attempt_id'     => $attemptId,
+                    'old_percentage' => (float)$existingResult['percentage'],
+                    'old_level'      => (int)$existingResult['level_assigned'],
+                    'new_percentage' => $percentage,
+                    'new_level'      => (int)$level['level_number'],
+                ]));
             }
         }
 

@@ -28,8 +28,8 @@ function parse_positive_int($val): ?int {
  */
 function handle_book_slot_request(array $input, mysqli $conn): void {
     require_csrf();
-    $sessionCandidateId = validate_candidate_session($conn);
     $role = resolve_admin_role($conn);
+    $sessionCandidateId = validate_candidate_session($conn);
 
     $bodyCandidateId = null;
     if (array_key_exists('candidate_id', $input) && $input['candidate_id'] !== null) {
@@ -186,8 +186,8 @@ function handle_auto_batch_request(array $input, mysqli $conn): void {
  * Matches API Contract: GET /api/slots/available.php
  */
 function handle_list_slots_request(array $input, mysqli $conn): void {
-    $sessionCandidateId = validate_candidate_session($conn);
     $role = resolve_admin_role($conn);
+    $sessionCandidateId = validate_candidate_session($conn);
 
     if ($sessionCandidateId === null && $role !== 'admin') {
         send_json_response('error', 'Unauthorized: candidate authentication required', null, 401);
@@ -249,8 +249,8 @@ function handle_list_slots_request(array $input, mysqli $conn): void {
  */
 function handle_cancel_slot_booking_request(array $input, mysqli $conn): void {
     require_csrf();
-    $sessionCandidateId = validate_candidate_session($conn);
     $role = resolve_admin_role($conn);
+    $sessionCandidateId = validate_candidate_session($conn);
 
     $bodyCandidateId = null;
     if (array_key_exists('candidate_id', $input) && $input['candidate_id'] !== null) {

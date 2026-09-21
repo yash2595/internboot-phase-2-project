@@ -1205,7 +1205,14 @@
   let currentPlacementRows = [];
 
   function escapeCsvCell(value) {
-    const str = String(value ?? "");
+    let str = String(value ?? "");
+
+    // Prevent CSV/Excel formula injection by prepending a single quote
+    // if the value starts with a formula trigger character
+    if (/^[=+\-@]/.test(str)) {
+      str = "'" + str;
+    }
+
     if (/[",\r\n]/.test(str)) {
       return `"${str.replace(/"/g, '""')}"`;
     }

@@ -89,6 +89,20 @@ function validate_candidate_session(?mysqli $conn = null): ?int {
         return (int)$user['candidate_id'];
     }
 
+    // Do not destroy the session if this is an admin/staff request 
+    // (admins are not candidates, so a missing candidate row is expected)
+    $role = $_SESSION['role'] ?? '';
+
+    // Self-sufficient fallback: If role isn't populated in session (e.g. non-standard login path), 
+    // fetch it defensively before deciding to wipe the session.
+    if ($role === '' && isset($_SESSION['user_id']) && function_exists('resolve_admin_role')) {
+        $role = resolve_admin_role($conn) ?? '';
+    }
+
+    if ($role === 'admin' || $role === 'staff') {
+        return null;
+    }
+
     // Deactivated or not found in DB: fully destroy session so user_id doesn't linger
     destroy_session();
     return null;

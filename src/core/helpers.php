@@ -25,24 +25,45 @@
  * In local development (no proxy) REMOTE_ADDR is the real client IP and
  * X-Forwarded-For is typically absent, so the fallback is correct there too.
  *
+ * SECURITY NOTE / ACCEPTED RISK:
+ * When TRUST_PROXY_HEADERS=1 is set, this function blindly trusts the right-most
+ * entry in X-Forwarded-For without verifying if REMOTE_ADDR belongs to a known proxy.
+ * This is an accepted risk tied exclusively to Railway.app's network guarantees:
+ * Railway containers are only reachable via their edge proxy (or internal network).
+ * Direct-to-origin public access is impossible by design on Railway, making an IP
+ * allowlist unnecessary.
+ * 
+ * WARNING: If the application is migrated to a host where the origin port CAN be
+ * reached directly from the internet, an attacker could hit the origin directly
+ * and spoof X-Forwarded-For. In that case, this function MUST be upgraded to
+ * explicitly validate REMOTE_ADDR against a proxy IP allowlist.
+ *
  * @return string  A valid dotted-decimal IPv4 or compressed IPv6 address.
  */
 function get_client_ip(): string
 {
-    $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    // Trust proxy headers only if explicitly enabled in the environment
+    $trustProxy = (env_value('TRUST_PROXY_HEADERS', '0') === '1');
 
-    if ($forwarded !== '') {
-        // Take the first (left-most) entry and strip any port suffix
-        $first = trim(explode(',', $forwarded)[0]);
+    if ($trustProxy) {
+        $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
 
-        // Strip IPv6-mapped IPv4 prefix if present (::ffff:1.2.3.4)
-        if (str_starts_with(strtolower($first), '::ffff:')) {
-            $first = substr($first, 7);
-        }
+        if ($forwarded !== '') {
+            $parts = explode(',', $forwarded);
+            
+            // Take the RIGHT-MOST entry in the X-Forwarded-For chain
+            // This is the hop closest to our trusted proxy, defeating client-prepended fakes.
+            $rightMost = trim(end($parts));
 
-        // Validate; only trust it if it is a well-formed IP address
-        if (filter_var($first, FILTER_VALIDATE_IP)) {
-            return $first;
+            // Strip IPv6-mapped IPv4 prefix if present (::ffff:1.2.3.4)
+            if (str_starts_with(strtolower($rightMost), '::ffff:')) {
+                $rightMost = substr($rightMost, 7);
+            }
+
+            // Validate; only trust it if it is a well-formed IP address
+            if (filter_var($rightMost, FILTER_VALIDATE_IP)) {
+                return $rightMost;
+            }
         }
     }
 

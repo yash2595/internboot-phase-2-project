@@ -96,7 +96,25 @@ function output_certificate_pdf(array $data): void
     $pdf->Cell(842, 18, 'THIS IS TO CERTIFY THAT', 0, 1, 'C');
 
     // Candidate Name (Supports Devanagari, Chinese, Arabic, Latin, etc.)
-    $pdf->SetFont('freesans', 'B', 28);
+    $fontSize = 28;
+    $pdf->SetFont('freesans', 'B', $fontSize);
+    
+    // Auto-shrink font if name is too wide (max width ~700)
+    $nameWidth = $pdf->GetStringWidth($name);
+    while ($nameWidth > 700 && $fontSize > 12) {
+        $fontSize--;
+        $pdf->SetFont('freesans', 'B', $fontSize);
+        $nameWidth = $pdf->GetStringWidth($name);
+    }
+    
+    // If it STILL overflows at 12pt (very unlikely for 100 chars), gracefully truncate
+    if ($nameWidth > 700) {
+        while ($pdf->GetStringWidth($name . '...') > 700 && mb_strlen($name) > 0) {
+            $name = mb_substr($name, 0, -1);
+        }
+        $name .= '...';
+    }
+
     $pdf->SetTextColor(15, 23, 42);
     $pdf->SetXY(0, 182);
     $pdf->Cell(842, 38, $name, 0, 1, 'C');

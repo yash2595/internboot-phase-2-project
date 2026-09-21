@@ -17,6 +17,9 @@ function handle_register_request(array $data, mysqli $conn): void {
     if ($fullName === '' || $email === '' || $phone === '' || $password === '') {
         send_json_response('error', 'All fields are required.', null, 422);
     }
+    if (!is_valid_full_name($fullName)) {
+        send_json_response('error', 'Full name must be under 100 characters, start with a letter, and contain only valid characters.', null, 422);
+    }
     if (!is_valid_email($email)) {
         send_json_response('error', 'Enter a valid email address.', null, 422);
     }
@@ -202,10 +205,15 @@ function handle_create_staff_request(array $data, mysqli $conn): void {
         send_json_response('error', 'All fields are required.', null, 422);
         return;
     }
+    if (!is_valid_full_name($fullName)) {
+        send_json_response('error', 'Full name must be under 100 characters, start with a letter, and contain only valid characters.', null, 422);
+        return;
+    }
     if (!is_valid_email($email)) {
         send_json_response('error', 'Enter a valid email address.', null, 422);
         return;
     }
+
     if ($phone !== '' && !preg_match('/^[6-9]\d{9}$/', $phone)) {
         send_json_response('error', 'Enter a valid 10-digit phone number.', null, 422);
         return;

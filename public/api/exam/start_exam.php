@@ -162,8 +162,9 @@ try {
                 $slotStart = new DateTime($examDate . ' ' . $slotStartTime);
                 $grace = (int) get_setting_value('slot_grace_minutes', $conn);
                 if ($grace <= 0) $grace = 30;
-                $slotEnd = new DateTime($examDate . ' ' . $slotEndTime);
-                $slotEnd->modify("+\{$grace\} minutes");
+                $slotEnd = (new DateTime())->setTimestamp(
+                    strtotime($examDate . ' ' . $slotEndTime) + ($grace * 60)
+                );
 
                 if ($now < $slotStart) {
                     send_json_response('error', "Your exam slot opens at {$slotStartTime}.", null, 403);

@@ -11,7 +11,7 @@
 <main class="main">
 <header class="topbar">
 <div class="title"><h1>My Profile</h1><p>Personal and registration details</p></div>
-<a class="profile-trigger" href="profile.html" title="My Profile"><div class="avatar">JD</div><div class="user"><strong><span data-candidate="name"></span></strong><small>Candidate</small></div></a>
+<a class="profile-trigger" href="profile.html" title="My Profile"><div class="avatar" data-candidate="initials">--</div><div class="user"><strong><span data-candidate="name"></span></strong><small>Candidate</small></div></a>
 </header>
 <section class="content">
 <div class="hero"><h2><span data-candidate="name"></span></h2><p>Candidate ID: <span data-candidate="candidateId"></span> · <span class="badge green">Active Account</span></p></div>
@@ -25,9 +25,9 @@
 <section class="card card-pad"><h2 class="section-title">Candidate Details</h2>
 <div class="row"><span class="label">Candidate ID</span><span class="value"><span data-candidate="candidateId"></span></span></div>
 <div class="row"><span class="label">Registration Date</span><span class="value"><span data-candidate="registrationDate"></span></span></div>
-<div class="row"><span class="label">Current Level</span><span class="value"><span class="badge blue">Level 1</span></span></div>
-<div class="row"><span class="label">Registration Status</span><span class="value"><span class="badge green">Registered</span></span></div>
-<div class="row"><span class="label">Profile Status</span><span class="value"><span class="badge green">Verified</span></span></div>
+<div class="row"><span class="label">Current Level</span><span class="value"><span class="badge gray" id="profile-level-badge" data-result="level_assigned">Not assigned yet</span></span></div>
+<div class="row"><span class="label">Registration Status</span><span class="value"><span class="badge green" data-candidate="registrationStatus">Registered</span></span></div>
+<div class="row"><span class="label">Profile Status</span><span class="value"><span class="badge green" id="profile-status-badge" data-candidate="profileStatus">Verified</span></span></div>
 </section>
 </div>
 </section>

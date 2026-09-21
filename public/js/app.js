@@ -35,6 +35,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateStatusCards(source);
         updateLearningJourney(source);
         renderCertificateState(source);
+        renderProfileState(source);
+        renderEnrollmentState(source);
 if (source.demo_mode) {
             let alertBox = document.getElementById('demo-mode-alert');
             if (!alertBox) {
@@ -273,4 +275,103 @@ function renderCertificateState(source) {
     }
 }
 
+function renderProfileState(source) {
+    if (!source) return;
 
+    const levelBadge = document.getElementById("profile-level-badge") || document.querySelector("[data-result='level_assigned']");
+    if (levelBadge) {
+        const assignedLevel = source.result?.level_assigned ||
+            (source.result?.level && source.result.level !== "—" ? source.result.level : null) ||
+            source.candidate?.level_assigned ||
+            (source.candidate?.level && source.candidate.level !== "—" ? source.candidate.level : null);
+
+        if (assignedLevel) {
+            levelBadge.textContent = assignedLevel;
+            levelBadge.className = "badge blue";
+        } else {
+            levelBadge.textContent = "Not assigned yet";
+            levelBadge.className = "badge gray";
+        }
+    }
+
+    const profileBadge = document.getElementById("profile-status-badge") || document.querySelector("[data-candidate='profileStatus']");
+    if (profileBadge) {
+        const pStatus = source.candidate?.profileStatus;
+        if (pStatus === "Verified") {
+            profileBadge.textContent = "Verified";
+            profileBadge.className = "badge green";
+        } else if (pStatus) {
+            profileBadge.textContent = pStatus;
+            profileBadge.className = "badge gray";
+        } else {
+            profileBadge.textContent = "Basic Profile";
+            profileBadge.className = "badge gray";
+        }
+    }
+}
+
+function renderEnrollmentState(source) {
+    if (!source) return;
+
+    const hero = document.getElementById("enrollment-hero");
+    const statusBadge = document.getElementById("enrollment-status-badge");
+    const nextStep = document.getElementById("enrollment-next-step");
+
+    if (!hero && !statusBadge) return;
+
+    const heroTitle = document.getElementById("enrollment-hero-title") || hero?.querySelector("h2");
+    const heroDesc = document.getElementById("enrollment-hero-desc") || hero?.querySelector("p");
+
+    const enrStatus = source.enrollment?.status;
+    const payStatus = source.payment?.status;
+    const hasEnrollmentId = source.enrollment?.id && source.enrollment.id !== "—";
+
+    // 1. Confirmed (payment verified + enrollment created/active)
+    if (enrStatus === "Enrolled" || enrStatus === "Confirmed" || enrStatus === "Active" || (hasEnrollmentId && enrStatus !== "Pending" && enrStatus !== "Not Enrolled")) {
+        if (heroTitle) heroTitle.textContent = "Enrollment Confirmed";
+        if (heroDesc) heroDesc.textContent = "Your payment has been verified and your enrollment has been created successfully.";
+        if (statusBadge) {
+            statusBadge.textContent = enrStatus && enrStatus !== "—" ? enrStatus : "Enrolled";
+            statusBadge.className = "badge green";
+        }
+        if (nextStep) {
+            nextStep.innerHTML = "Your next step is batch and slot assignment. You will see the details here once they are assigned.";
+        }
+    }
+    // 2. Pending (payment done, enrollment processing)
+    else if (enrStatus === "Pending" || (payStatus === "Paid" && !hasEnrollmentId)) {
+        if (heroTitle) heroTitle.textContent = "Enrollment Pending";
+        if (heroDesc) heroDesc.textContent = "Your payment has been received and your enrollment is currently being processed.";
+        if (statusBadge) {
+            statusBadge.textContent = "Pending";
+            statusBadge.className = "badge yellow";
+        }
+        if (nextStep) {
+            nextStep.innerHTML = "Your enrollment is pending verification. Please check back shortly once your batch is allocated.";
+        }
+    }
+    // 3. Failed (payment not verified / failed)
+    else if (payStatus === "Failed" || enrStatus === "Failed") {
+        if (heroTitle) heroTitle.textContent = "Payment Failed";
+        if (heroDesc) heroDesc.textContent = "Your payment could not be verified. Please complete your payment to proceed with enrollment.";
+        if (statusBadge) {
+            statusBadge.textContent = "Failed";
+            statusBadge.className = "badge gray";
+        }
+        if (nextStep) {
+            nextStep.innerHTML = 'Please visit <a href="payment.html" style="color:#1652d6;font-weight:700;">Payments</a> to retry your payment and complete your enrollment.';
+        }
+    }
+    // 4. Not Started / Not Enrolled
+    else {
+        if (heroTitle) heroTitle.textContent = "Enrollment Not Started";
+        if (heroDesc) heroDesc.textContent = "Please complete your payment to verify and confirm your enrollment.";
+        if (statusBadge) {
+            statusBadge.textContent = enrStatus && enrStatus !== "—" ? enrStatus : "Not Enrolled";
+            statusBadge.className = "badge gray";
+        }
+        if (nextStep) {
+            nextStep.innerHTML = 'Please visit <a href="payment.html" style="color:#1652d6;font-weight:700;">Payments</a> to pay the registration fee and start your enrollment.';
+        }
+    }
+}

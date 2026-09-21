@@ -300,13 +300,14 @@ try {
         $exam['status'] = 'Slot Not Booked';
     }
 
-    $result = ['score' => '— / 100', 'level' => '—', 'status' => 'Pending', 'evaluation' => 'Pending'];
+    $result = ['score' => '— / 100', 'level' => '—', 'level_assigned' => null, 'status' => 'Pending', 'evaluation' => 'Pending'];
     if ($resultRow) {
         $percentage = (float)$resultRow['percentage'];
         $level = $resultRow['level_assigned'];
         $result = [
             'score' => number_format($percentage, 2) . ' / 100',
             'level' => $level !== null && $level !== '' ? 'Level ' . $level : '—',
+            'level_assigned' => $level !== null && $level !== '' ? 'Level ' . $level : null,
             'status' => 'Available',
             'evaluation' => 'Evaluated'
         ];
@@ -360,7 +361,8 @@ try {
             'candidateId' => 'IB-CAN-' . $candidate['id'],
             'registrationDate' => !empty($candidate['created_at']) ? date('d M Y', strtotime($candidate['created_at'])) : '—',
             'level' => $resultRow && $resultRow['level_assigned'] !== null ? 'Level ' . $resultRow['level_assigned'] : '—',
-            'accountStatus' => 'Active', 'profileStatus' => $profileStatus
+            'level_assigned' => $resultRow && $resultRow['level_assigned'] !== null ? 'Level ' . $resultRow['level_assigned'] : null,
+            'accountStatus' => 'Active', 'registrationStatus' => 'Registered', 'profileStatus' => $profileStatus
         ],
         'payment' => $payment,
         'enrollment' => $enrollment,

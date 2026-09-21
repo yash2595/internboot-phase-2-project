@@ -12,6 +12,34 @@ function m7_request_body(): array
     return is_array($data) ? $data : [];
 }
 
+/**
+ * Strip PII fields that staff must not see from a single record or a list.
+ *
+ * Fields removed for staff: email, phone, profile_details.
+ * Admin receives the full, unfiltered row — this function is a no-op for admins.
+ *
+ * @param array  $rows   A single associative record OR a flat list of records.
+ * @param bool   $isList True when $rows is an array-of-arrays (list endpoint).
+ * @param mysqli $conn   DB connection (for resolve_admin_role()).
+ * @return array         Filtered record(s).
+ */
+function m7_strip_pii_for_staff(array $rows, bool $isList, mysqli $conn): array
+{
+    if (resolve_admin_role($conn) === 'admin') {
+        return $rows; // Admin sees everything — no change.
+    }
+
+    static $piiFields = ['email', 'phone', 'profile_details'];
+
+    if ($isList) {
+        return array_map(static function (array $row) use ($piiFields): array {
+            return array_diff_key($row, array_flip($piiFields));
+        }, $rows);
+    }
+
+    return array_diff_key($rows, array_flip($piiFields));
+}
+
 function m7_handle_request(mysqli $conn): void
 {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -30,21 +58,30 @@ function m7_handle_request(mysqli $conn): void
                 require_once __DIR__ . '/../m1_ai_qbank/controller.php';
                 handle_ai_status_request($conn);
                 break;
-            case 'candidates': send_json_response('success','Candidates loaded',['candidates'=>m7_candidates($conn)]);
+            case 'candidates':
+                $candidateList = m7_strip_pii_for_staff(m7_candidates($conn), true, $conn);
+                send_json_response('success', 'Candidates loaded', ['candidates' => $candidateList]);
             case 'candidate':
                 $id=require_positive_int($_GET['id']??null,'id');
                 $data=m7_get_candidate($conn,$id);
                 if(!$data) throw new InvalidArgumentException('Candidate not found.');
-                send_json_response('success','Candidate loaded',$data);
-            case 'results': send_json_response('success','Results loaded',['results'=>m7_results($conn)]);
-            case 'pending-attempts': send_json_response('success','Pending attempts loaded',['attempts'=>m7_pending_attempts($conn)]);
+                $data = m7_strip_pii_for_staff($data, false, $conn);
+                send_json_response('success', 'Candidate loaded', $data);
+            case 'results':
+                $resultList = m7_strip_pii_for_staff(m7_results($conn), true, $conn);
+                send_json_response('success', 'Results loaded', ['results' => $resultList]);
+            case 'pending-attempts':
+                $attemptList = m7_strip_pii_for_staff(m7_pending_attempts($conn), true, $conn);
+                send_json_response('success', 'Pending attempts loaded', ['attempts' => $attemptList]);
             case 'attempt':
                 require_admin_only($conn);
                 $id=require_positive_int($_GET['id']??null,'id');
                 $data=get_attempt_detail($conn,$id);
                 if(!$data) throw new InvalidArgumentException('Attempt not found.');
                 send_json_response('success','Attempt loaded',$data);
-            case 'certificates': send_json_response('success','Certificates loaded',['certificates'=>m7_certificates($conn)]);
+            case 'certificates':
+                $certList = m7_strip_pii_for_staff(m7_certificates($conn), true, $conn);
+                send_json_response('success', 'Certificates loaded', ['certificates' => $certList]);
             case 'certificate-verify':
                 $number=trim((string)($_GET['certificate_number']??''));
                 if($number==='' || strlen($number)>100) throw new InvalidArgumentException('Enter a valid certificate number.');

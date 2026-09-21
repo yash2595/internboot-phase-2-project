@@ -12,6 +12,7 @@ const IB_CONFIG = {
   fee:        "₹2999",
   feeShort:   "₹2999",
   batchSize:  "100",
+  batchNumber: "Batch #14",
 
   /* --- exam --- */
   duration:   "60 minutes",

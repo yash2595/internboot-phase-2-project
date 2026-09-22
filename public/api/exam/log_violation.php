@@ -12,12 +12,28 @@ try {
     $stmt->execute();
     $stmt->close();
     
-    // fetch new count
-    $stmt = $conn->prepare("SELECT violations FROM attempts WHERE id = ?");
-    $stmt->bind_param('i', $attemptId);
+    // Fetch new count — scoped to this candidate to prevent IDOR read-back.
+    // Closing Finding: "Violation-count read-back is not candidate-scoped" (InternBoot MVP audit).
+    $stmt = $conn->prepare('SELECT violations, status FROM attempts WHERE id = ? AND candidate_id = ?');
+    $stmt->bind_param('ii', $attemptId, $candidateId);
     $stmt->execute();
-    $v = $stmt->get_result()->fetch_assoc()['violations'] ?? 0;
+    $row = $stmt->get_result()->fetch_assoc();
     $stmt->close();
+
+    if ($row === null) {
+        // attempt_id does not exist or belongs to a different candidate
+        send_json_response('error', 'Attempt not found or access denied', null, 404);
+    }
+
+    if ($row['status'] !== 'in_progress') {
+        // UPDATE above was a no-op (attempt already submitted/expired).
+        // Return current stored count with 409 so the frontend knows the
+        // increment did not apply — avoids silently returning a stale count
+        // that could be mistaken for "no violations yet".
+        send_json_response('error', 'Attempt is no longer in progress', ['violations' => (int)$row['violations']], 409);
+    }
+
+    $v = (int)$row['violations'];
 
     send_json_response('success', 'Logged', ['violations' => $v], 200);
 } catch (Exception $e) {

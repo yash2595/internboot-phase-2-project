@@ -11,7 +11,7 @@ Remove-Item Env:\OTP_PEPPER -ErrorAction SilentlyContinue
 ```
 **Output:**
 ```
-FATAL: OTP_PEPPER must be set to a unique, non-default secret in production.
+FATAL: OTP_PEPPER must be set to a unique, non-default secret outside development environments.
 ```
 **Status:** PASS
 
@@ -54,6 +54,6 @@ Remove-Item Env:\OTP_PEPPER -ErrorAction SilentlyContinue
 ```
 **Output:**
 ```
-FATAL: OTP_PEPPER must be set to a unique, non-default secret in production.
+FATAL: OTP_PEPPER must be set to a unique, non-default secret outside development environments.
 ```
 **Status:** PASS (Deny-by-default behavior succeeds in rejecting unconfigured environments)

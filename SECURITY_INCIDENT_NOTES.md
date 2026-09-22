@@ -75,3 +75,22 @@ into any chat session or command-line output.
    scan's "Total deleted: 0" was incorrect due to an incomplete, manually-typed fragment list.
 3. **All five credential types in `.env` were real production/live values**, not
    placeholders. Treat every `.env` value as real until explicitly confirmed otherwise.
+
+---
+
+# Security Incident Notes — Production Database Dropped During Test Teardown
+
+**Date:** 2026-09-22
+**Severity:** Critical (Data Loss)
+**Status:** Remediated (Schema restored, historical attempt data permanently lost)
+
+## What Happened
+
+A `phpunit` test teardown method was incorrectly configured to run `DROP TABLE IF EXISTS` against the live production Railway MySQL database, rather than an isolated test database. This destroyed the `attempts` and `attempt_questions` tables, permanently erasing all historical attempt data up to that point.
+
+## Remediation
+
+1. The missing tables (`attempts` and `attempt_questions`) were recreated using the exact `CREATE TABLE` statements from `schema.sql`.
+2. Admin credentials were reconfirmed to regain access.
+3. The schema is fully restored, and the admin dashboard candidate fetch endpoint is returning 200 OK again.
+4. **Data Loss:** All candidate attempts data prior to 2026-09-22 is permanently unrecoverable.

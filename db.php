@@ -107,14 +107,14 @@ try {
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode([
             'status' => 'error',
-            'message' => 'Database connection failed. Check Railway public MySQL credentials and host/port in .env.',
+            'message' => 'Database connection failed: ' . $e->getMessage(),
             'data' => null
         ]);
         exit;
     }
     http_response_code(500);
     header('Content-Type: text/html; charset=utf-8');
-    echo '<!DOCTYPE html><html><head><title>Database Connection Error</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:32px;max-width:480px;width:100%;text-align:center}h1{font-size:20px;margin:0 0 12px;color:#f87171}p{font-size:14px;color:#94a3b8;line-height:1.6;margin:0}</style></head><body><div class="card"><h1>Database Connection Failed</h1><p>Database connection failed. Check DB_* or Railway MYSQL_* credentials in .env.</p></div></body></html>';
+    echo '<!DOCTYPE html><html><head><title>Database Connection Error</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:32px;max-width:480px;width:100%;text-align:center}h1{font-size:20px;margin:0 0 12px;color:#f87171}p{font-size:14px;color:#94a3b8;line-height:1.6;margin:0}</style></head><body><div class="card"><h1>Database Connection Failed</h1><p>' . htmlspecialchars($e->getMessage()) . '</p></div></body></html>';
     exit;
 }
 

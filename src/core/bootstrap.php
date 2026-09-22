@@ -15,6 +15,11 @@ if ($appEnv === 'production' && demo_mode()) {
     die("FATAL: M4_DEMO_MODE cannot be enabled in production environment.");
 }
 
+$otpPepper = env_value('OTP_PEPPER', '');
+if ($appEnv !== 'development' && ($otpPepper === '' || $otpPepper === 'change_this_pepper_in_production')) {
+    die("FATAL: OTP_PEPPER must be set to a unique, non-default secret outside development environments.");
+}
+
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');

@@ -11,8 +11,8 @@ require_once __DIR__ . '/candidate_resolver.php';
 
 $appEnv = get_app_env();
 
-if ($appEnv === 'production' && demo_mode()) {
-    die("FATAL: M4_DEMO_MODE cannot be enabled in production environment.");
+if ($appEnv !== 'development' && demo_mode()) {
+    die("FATAL: M4_DEMO_MODE cannot be enabled outside development environments.");
 }
 
 $otpPepper = env_value('OTP_PEPPER', '');

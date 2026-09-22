@@ -671,3 +671,13 @@ function create_admin_log(mysqli $conn, ?int $userId, string $action, ?string $d
     $stmt->close();
 }
 
+function check_payment_enrollment_integrity(mysqli $conn): array
+{
+    return q_all($conn, "SELECT p.candidate_id, p.assessment_id, p.id AS payment_id
+        FROM payments p
+        LEFT JOIN enrollments e
+          ON e.candidate_id = p.candidate_id AND e.assessment_id = p.assessment_id
+        WHERE p.status = 'success'
+          AND (e.id IS NULL OR e.eligibility_status <> 'eligible')");
+}
+

@@ -105,6 +105,12 @@ function m7_handle_request(mysqli $conn): void
                 }
                 $stmt->close();
                 send_json_response('success','M7 health check completed',['database'=>'connected','missing_tables'=>$missing,'ready'=>count($missing)===0]);
+            case 'integrity_check':
+                $desynced = check_payment_enrollment_integrity($conn);
+                send_json_response('success', 'Integrity check completed', [
+                    'desync_count' => count($desynced),
+                    'desynced_records' => $desynced
+                ]);
             default: throw new InvalidArgumentException('Unknown admin action.');
         }
     }

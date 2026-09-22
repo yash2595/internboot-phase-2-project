@@ -524,6 +524,40 @@
       }
     }
 
+    // Run integrity check in background with 5-min cache
+    setTimeout(async () => {
+      try {
+        const now = Date.now();
+        const cached = sessionStorage.getItem("integrityCheck");
+        let desyncCount = 0;
+        
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (now - parsed.time < 5 * 60 * 1000) {
+            desyncCount = parsed.count;
+          }
+        }
+        
+        if (desyncCount === 0 && (!cached || now - JSON.parse(cached).time >= 5 * 60 * 1000)) {
+          const checkData = await api("integrity_check");
+          desyncCount = checkData.desync_count || 0;
+          sessionStorage.setItem("integrityCheck", JSON.stringify({ time: now, count: desyncCount }));
+        }
+
+        const banner = $("#integrityWarningBanner");
+        if (banner) {
+          if (desyncCount > 0) {
+            $("#integrityDesyncCount").textContent = desyncCount;
+            banner.classList.remove("hidden");
+          } else {
+            banner.classList.add("hidden");
+          }
+        }
+      } catch (e) {
+        console.warn("Integrity check failed:", e);
+      }
+    }, 100);
+
     const recent = $("#recentCandidates");
     if (recent) {
       recent.innerHTML = data.recent_candidates?.length

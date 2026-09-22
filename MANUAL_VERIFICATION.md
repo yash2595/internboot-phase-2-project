@@ -57,3 +57,18 @@ Remove-Item Env:\OTP_PEPPER -ErrorAction SilentlyContinue
 FATAL: OTP_PEPPER must be set to a unique, non-default secret outside development environments.
 ```
 **Status:** PASS (Deny-by-default behavior succeeds in rejecting unconfigured environments)
+
+## 5. Payment & Enrollment Synchronization (Triggers)
+**Command:**
+```powershell
+& php scripts/verify_payment_sync.php 2>&1
+```
+**Output:**
+```
+Verifying payment sync trigger...
+[OK] Trigger successfully created an eligible enrollment for direct INSERT.
+[OK] Trigger successfully updated enrollment for direct UPDATE.
+All tests passed!
+Cleanup complete via transaction rollback.
+```
+**Status:** PASS (Database-level triggers successfully keep enrollments synchronized with payments unconditionally)

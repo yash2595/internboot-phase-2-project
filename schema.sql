@@ -427,6 +427,39 @@ BEGIN
     END IF;
 END$$
 
+-- Trigger 3: Sync enrollments on successful payment INSERT
+-- Note: This enforces the "success => eligible" forward-only synchronization to prevent desyncs.
+-- If a payment is later refunded, eligibility is not automatically revoked (matches existing app behavior).
+DROP TRIGGER IF EXISTS `trg_payments_after_insert`$$
+CREATE TRIGGER `trg_payments_after_insert`
+AFTER INSERT ON `payments`
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'success' THEN
+        INSERT INTO `enrollments` (`candidate_id`, `assessment_id`, `payment_id`, `eligibility_status`)
+        VALUES (NEW.candidate_id, NEW.assessment_id, NEW.id, 'eligible')
+        ON DUPLICATE KEY UPDATE 
+            `payment_id` = VALUES(`payment_id`), 
+            `eligibility_status` = 'eligible';
+    END IF;
+END$$
+
+-- Trigger 4: Sync enrollments on successful payment UPDATE
+-- Note: ON DUPLICATE KEY UPDATE strictly touches payment_id and eligibility_status so batch_id is preserved.
+DROP TRIGGER IF EXISTS `trg_payments_after_update`$$
+CREATE TRIGGER `trg_payments_after_update`
+AFTER UPDATE ON `payments`
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'success' AND OLD.status != 'success' THEN
+        INSERT INTO `enrollments` (`candidate_id`, `assessment_id`, `payment_id`, `eligibility_status`)
+        VALUES (NEW.candidate_id, NEW.assessment_id, NEW.id, 'eligible')
+        ON DUPLICATE KEY UPDATE 
+            `payment_id` = VALUES(`payment_id`), 
+            `eligibility_status` = 'eligible';
+    END IF;
+END$$
+
 
 
 DELIMITER ;

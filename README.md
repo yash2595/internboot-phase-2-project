@@ -243,6 +243,7 @@ The platform uses 23 relational tables defined in `schema.sql`:
   - `POST /api/payment/payment.php` (`{"action":"verify", "payment_id":1, "token":"..."}`) — Performs server-side token verification, marks `payments.status = 'success'`, and updates `enrollments.eligibility_status = 'eligible'`.
   - `GET  /api/dashboard.php?candidate_id=1` — Returns complete dashboard status metrics.
   - `GET  /api/enrollment.php?candidate_id=1` — Returns candidate enrollment records.
+- **Synchronization Triggers:** The `payments` table uses `AFTER INSERT` and `AFTER UPDATE` database triggers to strictly enforce synchronization of `status='success'` payments into the `enrollments` table as `eligibility_status='eligible'`. This guarantees structural data integrity independently of PHP application-level writes (which are kept as defense-in-depth).
 
 ---
 

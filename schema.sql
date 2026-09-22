@@ -229,7 +229,6 @@ CREATE TABLE IF NOT EXISTS `attempts` (
   `end_time` DATETIME DEFAULT NULL COMMENT 'Server-side calculated mandatory completion deadline',
   `submitted_at` DATETIME DEFAULT NULL,
   `violations` INT UNSIGNED NOT NULL DEFAULT 0,
-  `violations` INT UNSIGNED NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY `uk_candidate_exam_slot` (`candidate_id`, `exam_slot_id`),

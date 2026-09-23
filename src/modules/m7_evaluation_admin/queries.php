@@ -242,16 +242,25 @@ function get_all_question_banks(mysqli $conn): array
 function get_questions(mysqli $conn, bool $isAdmin = false): array
 {
     $correctOptionSql = $isAdmin 
-        ? "(SELECT GROUP_CONCAT(CASE WHEN o.is_correct=1 THEN o.option_text END SEPARATOR ' | ') FROM options o WHERE o.question_id=q.id) correct_option"
-        : "NULL as correct_option";
+        ? "opt.correct_option, opt.all_options"
+        : "NULL as correct_option, NULL as all_options";
 
     return q_all($conn, "SELECT q.id, q.question_text, q.difficulty, q.approval_status,
         qb.id question_bank_id, qb.name question_bank, a.id assessment_id, a.title assessment_title,
-        (SELECT COUNT(*) FROM options o WHERE o.question_id=q.id) option_count,
+        COALESCE(opt.option_count, 0) AS option_count,
         $correctOptionSql
       FROM questions q
       JOIN question_banks qb ON qb.id=q.question_bank_id
       JOIN assessments a ON a.id=qb.assessment_id
+      LEFT JOIN (
+        SELECT 
+          question_id,
+          COUNT(*) AS option_count,
+          GROUP_CONCAT(CASE WHEN is_correct=1 THEN option_text END SEPARATOR ' | ') AS correct_option,
+          GROUP_CONCAT(CONCAT(IF(is_correct=1, '[✓] ', '[ ] '), option_text) SEPARATOR '|||') AS all_options
+        FROM options
+        GROUP BY question_id
+      ) opt ON opt.question_id = q.id
       ORDER BY q.created_at DESC");
 }
 
@@ -445,12 +454,37 @@ function update_question_status(mysqli $conn, int $questionId, string $status): 
 {
     $allowed=['pending','approved','rejected'];
     if (!in_array($status,$allowed,true)) throw new InvalidArgumentException('Invalid question status.');
-    $exists=q_one($conn,'SELECT id FROM questions WHERE id=?','i',[$questionId]);
-    if(!$exists) throw new InvalidArgumentException('Question not found.');
-    $stmt=$conn->prepare('UPDATE questions SET approval_status=?, updated_at=NOW() WHERE id=?');
-    $stmt->bind_param('si',$status,$questionId);
-    $stmt->execute();
-    $stmt->close();
+    
+    if ($status === 'rejected') {
+        $conn->begin_transaction();
+        try {
+            $stmt = $conn->prepare('DELETE FROM options WHERE question_id=?');
+            $stmt->bind_param('i', $questionId);
+            $stmt->execute();
+            $stmt->close();
+
+            $stmt = $conn->prepare('DELETE FROM questions WHERE id=?');
+            $stmt->bind_param('i', $questionId);
+            $stmt->execute();
+            if ($stmt->affected_rows === 0) {
+                throw new InvalidArgumentException('Question not found.');
+            }
+            $stmt->close();
+            $conn->commit();
+        } catch (Throwable $e) {
+            $conn->rollback();
+            throw $e;
+        }
+    } else {
+        $stmt=$conn->prepare('UPDATE questions SET approval_status=?, updated_at=NOW() WHERE id=?');
+        $stmt->bind_param('si',$status,$questionId);
+        $stmt->execute();
+        if ($stmt->affected_rows === 0) {
+            $exists=q_one($conn,'SELECT id FROM questions WHERE id=?','i',[$questionId]);
+            if(!$exists) throw new InvalidArgumentException('Question not found.');
+        }
+        $stmt->close();
+    }
 }
 
 function update_setting(mysqli $conn, string $key, string $value): void

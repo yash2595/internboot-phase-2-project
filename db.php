@@ -94,7 +94,22 @@ if ($isRailway && str_contains((string)$host, '.proxy.rlwy.net')) {
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
-    $conn = new mysqli($host, $user, $password, $dbname, $port);
+    $caCertPath = env_value('DB_SSL_CA');
+    if ($caCertPath !== null && $caCertPath !== '') {
+        if (!str_starts_with($caCertPath, '/') && !preg_match('/^[A-Za-z]:[\\\\\/]/', $caCertPath)) {
+            $caCertPath = __DIR__ . '/' . $caCertPath;
+        }
+    } else {
+        $caCertPath = __DIR__ . '/aiven-ca.pem';
+    }
+
+    if (file_exists($caCertPath)) {
+        $conn = mysqli_init();
+        $conn->ssl_set(NULL, NULL, $caCertPath, NULL, NULL);
+        $conn->real_connect($host, $user, $password, $dbname, $port, null, MYSQLI_CLIENT_SSL);
+    } else {
+        $conn = new mysqli($host, $user, $password, $dbname, $port);
+    }
     $conn->set_charset('utf8mb4');
     // Synchronize MySQL DB session time zone with PHP timezone offset (e.g. +05:30)
     $conn->query("SET time_zone = '" . date('P') . "'");

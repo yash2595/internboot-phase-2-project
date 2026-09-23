@@ -116,6 +116,8 @@ function generate_questions_via_ai(
     int $hardCount,
     mysqli $conn
 ): array {
+    set_time_limit(180);
+
     // 1. Validate Question Bank exists
     $stmt = $conn->prepare("SELECT id FROM question_banks WHERE id = ?");
     $stmt->bind_param("i", $qbankId);
@@ -146,7 +148,7 @@ function generate_questions_via_ai(
     $totalCount = $easyCount + $mediumCount + $hardCount;
     $difficultyMix = "{$easyCount} Easy, {$mediumCount} Medium, {$hardCount} Hard";
     
-    $prompt = "Generate exactly {$totalCount} multiple-choice test questions about the topic: \"{$topic}\".\n";
+    $prompt = "Generate exactly {$totalCount} multiple-choice test questions (MCQs) about the topic: \"{$topic}\". These must be strictly MCQ-based test questions.\n";
     if (!empty($difficultyMix)) {
         $prompt .= "Target difficulty distribution/mix: {$difficultyMix}.\n";
     }
@@ -199,11 +201,12 @@ function generate_questions_via_ai(
                 CURLOPT_POST => true,
                 CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
                 CURLOPT_POSTFIELDS => json_encode($payload),
-                CURLOPT_TIMEOUT => 30,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT => 120,
+                CURLOPT_CONNECTTIMEOUT => 60,
                 CURLOPT_SSL_VERIFYPEER => false,
                 CURLOPT_SSL_VERIFYHOST => 0,
-                CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4
+                CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                CURLOPT_RESOLVE => ['generativelanguage.googleapis.com:443:172.217.113.4']
             ]);
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -243,8 +246,8 @@ function generate_questions_via_ai(
                     'Authorization: Bearer ' . $apiKey
                 ],
                 CURLOPT_POSTFIELDS => json_encode($payload),
-                CURLOPT_TIMEOUT => 30,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT => 120,
+                CURLOPT_CONNECTTIMEOUT => 60,
                 CURLOPT_SSL_VERIFYPEER => false,
                 CURLOPT_SSL_VERIFYHOST => 0,
                 CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4

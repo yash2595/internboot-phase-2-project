@@ -1025,8 +1025,23 @@
           .map((q) => {
             const m = String(q.question_bank || "").match(/level\s*([1-5])/i);
             const level = m ? m[1] : "—";
+            const allOptsHtml = (q.all_options || '').split('|||').map(o => {
+              if (!o.trim()) return '';
+              const isCorrect = o.startsWith('[✓]');
+              const text = o.replace(/^\[[✓ ]\] /, '');
+              return `<div class="text-sm mt-1 ${isCorrect ? 'text-green-600 font-medium' : 'text-slate-500'}">
+                <span class="inline-block w-4">${isCorrect ? '✓' : '•'}</span> ${escapeHtml(text)}
+              </div>`;
+            }).join('');
+
             return `<tr data-question="true" data-level="${m ? `level ${m[1]}` : ""}" data-status="${escapeHtml(q.approval_status)}">
-        <td class="px-6 py-4"><p class="max-w-xl font-medium text-slate-800">${escapeHtml(q.question_text)}</p><p class="mt-1 text-xs text-slate-400">${escapeHtml(q.question_bank)} · ${Number(q.option_count || 0)} options</p></td>
+        <td class="px-6 py-4">
+          <p class="max-w-xl font-medium text-slate-800">${escapeHtml(q.question_text)}</p>
+          <div class="mt-3 mb-3 pl-2 border-l-2 border-slate-200">
+            ${allOptsHtml}
+          </div>
+          <p class="mt-1 text-xs text-slate-400">${escapeHtml(q.question_bank)} · ${Number(q.option_count || 0)} options</p>
+        </td>
         <td class="px-6 py-4">${level === "—" ? "—" : badge(`Level ${level}`, "blue")}</td>
         <td class="px-6 py-4 text-slate-500">${escapeHtml(q.type || "MCQ")}</td>
         <td class="px-6 py-4">${badge(label(q.approval_status), typeForStatus(q.approval_status))}</td>

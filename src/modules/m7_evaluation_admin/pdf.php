@@ -121,6 +121,9 @@ function output_certificate_pdf(array $data): void
     $pdf->SetXY(208.9, 509.5 - 14);
     $pdf->Cell(119.2, 14, $cert, 0, 0, 'C');
     
+    // QR code rendering has been completely removed as per user request
+
+
     // (Date is omitted visually as the new scorecard template does not have a Date field)
 
     $pdfContent = $pdf->Output('', 'S');

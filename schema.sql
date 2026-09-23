@@ -112,6 +112,8 @@ CREATE TABLE IF NOT EXISTS `enrollments` (
   `assessment_id` BIGINT UNSIGNED NOT NULL,
   `payment_id` BIGINT UNSIGNED DEFAULT NULL,
   `batch_id` BIGINT UNSIGNED DEFAULT NULL COMMENT 'Allocated batch once threshold is met',
+  `provisional_schedule_id` BIGINT UNSIGNED DEFAULT NULL COMMENT 'Candidate preferred provisional schedule before finalization',
+  `preferred_exam_date` DATE DEFAULT NULL,
   `eligibility_status` ENUM('pending', 'eligible') NOT NULL DEFAULT 'pending',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -120,10 +122,12 @@ CREATE TABLE IF NOT EXISTS `enrollments` (
   CONSTRAINT `fk_enrollments_assessment` FOREIGN KEY (`assessment_id`) REFERENCES `assessments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_enrollments_payment` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_enrollments_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_enrollment_prov_sched` FOREIGN KEY (`provisional_schedule_id`) REFERENCES `exam_schedules` (`id`) ON DELETE SET NULL,
   INDEX `idx_enrollments_candidate` (`candidate_id`),
   INDEX `idx_enrollments_assessment` (`assessment_id`),
   INDEX `idx_enrollments_payment` (`payment_id`),
   INDEX `idx_enrollments_batch` (`batch_id`),
+  INDEX `idx_enrollments_prov_sched` (`provisional_schedule_id`),
   INDEX `idx_enrollments_eligibility` (`eligibility_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Candidate registrations. Retakes create new attempts, not new enrollments.';
 
@@ -135,7 +139,7 @@ CREATE TABLE IF NOT EXISTS `exam_schedules` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `batch_id` BIGINT UNSIGNED NOT NULL,
   `exam_date` DATE NOT NULL COMMENT 'Exam date restricted to Saturday or Sunday',
-  `status` ENUM('scheduled', 'in_progress', 'completed', 'cancelled') NOT NULL DEFAULT 'scheduled',
+  `status` ENUM('scheduled', 'in_progress', 'completed', 'cancelled', 'provisional') NOT NULL DEFAULT 'scheduled',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_schedules_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,

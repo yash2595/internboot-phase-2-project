@@ -298,7 +298,22 @@ function get_batches(mysqli $conn): array
     $assessments = q_all($conn, "SELECT id,title,status,total_questions,duration_minutes
         FROM assessments WHERE status <> 'archived' ORDER BY status='active' DESC,id ASC");
 
-    return ['batches'=>$batches,'slots'=>$slots,'eligible_candidates'=>$eligible,'assessments'=>$assessments];
+    $pending_requests = q_all($conn, "SELECT 
+        s.id as schedule_id,
+        a.id as assessment_id,
+        a.title AS assessment_title, 
+        s.exam_date as preferred_date, 
+        CONCAT(es.start_time, '-', es.end_time) as preferred_time_slot,
+        es.capacity as capacity,
+        (SELECT COUNT(*) FROM enrollments e WHERE e.provisional_schedule_id = s.id AND e.eligibility_status = 'eligible' AND e.batch_id IS NULL) as candidate_count
+        FROM exam_schedules s
+        JOIN batches b ON s.batch_id = b.id
+        JOIN assessments a ON b.assessment_id = a.id
+        JOIN exam_slots es ON es.exam_schedule_id = s.id
+        WHERE s.status = 'provisional'
+        ORDER BY s.exam_date ASC");
+
+    return ['batches'=>$batches,'slots'=>$slots,'eligible_candidates'=>$eligible,'assessments'=>$assessments,'pending_requests'=>$pending_requests];
 }
 
 function get_settings(mysqli $conn): array
@@ -760,3 +775,53 @@ function check_payment_enrollment_integrity(mysqli $conn): array
           AND (e.id IS NULL OR e.eligibility_status <> 'eligible')");
 }
 
+
+function create_provisional_batch(mysqli $conn, string $batchNumber, int $assessmentId, string $examDate, int $capacity, ?string $startTime = null, ?string $endTime = null): array
+{
+    $batchNumber=trim($batchNumber);
+    if($batchNumber==='' || strlen($batchNumber)>50) throw new InvalidArgumentException('Batch name must be between 1 and 50 characters.');
+    if($capacity<1) throw new InvalidArgumentException('Batch capacity must be positive.');
+
+    $date=DateTime::createFromFormat('!Y-m-d',$examDate);
+    $errors=DateTime::getLastErrors();
+    if(!$date || ($errors!==false && ($errors['warning_count']||$errors['error_count'])) || $date->format('Y-m-d')!==$examDate){
+        throw new InvalidArgumentException('Enter a valid exam date.');
+    }
+    if((int)$date->format('N')<6) throw new InvalidArgumentException('Exam date must be Saturday or Sunday.');
+    if($date < new DateTime('today')) throw new InvalidArgumentException('Exam date cannot be in the past.');
+
+    if($assessmentId>0){
+        $assessment=q_one($conn,'SELECT id,title,duration_minutes,status FROM assessments WHERE id=? AND status<>"archived"','i',[$assessmentId]);
+    }else{
+        $assessment=q_one($conn,'SELECT id,title,duration_minutes,status FROM assessments WHERE status="active" ORDER BY id DESC LIMIT 1');
+        if(!$assessment) $assessment=q_one($conn,'SELECT id,title,duration_minutes,status FROM assessments WHERE status<>"archived" ORDER BY id DESC LIMIT 1');
+    }
+    if(!$assessment) throw new InvalidArgumentException('No active assessment exists. Create or activate an assessment first.');
+    $assessmentId=(int)$assessment['id'];
+
+    $duplicate=q_one($conn,'SELECT id FROM batches WHERE batch_number=?','s',[$batchNumber]);
+    if($duplicate) throw new InvalidArgumentException('A batch with this name already exists.');
+
+    $duration=max(1,(int)$assessment['duration_minutes']);
+
+    $conn->begin_transaction();
+    try{
+        $stmt=$conn->prepare('INSERT INTO batches(batch_number,assessment_id) VALUES(?,?)');
+        $stmt->bind_param('si',$batchNumber,$assessmentId); $stmt->execute(); $batchId=$stmt->insert_id; $stmt->close();
+
+        // Create as PROVISIONAL
+        $stmt=$conn->prepare("INSERT INTO exam_schedules(batch_id,exam_date,status) VALUES(?,?,'provisional')");
+        $stmt->bind_param('is',$batchId,$examDate); $stmt->execute(); $scheduleId=$stmt->insert_id; $stmt->close();
+
+        $start1 = $startTime ?? '10:00:00';
+        $end1 = $endTime ?? (new DateTime('2000-01-01 ' . $start1))->modify("+{$duration} minutes")->format('H:i:s');
+
+        $stmt=$conn->prepare('INSERT INTO exam_slots(exam_schedule_id,start_time,end_time,capacity,seats_remaining) VALUES(?,?,?,?,?)');
+        $stmt->bind_param('issii',$scheduleId,$start1,$end1,$capacity,$capacity); $stmt->execute(); $slot1=$stmt->insert_id; $stmt->close();
+
+        $conn->commit();
+        return ['batch_id'=>$batchId,'batch_number'=>$batchNumber,'assessment_id'=>$assessmentId,'assessment_title'=>$assessment['title'],'schedule_id'=>$scheduleId,'exam_date'=>$examDate,'capacity'=>$capacity,'slots'=>[
+            ['slot_id'=>$slot1,'start_time'=>$start1,'end_time'=>$end1,'capacity'=>$capacity]
+        ]];
+    }catch(Throwable $e){$conn->rollback();throw $e;}
+}

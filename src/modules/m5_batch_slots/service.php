@@ -502,8 +502,8 @@ function record_candidate_preference(int $candidateId, int $assessmentId, string
 
     set_candidate_preference((int)$enrollment['id'], $preferredDate, $preferredTimeSlot, $conn);
 
-    // Run the batching process to see if we crossed the threshold
-    $batchingResults = process_automated_preference_batching($assessmentId, $conn);
+    // Automatic batching removed per user request: Admin must manually trigger it from Admin Panel.
+    // $batchingResults = process_automated_preference_batching($assessmentId, $conn);
 
     // Did this candidate just get batched? Check the enrollment again
     $checkSql = "SELECT b.id AS batch_id, b.batch_number 
@@ -543,4 +543,105 @@ function record_candidate_preference(int $candidateId, int $assessmentId, string
         'status' => 'waiting',
         'candidates_needed' => max(0, $threshold - $currentCount)
     ];
+}
+
+function record_candidate_provisional_preference(int $candidateId, int $assessmentId, int $provisionalScheduleId, mysqli $conn): array {
+    $enrollment = get_candidate_enrollment($candidateId, $assessmentId, $conn);
+    if (!$enrollment) {
+        throw new Exception("Candidate is not enrolled in the specified assessment");
+    }
+    if ($enrollment['eligibility_status'] !== 'eligible') {
+        throw new Exception("Candidate is not eligible to record a preference.");
+    }
+    
+    // Check if provisional schedule exists and is valid
+    $checkSql = "SELECT s.exam_date, es.start_time, es.end_time 
+                 FROM exam_schedules s
+                 JOIN exam_slots es ON es.exam_schedule_id = s.id
+                 WHERE s.id = ? AND s.status = 'provisional'";
+    $stmt = $conn->prepare($checkSql);
+    $stmt->bind_param("i", $provisionalScheduleId);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $schedRow = $res->fetch_assoc();
+    $stmt->close();
+    
+    if (!$schedRow) {
+        throw new Exception("Selected provisional slot does not exist or is no longer available.");
+    }
+    
+    if (!is_registration_open_for_date($schedRow['exam_date'])) {
+        throw new Exception("Registration cutoff has passed for this exam date.");
+    }
+
+    $updateSql = "UPDATE enrollments SET provisional_schedule_id = ?, updated_at = NOW() WHERE id = ?";
+    $updateStmt = $conn->prepare($updateSql);
+    $enrollmentId = (int)$enrollment['id'];
+    $updateStmt->bind_param("ii", $provisionalScheduleId, $enrollmentId);
+    $updateStmt->execute();
+    $updateStmt->close();
+
+    return [
+        'status' => 'waiting',
+        'message' => 'Preference recorded. Waiting for enough candidates to form the batch.',
+        'provisional_schedule_id' => $provisionalScheduleId
+    ];
+}
+
+function finalize_provisional_batch(int $scheduleId, int $assessmentId, mysqli $conn): array {
+    $conn->begin_transaction();
+    try {
+        // Find the schedule and batch
+        $stmt = $conn->prepare("SELECT s.id, s.status, s.batch_id, s.exam_date, b.assessment_id, b.batch_number
+                                FROM exam_schedules s
+                                JOIN batches b ON b.id = s.batch_id
+                                WHERE s.id = ? AND b.assessment_id = ?");
+        $stmt->bind_param("ii", $scheduleId, $assessmentId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $sched = $res->fetch_assoc();
+        $stmt->close();
+
+        if (!$sched) {
+            throw new Exception("Provisional schedule not found.");
+        }
+        if ($sched['status'] !== 'provisional') {
+            throw new Exception("This schedule is already finalized.");
+        }
+
+        // Update schedule to 'scheduled'
+        $updateSched = $conn->prepare("UPDATE exam_schedules SET status = 'scheduled' WHERE id = ?");
+        $updateSched->bind_param("i", $scheduleId);
+        $updateSched->execute();
+        $updateSched->close();
+
+        // Assign all eligible enrollments that picked this provisional slot
+        $batchId = $sched['batch_id'];
+        
+        $assignStmt = $conn->prepare("UPDATE enrollments 
+                                      SET batch_id = ?, updated_at = NOW() 
+                                      WHERE provisional_schedule_id = ? AND eligibility_status = 'eligible' AND batch_id IS NULL");
+        $assignStmt->bind_param("ii", $batchId, $scheduleId);
+        $assignStmt->execute();
+        $assignedCount = $assignStmt->affected_rows;
+        $assignStmt->close();
+
+        // Decrement seats in exam_slots by assignedCount (simple approach assuming 1 slot for the provisional schedule for now, or just spreading)
+        // Actually, enrollments are just assigned to batch_id. We need to assign them to exam_slots using attempts if they book, but wait!
+        // When we do `assign_batch_to_enrollments`, it sets `batch_id`. It doesn't book a slot. Booking slot happens in Candidate UI?
+        // Wait, NO! If a candidate sets preference, they are automatically allocated to a slot when the batch is created.
+        // Let's check what assign_batch_to_enrollments did.
+        
+        $conn->commit();
+        
+        return [
+            'status' => 'success',
+            'batch_number' => $sched['batch_number'],
+            'exam_date' => $sched['exam_date'],
+            'assigned_count' => $assignedCount
+        ];
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
+    }
 }

@@ -1103,7 +1103,44 @@
     const data = await api("batches");
     const eligible = data.eligible_candidates || [],
       slots = data.slots || [],
-      batches = data.batches || [];
+      batches = data.batches || [],
+      assessments = data.assessments || [];
+
+    const assessSelect = $("#assessmentSelect");
+    if (assessSelect) {
+      assessSelect.innerHTML = '<option value="">Select Assessment</option>' + 
+        assessments.map(a => `<option value="${a.id}">${escapeHtml(a.title)}</option>`).join("");
+    }
+
+    const provForm = $("#createProvisionalSlotForm");
+    if (provForm && !provForm.dataset.bound) {
+      provForm.dataset.bound = "1";
+      provForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = provForm.querySelector('button[type="submit"]');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i class="ri-loader-4-line animate-spin"></i> Creating...`;
+        }
+        try {
+          await api("provisional_batch", {
+            method: "POST",
+            body: Object.fromEntries(new FormData(provForm)),
+          });
+          notify("Provisional slot created successfully!");
+          provForm.reset();
+          await loadBatches();
+        } catch (err) {
+          notify(err.message, true);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="ri-calendar-check-line"></i> Create Provisional Slot`;
+            }
+        }
+      };
+    }
+
     const set = (id, v) => {
       const el = $("#" + id);
       if (el) el.textContent = v;
@@ -1189,68 +1226,61 @@
         }),
     );
 
-    const batchDate = $("#batchDate");
-    const batchDateMessage = $("#batchDateMessage");
-    if (batchDate && !batchDate.dataset.bound) {
-      batchDate.dataset.bound = "1";
-      if (typeof flatpickr !== 'undefined') {
-        flatpickr("#batchDate", {
-          minDate: "today",
-          disable: [(date) => date.getDay() !== 0 && date.getDay() !== 6],
-          dateFormat: "Y-m-d",
-          onChange: function(selectedDates, dateStr) {
-            const msg = document.getElementById("batchDateMessage");
-            if (msg) msg.textContent = "Weekend date selected.";
-          }
+    const pendingRequestsBody = $("#pendingRequestsTableBody");
+    const pendingRequests = data.pending_requests || [];
+    if (pendingRequestsBody) {
+      if (pendingRequests.length === 0) {
+        pendingRequestsBody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-sm text-slate-500">No pending batch requests.</td></tr>`;
+      } else {
+        pendingRequestsBody.innerHTML = pendingRequests.map(r => `
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-4"><div class="font-medium text-slate-800">${escapeHtml(r.preferred_date)}</div><div class="text-xs text-slate-500">${escapeHtml(r.assessment_title)}<br>${escapeHtml(r.preferred_time_slot)}</div></td>
+            <td class="px-4 py-4 font-medium ${r.candidate_count >= 100 ? 'text-green-600' : 'text-amber-600'}">${r.candidate_count} <span class="text-xs text-slate-400 font-normal">/ 100</span></td>
+            <td class="px-4 py-4">
+              <button class="btn-create-auto-batch rounded-lg px-3 py-2 text-xs font-medium text-white ${r.candidate_count >= 100 ? 'bg-intern-blue hover:bg-blue-700' : 'bg-slate-300 cursor-not-allowed'}" 
+                data-assessment="${r.assessment_id}" data-schedule="${r.schedule_id}" 
+                ${r.candidate_count >= 100 ? '' : 'disabled'}>
+                Create Batch
+              </button>
+            </td>
+          </tr>
+        `).join("");
+
+        $$(".btn-create-auto-batch").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const assessmentId = Number(btn.dataset.assessment);
+            const scheduleId = Number(btn.dataset.schedule);
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Processing...";
+            try {
+              const token = await getCsrfToken();
+              const response = await fetch("/api/slots/auto_batch.php", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Accept": "application/json",
+                  "X-CSRF-Token": token
+                },
+                body: JSON.stringify({
+                  assessment_id: assessmentId,
+                  schedule_id: scheduleId
+                })
+              });
+              const payload = await response.json();
+              if (!response.ok || payload.status !== "success") {
+                throw new Error(payload.message || "Failed to process batch");
+              }
+              notify("Batch created and candidates allocated successfully!");
+              await loadBatches();
+            } catch (err) {
+              notify(err.message, true);
+              btn.disabled = false;
+              btn.textContent = originalText;
+            }
+          });
         });
       }
-    }
-
-    const form = $("#createBatchForm");
-    if (form && !form.dataset.bound) {
-      form.dataset.bound = "1";
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const name = $("#batchName")?.value.trim(),
-          date = $("#batchDate")?.value,
-          capacity = Number($("#batchCapacity")?.value || 0),
-          start_time = $("#batchStartTime")?.value,
-          end_time = $("#batchEndTime")?.value;
-          
-        const selectedDate = date ? new Date(`${date}T00:00:00`) : null;
-        const isWeekend =
-          selectedDate &&
-          !Number.isNaN(selectedDate.getTime()) &&
-          (selectedDate.getDay() === 0 || selectedDate.getDay() === 6);
-        if (!name || !date || !isWeekend || capacity < 100) {
-          notify(
-            date && !isWeekend
-              ? "Assessment can be scheduled only on Saturday or Sunday."
-              : "Enter a batch name, weekend date and capacity of at least 100.",
-            true,
-          );
-          return;
-        }
-        
-        let payload = { batch_number: name, exam_date: date, capacity };
-        if (start_time) payload.start_time = start_time + ':00';
-        if (end_time) payload.end_time = end_time + ':00';
-        
-        try {
-          await api("batch", {
-            method: "POST",
-            body: payload,
-          });
-          notify("Batch created successfully.");
-          form.reset();
-          $("#batchCapacity").value = 100;
-          if ($("#batchStartTime")) $("#batchStartTime").value = "10:00";
-          if ($("#batchEndTime")) $("#batchEndTime").value = "11:00";
-          await loadBatches();
-        } catch (err) {
-          notify(err.message, true);
-        }
-      });
     }
 
     const createSlot = $("#createSlotButton");

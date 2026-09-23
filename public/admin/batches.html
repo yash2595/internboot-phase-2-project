@@ -100,30 +100,46 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                    <h3 class="font-semibold text-slate-800 mb-4">Create New Batch</h3>
-                    <form id="createBatchForm" class="space-y-4">
-                        <label class="block text-sm text-slate-700 font-medium">Batch Name
-                            <input id="batchName" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" placeholder="e.g. BATCH-2024-Q1">
-                        </label>
-                        <label class="block text-sm text-slate-700 font-medium">Exam Date
-                            <input id="batchDate" required type="text" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" placeholder="Select weekend date...">
-                            <span id="batchDateMessage" class="block mt-1 text-xs text-amber-600">Must be a Saturday or Sunday.</span>
-                        </label>
-                        <label class="block text-sm text-slate-700 font-medium">Max Capacity
-                            <input id="batchCapacity" required type="number" min="100" value="100" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2">
-                        </label>
-                        <div class="grid grid-cols-2 gap-4">
-                            <label class="block text-sm text-slate-700 font-medium">Start Time
-                                <input id="batchStartTime" type="time" value="10:00" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2">
-                            </label>
-                            <label class="block text-sm text-slate-700 font-medium">End Time
-                                <input id="batchEndTime" type="time" value="11:00" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2">
-                            </label>
+            <div class="lg:col-span-1 flex flex-col gap-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col">
+                    <h3 class="font-semibold text-slate-800 mb-4">Create Provisional Slot</h3>
+                    <form id="createProvisionalSlotForm" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Assessment</label>
+                            <select id="assessmentSelect" name="assessment_id" class="w-full text-sm border-slate-200 rounded-lg focus:ring-primary focus:border-primary px-3 py-2 border"></select>
                         </div>
-                        <button type="submit" class="w-full rounded-lg bg-intern-blue px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700">Create Batch</button>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Exam Date (Sat/Sun)</label>
+                            <input type="date" name="exam_date" required class="w-full text-sm border-slate-200 rounded-lg focus:ring-primary focus:border-primary px-3 py-2 border">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Start Time</label>
+                                <input type="time" name="start_time" value="10:00" class="w-full text-sm border-slate-200 rounded-lg focus:ring-primary focus:border-primary px-3 py-2 border">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Capacity</label>
+                                <input type="number" name="capacity" value="100" min="10" required class="w-full text-sm border-slate-200 rounded-lg focus:ring-primary focus:border-primary px-3 py-2 border">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors flex items-center justify-center gap-2">
+                            <i class="ri-calendar-check-line"></i> Create Provisional Slot
+                        </button>
                     </form>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col flex-1">
+                    <h3 class="font-semibold text-slate-800 mb-4">Pending Batch Requests</h3>
+                    <p class="text-xs text-slate-500 mb-4">Batches can only be created once a threshold (e.g., 100) of candidates request the same date.</p>
+                    <div class="overflow-y-auto flex-1">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+                                <tr><th class="px-4 py-2 font-medium">Req. Date</th><th class="px-4 py-2 font-medium">Count</th><th class="px-4 py-2 font-medium">Action</th></tr>
+                            </thead>
+                            <tbody id="pendingRequestsTableBody" class="divide-y divide-slate-100">
+                                <tr><td colspan="3" class="px-4 py-4 text-center text-slate-500">Loading pending requests...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div class="lg:col-span-2">

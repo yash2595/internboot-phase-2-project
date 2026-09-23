@@ -25,29 +25,21 @@ if ($method === 'GET') {
         send_json_response('error', 'Candidate is not enrolled in the specified assessment', null, 403);
     }
 
-    // Get upcoming valid weekend dates
-    $weekends = calculate_next_weekend_dates();
-    $validDates = [];
-    foreach ($weekends as $dateStr) {
-        if (is_registration_open_for_date($dateStr)) {
-            $validDates[] = $dateStr;
-        }
-    }
-
-    // Standard slots
-    $allowedSlots = ['10:00:00-11:00:00', '14:00:00-15:00:00'];
-    
-    $options = [];
-    foreach ($validDates as $d) {
-        foreach ($allowedSlots as $s) {
-            $options[] = ['date' => $d, 'time_slot' => $s];
-        }
-    }
+    $options = q_all($conn, "SELECT 
+        s.id as provisional_schedule_id, 
+        s.exam_date as date, 
+        CONCAT(es.start_time, '-', es.end_time) as time_slot
+    FROM exam_schedules s
+    JOIN batches b ON b.id = s.batch_id
+    JOIN exam_slots es ON es.exam_schedule_id = s.id
+    WHERE s.status = 'provisional' 
+      AND b.assessment_id = ? 
+      AND s.exam_date >= CURDATE()
+    ORDER BY s.exam_date ASC, es.start_time ASC", 'i', [$assessmentId]);
 
     $response = [
         'current_preference' => [
-            'preferred_date' => $enrollment['preferred_date'] ?? null,
-            'preferred_time_slot' => $enrollment['preferred_time_slot'] ?? null,
+            'provisional_schedule_id' => $enrollment['provisional_schedule_id'] ?? null,
         ],
         'options' => $options
     ];
@@ -65,15 +57,14 @@ if ($method === 'GET') {
     }
 
     $assessmentId = isset($input['assessment_id']) ? (int)$input['assessment_id'] : 0;
-    $preferredDate = isset($input['preferred_date']) ? trim($input['preferred_date']) : '';
-    $preferredTimeSlot = isset($input['preferred_time_slot']) ? trim($input['preferred_time_slot']) : '';
+    $provisionalScheduleId = isset($input['provisional_schedule_id']) ? (int)$input['provisional_schedule_id'] : 0;
 
-    if ($assessmentId <= 0 || empty($preferredDate) || empty($preferredTimeSlot)) {
-        send_json_response('error', 'assessment_id, preferred_date, and preferred_time_slot are required', null, 400);
+    if ($assessmentId <= 0 || $provisionalScheduleId <= 0) {
+        send_json_response('error', 'assessment_id and provisional_schedule_id are required', null, 400);
     }
 
     try {
-        $result = record_candidate_preference($candidateId, $assessmentId, $preferredDate, $preferredTimeSlot, $conn);
+        $result = record_candidate_provisional_preference($candidateId, $assessmentId, $provisionalScheduleId, $conn);
         send_json_response('success', 'Preference recorded successfully', $result, 200);
     } catch (Throwable $e) {
         $msg = $e->getMessage();

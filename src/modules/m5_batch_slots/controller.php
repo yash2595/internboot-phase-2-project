@@ -141,7 +141,18 @@ function handle_auto_batch_request(array $input, mysqli $conn): void {
         }
     }
 
-    try {
+        try {
+        if (array_key_exists('schedule_id', $input) && $input['schedule_id'] !== null) {
+            $scheduleId = parse_positive_int($input['schedule_id']);
+            if ($scheduleId === null) {
+                send_json_response('error', 'A valid schedule_id is required', null, 400);
+                return;
+            }
+            $result = finalize_provisional_batch($scheduleId, $assessmentId, $conn);
+            send_json_response('success', 'Batch finalized and candidates assigned', $result, 201);
+            return;
+        }
+
         $batches = create_all_eligible_batches($assessmentId, $conn, $customThreshold);
 
         if (!empty($batches)) {

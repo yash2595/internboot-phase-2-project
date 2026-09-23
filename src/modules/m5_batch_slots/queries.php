@@ -156,7 +156,7 @@ function insert_exam_slot(int $scheduleId, string $startTime, string $endTime, i
  * Fetches candidate enrollment details for an assessment.
  */
 function get_candidate_enrollment(int $candidateId, int $assessmentId, mysqli $conn): ?array {
-    $sql = "SELECT id, candidate_id, assessment_id, batch_id, eligibility_status 
+    $sql = "SELECT id, candidate_id, assessment_id, batch_id, eligibility_status, provisional_schedule_id 
             FROM enrollments 
             WHERE candidate_id = ? AND assessment_id = ? 
             LIMIT 1";
@@ -202,7 +202,7 @@ function get_candidate_booked_attempt(int $candidateId, int $assessmentId, mysql
  * Serializes parallel booking requests for the same candidate and assessment.
  */
 function get_candidate_enrollment_for_update(int $candidateId, int $assessmentId, mysqli $conn): ?array {
-    $sql = "SELECT id, candidate_id, assessment_id, batch_id, eligibility_status 
+    $sql = "SELECT id, candidate_id, assessment_id, batch_id, eligibility_status, provisional_schedule_id 
             FROM enrollments 
             WHERE candidate_id = ? AND assessment_id = ? 
             LIMIT 1 

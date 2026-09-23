@@ -300,11 +300,12 @@ try {
         $exam['status'] = 'Slot Not Booked';
     }
 
-    $result = ['score' => '— / 100', 'level' => '—', 'level_assigned' => null, 'status' => 'Pending', 'evaluation' => 'Pending'];
+    $result = ['id' => null, 'score' => '— / 100', 'level' => '—', 'level_assigned' => null, 'status' => 'Pending', 'evaluation' => 'Pending'];
     if ($resultRow) {
         $percentage = (float)$resultRow['percentage'];
         $level = $resultRow['level_assigned'];
         $result = [
+            'id' => (int)$resultRow['id'],
             'score' => number_format($percentage, 2) . ' / 100',
             'level' => $level !== null && $level !== '' ? 'Level ' . $level : '—',
             'level_assigned' => $level !== null && $level !== '' ? 'Level ' . $level : null,
@@ -313,13 +314,16 @@ try {
         ];
     }
 
-    $certificate = ['number' => 'Not issued', 'level' => 'Not assigned', 'issueDate' => '—', 'status' => 'Pending'];
+    $certificate = ['number' => 'Not issued', 'level' => 'Not assigned', 'issueDate' => '—', 'issue_date' => '—', 'status' => 'Pending', 'result_id' => null];
     if ($certificateRow) {
         $certificate = [
             'number' => $certificateRow['certificate_number'],
+            'certificate_number' => $certificateRow['certificate_number'],
             'level' => 'Level ' . $certificateRow['level'],
             'issueDate' => !empty($certificateRow['issue_date']) ? date('d M Y', strtotime($certificateRow['issue_date'])) : '—',
-            'status' => 'Issued'
+            'issue_date' => !empty($certificateRow['issue_date']) ? date('d M Y', strtotime($certificateRow['issue_date'])) : '—',
+            'status' => 'Issued',
+            'result_id' => $resultRow ? (int)$resultRow['id'] : null
         ];
     }
 

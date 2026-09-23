@@ -93,7 +93,16 @@ function get_candidates(mysqli $conn): array
           WHEN EXISTS(SELECT 1 FROM attempts ax WHERE ax.candidate_id=c.id AND ax.status IN ('in_progress','submitted','expired')) THEN 'pending'
           ELSE 'not-started'
         END assessment_status,
-        (SELECT r.level_assigned FROM results r JOIN attempts ax ON ax.id=r.attempt_id WHERE ax.candidate_id=c.id ORDER BY r.created_at DESC LIMIT 1) level_assigned
+        (SELECT r.level_assigned FROM results r JOIN attempts ax ON ax.id=r.attempt_id WHERE ax.candidate_id=c.id ORDER BY r.created_at DESC LIMIT 1) level_assigned,
+        CASE
+          WHEN EXISTS(
+            SELECT 1 FROM certificates cert
+            JOIN results r2 ON r2.id = cert.result_id
+            JOIN attempts ax2 ON ax2.id = r2.attempt_id
+            WHERE ax2.candidate_id = c.id
+          ) THEN 'issued'
+          ELSE 'not-issued'
+        END certificate_status
       FROM candidates c
       JOIN users u ON u.id=c.user_id
       ORDER BY c.created_at DESC");
@@ -372,8 +381,8 @@ function upsert_result(mysqli $conn, int $attemptId, float $score, float $percen
 
 function upsert_certificate(mysqli $conn, int $candidateId, int $resultId, int $level): array
 {
-    $existing=q_one($conn,'SELECT id, certificate_number, issue_date FROM certificates WHERE result_id=?','i',[$resultId]);
-    if($existing) return $existing;
+    $existing = q_one($conn, 'SELECT id, certificate_number, issue_date FROM certificates WHERE result_id=?', 'i', [$resultId]);
+    if ($existing) return $existing;
 
     require_once __DIR__ . '/../m5_batch_slots/queries.php';
     $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 4);
@@ -381,13 +390,49 @@ function upsert_certificate(mysqli $conn, int $candidateId, int $resultId, int $
         throw new InvalidArgumentException("Result level {$level} does not qualify for certificate issuance (minimum Level {$minCertLevel} required).");
     }
 
-    $number='IB-'.date('Y').'-'.strtoupper(bin2hex(random_bytes(5)));
-    while(q_one($conn,'SELECT id FROM certificates WHERE certificate_number=?','s',[$number])){
-        $number='IB-'.date('Y').'-'.strtoupper(bin2hex(random_bytes(5)));
+    $maxAttempts = 3;
+    for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+        $conn->begin_transaction();
+        try {
+            $existing = q_one($conn, 'SELECT id, certificate_number, issue_date FROM certificates WHERE result_id=?', 'i', [$resultId]);
+            if ($existing) {
+                $conn->commit();
+                return $existing;
+            }
+
+            $row = q_one(
+                $conn,
+                "SELECT certificate_number FROM certificates ORDER BY id DESC LIMIT 1 FOR UPDATE"
+            );
+
+            if ($row && !empty($row['certificate_number']) && preg_match('/^C(\d+)$/', $row['certificate_number'], $matches)) {
+                $currentNum = (int)$matches[1];
+                $number = 'C' . ($currentNum + 1);
+            } else {
+                $number = 'C100';
+            }
+
+            $stmt = $conn->prepare('INSERT INTO certificates(certificate_number, candidate_id, result_id, level, issue_date) VALUES(?, ?, ?, ?, CURDATE())');
+            $stmt->bind_param('siii', $number, $candidateId, $resultId, $level);
+            $stmt->execute();
+            $id = $stmt->insert_id;
+            $stmt->close();
+
+            $conn->commit();
+            return ['id' => $id, 'certificate_number' => $number, 'issue_date' => date('Y-m-d')];
+        } catch (mysqli_sql_exception $e) {
+            $conn->rollback();
+            if (($e->getCode() === 1062 || str_contains($e->getMessage(), 'Duplicate entry')) && $attempt < $maxAttempts - 1) {
+                continue;
+            }
+            throw $e;
+        } catch (Throwable $e) {
+            $conn->rollback();
+            throw $e;
+        }
     }
-    $stmt=$conn->prepare('INSERT INTO certificates(certificate_number,candidate_id,result_id,level,issue_date) VALUES(?,?,?,?,CURDATE())');
-    $stmt->bind_param('siii',$number,$candidateId,$resultId,$level); $stmt->execute(); $id=$stmt->insert_id; $stmt->close();
-    return ['id'=>$id,'certificate_number'=>$number,'issue_date'=>date('Y-m-d')];
+
+    throw new RuntimeException("Failed to generate unique certificate number after {$maxAttempts} attempts.");
 }
 
 function update_placement(mysqli $conn,int $id,string $status,?string $company,?string $notes): void

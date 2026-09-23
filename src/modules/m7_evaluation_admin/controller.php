@@ -199,6 +199,54 @@ function m7_handle_request(mysqli $conn): void
             create_admin_log($conn,$_SESSION['user_id']??null,'generate_certificate',json_encode(['result_id'=>$data['result_id']??null,'certificate_id'=>$data['id']]));
             send_json_response('success','Certificate generated successfully.',$data);
 
+        case 'certificate-bulk':
+            set_time_limit(0);
+            
+            require_once __DIR__ . '/../m5_batch_slots/queries.php';
+            $minCertLevel = (int)(get_setting_value('min_certificate_level', $conn) ?? 4);
+            $minCertPct = (float)(get_setting_value('min_certificate_percentage', $conn) ?? 40.0);
+            
+            $conn->begin_transaction();
+            try {
+                $eligibleResults = q_all($conn, "
+                    SELECT r.id as result_id, at.candidate_id, r.level_assigned
+                    FROM results r
+                    JOIN attempts at ON at.id = r.attempt_id
+                    LEFT JOIN certificates c ON c.result_id = r.id
+                    WHERE c.id IS NULL 
+                      AND r.level_assigned <= ? 
+                      AND r.percentage >= ?
+                    ORDER BY r.created_at ASC
+                ", 'id', [$minCertLevel, $minCertPct]);
+                
+                $count = count($eligibleResults);
+                if ($count > 0) {
+                    $row = q_one($conn, "SELECT certificate_number FROM certificates ORDER BY id DESC LIMIT 1 FOR UPDATE");
+                    $currentNum = 100;
+                    if ($row && !empty($row['certificate_number']) && preg_match('/^C(\d+)$/', $row['certificate_number'], $matches)) {
+                        $currentNum = (int)$matches[1];
+                    }
+                    
+                    $stmt = $conn->prepare('INSERT INTO certificates (certificate_number, candidate_id, result_id, level, issue_date) VALUES (?, ?, ?, ?, CURDATE())');
+                    
+                    foreach ($eligibleResults as $res) {
+                        $currentNum++;
+                        $number = 'C' . $currentNum;
+                        $stmt->bind_param('siii', $number, $res['candidate_id'], $res['result_id'], $res['level_assigned']);
+                        $stmt->execute();
+                    }
+                    $stmt->close();
+                }
+                
+                $conn->commit();
+                create_admin_log($conn, $_SESSION['user_id'] ?? null, 'generate_certificates_bulk', json_encode(['count' => $count]));
+                send_json_response('success', "Generated $count certificates successfully.", ['count' => $count]);
+            } catch (Throwable $e) {
+                $conn->rollback();
+                error_log('Bulk certificate generation error: ' . $e->getMessage());
+                send_json_response('error', 'Failed to generate certificates.', null, 500);
+            }
+
         case 'placement':
             $id=require_positive_int($body['id']??null,'id');
             $status=trim((string)($body['status']??''));

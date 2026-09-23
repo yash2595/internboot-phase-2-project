@@ -1,4 +1,5 @@
 <?php
+// VERIFICATION_TOKEN: VERIFY-25BCE14D1F630DEA
 // Path: src/modules/m5_batch_slots/controller.php
 
 require_once __DIR__ . '/service.php';
@@ -330,5 +331,62 @@ function handle_cancel_slot_booking_request(array $input, mysqli $conn): void {
         error_log("Error cancelling slot booking: " . $msg);
         send_json_response('error', $msg, null, 400);
         return;
+    }
+}
+
+function handle_list_provisional_slots_request(array $input, mysqli $conn): void {
+    try {
+        $candidateId = validate_candidate_session($conn);
+        
+        if (!array_key_exists('assessment_id', $input) || $input['assessment_id'] === null) {
+            send_json_response('error', 'Assessment ID is required', null, 400);
+            return;
+        }
+        
+        $assessmentId = parse_positive_int($input['assessment_id']);
+        if ($assessmentId === null) {
+            send_json_response('error', 'A valid assessment_id is required', null, 400);
+            return;
+        }
+
+        $slots = fetch_provisional_slots_with_counts($assessmentId, $conn);
+        send_json_response('success', 'Provisional slots retrieved successfully', ['slots' => $slots], 200);
+    } catch (Exception $e) {
+        if ($e->getMessage() === 'Unauthorized: Active candidate session required') {
+            send_json_response('error', $e->getMessage(), null, 401);
+            return;
+        }
+        $msg = $e->getMessage();
+        error_log("Error listing provisional slots: " . $msg);
+        send_json_response('error', is_dev_env() ? $msg : 'An internal error occurred.', null, 500);
+    }
+}
+
+function handle_list_notifications_request(array $input, mysqli $conn): void {
+    try {
+        $candidateId = validate_candidate_session($conn);
+        
+        $sql = "SELECT id, type, related_schedule_id, message, is_read, created_at 
+                FROM notifications 
+                WHERE candidate_id = ? 
+                ORDER BY created_at DESC";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $candidateId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $notifications = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        // Mark as read optionally? 
+        // Just return them for now.
+        send_json_response('success', 'Notifications retrieved successfully', ['notifications' => $notifications], 200);
+    } catch (Exception $e) {
+        if ($e->getMessage() === 'Unauthorized: Active candidate session required') {
+            send_json_response('error', $e->getMessage(), null, 401);
+            return;
+        }
+        $msg = $e->getMessage();
+        error_log("Error listing notifications: " . $msg);
+        send_json_response('error', is_dev_env() ? $msg : 'An internal error occurred.', null, 500);
     }
 }

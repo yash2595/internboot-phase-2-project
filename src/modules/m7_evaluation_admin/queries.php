@@ -551,10 +551,10 @@ function create_batch(mysqli $conn, string $batchNumber, int $assessmentId, stri
     if($date < new DateTime('today')) throw new InvalidArgumentException('Exam date cannot be in the past.');
 
     if($assessmentId>0){
-        $assessment=q_one($conn,'SELECT id,title,duration_minutes,status FROM assessments WHERE id=? AND status<>"archived"','i',[$assessmentId]);
+        $assessment=q_one($conn,"SELECT id,title,duration_minutes,status FROM assessments WHERE id=? AND status<>'archived'",'i',[$assessmentId]);
     }else{
-        $assessment=q_one($conn,'SELECT id,title,duration_minutes,status FROM assessments WHERE status="active" ORDER BY id DESC LIMIT 1');
-        if(!$assessment) $assessment=q_one($conn,'SELECT id,title,duration_minutes,status FROM assessments WHERE status<>"archived" ORDER BY id DESC LIMIT 1');
+        $assessment=q_one($conn,"SELECT id,title,duration_minutes,status FROM assessments WHERE status='active' ORDER BY id DESC LIMIT 1");
+        if(!$assessment) $assessment=q_one($conn,"SELECT id,title,duration_minutes,status FROM assessments WHERE status<>'archived' ORDER BY id DESC LIMIT 1");
     }
     if(!$assessment) throw new InvalidArgumentException('No active assessment exists. Create or activate an assessment first.');
     $assessmentId=(int)$assessment['id'];
@@ -791,10 +791,10 @@ function create_provisional_batch(mysqli $conn, string $batchNumber, int $assess
     if($date < new DateTime('today')) throw new InvalidArgumentException('Exam date cannot be in the past.');
 
     if($assessmentId>0){
-        $assessment=q_one($conn,'SELECT id,title,duration_minutes,status FROM assessments WHERE id=? AND status<>"archived"','i',[$assessmentId]);
+        $assessment=q_one($conn,"SELECT id,title,duration_minutes,status FROM assessments WHERE id=? AND status<>'archived'",'i',[$assessmentId]);
     }else{
-        $assessment=q_one($conn,'SELECT id,title,duration_minutes,status FROM assessments WHERE status="active" ORDER BY id DESC LIMIT 1');
-        if(!$assessment) $assessment=q_one($conn,'SELECT id,title,duration_minutes,status FROM assessments WHERE status<>"archived" ORDER BY id DESC LIMIT 1');
+        $assessment=q_one($conn,"SELECT id,title,duration_minutes,status FROM assessments WHERE status='active' ORDER BY id DESC LIMIT 1");
+        if(!$assessment) $assessment=q_one($conn,"SELECT id,title,duration_minutes,status FROM assessments WHERE status<>'archived' ORDER BY id DESC LIMIT 1");
     }
     if(!$assessment) throw new InvalidArgumentException('No active assessment exists. Create or activate an assessment first.');
     $assessmentId=(int)$assessment['id'];

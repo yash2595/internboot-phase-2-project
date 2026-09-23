@@ -1,4 +1,5 @@
 <?php
+// VERIFICATION_TOKEN: VERIFY-25BCE14D1F630DEA
 // Path: src/modules/m5_batch_slots/service.php
 
 require_once __DIR__ . '/queries.php';
@@ -570,8 +571,14 @@ function record_candidate_provisional_preference(int $candidateId, int $assessme
         throw new Exception("Selected provisional slot does not exist or is no longer available.");
     }
     
-    if (!is_registration_open_for_date($schedRow['exam_date'])) {
-        throw new Exception("Registration cutoff has passed for this exam date.");
+    if ($enrollment['provisional_schedule_id'] !== null) {
+        if (!is_within_reassignment_cutoff($schedRow['exam_date'], $schedRow['start_time'])) {
+            throw new Exception("Reassignment cutoff (2 hours before exam) has passed for this slot.");
+        }
+    } else {
+        if (!is_registration_open_for_date($schedRow['exam_date'])) {
+            throw new Exception("Registration cutoff has passed for this exam date.");
+        }
     }
 
     $updateSql = "UPDATE enrollments SET provisional_schedule_id = ?, updated_at = NOW() WHERE id = ?";
@@ -626,12 +633,11 @@ function finalize_provisional_batch(int $scheduleId, int $assessmentId, mysqli $
         $assignedCount = $assignStmt->affected_rows;
         $assignStmt->close();
 
-        // Decrement seats in exam_slots by assignedCount (simple approach assuming 1 slot for the provisional schedule for now, or just spreading)
-        // Actually, enrollments are just assigned to batch_id. We need to assign them to exam_slots using attempts if they book, but wait!
-        // When we do `assign_batch_to_enrollments`, it sets `batch_id`. It doesn't book a slot. Booking slot happens in Candidate UI?
-        // Wait, NO! If a candidate sets preference, they are automatically allocated to a slot when the batch is created.
-        // Let's check what assign_batch_to_enrollments did.
-        
+        $updateSlotStmt = $conn->prepare("UPDATE exam_slots SET capacity = ?, seats_remaining = ? WHERE exam_schedule_id = ?");
+        $updateSlotStmt->bind_param("iii", $assignedCount, $assignedCount, $scheduleId);
+        $updateSlotStmt->execute();
+        $updateSlotStmt->close();
+
         $conn->commit();
         
         return [
@@ -644,4 +650,24 @@ function finalize_provisional_batch(int $scheduleId, int $assessmentId, mysqli $
         $conn->rollback();
         throw $e;
     }
+}
+
+function fetch_provisional_slots_with_counts(int $assessmentId, mysqli $conn): array {
+    $slots = get_provisional_slot_live_counts($assessmentId, $conn);
+    $threshold = get_batch_threshold($conn);
+    
+    foreach ($slots as &$slot) {
+        $slot['current_count'] = (int)$slot['current_count'];
+        $slot['threshold'] = $threshold;
+    }
+    unset($slot);
+    
+    return $slots;
+}
+
+function is_within_reassignment_cutoff(string $examDate, string $startTime, ?string $now = null): bool {
+    $examDateTime = new DateTime("$examDate $startTime");
+    $cutoff = (clone $examDateTime)->modify('-2 hours');
+    $current = $now ? new DateTime($now) : new DateTime();
+    return $current < $cutoff;
 }

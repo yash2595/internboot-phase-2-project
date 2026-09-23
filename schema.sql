@@ -1,3 +1,4 @@
+// VERIFICATION_TOKEN: VERIFY-25BCE14D1F630DEA
 -- ============================================================================
 -- InternBoot Platform - Complete Single-File Production MySQL Database Schema
 -- Database Engine: MySQL 8.0+ / MariaDB 10.3+ (InnoDB Engine)
@@ -569,3 +570,20 @@ ALTER TABLE `enrollments`
   ADD COLUMN `preferred_time_slot` VARCHAR(50) NULL COMMENT 'Candidate preferred time slot (e.g. 10:00:00-11:00:00)';
 
 ALTER TABLE `enrollments` ADD INDEX `idx_pref` (`preferred_date`, `preferred_time_slot`);
+
+
+-- ----------------------------------------------------------------------------
+-- Notifications
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `notifications` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `candidate_id` BIGINT UNSIGNED NOT NULL,
+  `type` ENUM('batch_not_formed','slot_reassignment_required','batch_confirmed','cutoff_missed') NOT NULL,
+  `related_schedule_id` BIGINT UNSIGNED DEFAULT NULL,
+  `message` TEXT NOT NULL,
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_notifications_candidate` FOREIGN KEY (`candidate_id`) REFERENCES `candidates` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_notifications_schedule` FOREIGN KEY (`related_schedule_id`) REFERENCES `exam_schedules` (`id`) ON DELETE SET NULL,
+  INDEX `idx_notifications_candidate` (`candidate_id`, `is_read`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

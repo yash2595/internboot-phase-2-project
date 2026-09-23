@@ -1,4 +1,5 @@
 <?php
+// VERIFICATION_TOKEN: VERIFY-25BCE14D1F630DEA
 // Path: scripts/finalize_monday_batches.php
 // This script is meant to be run via a cron job every Monday morning.
 
@@ -63,7 +64,7 @@ try {
                             JOIN users u ON e.candidate_id = u.id -- Wait, enrollments.candidate_id is candidates.id not users.id
                             WHERE e.provisional_schedule_id = ? AND e.eligibility_status = 'eligible' AND e.batch_id IS NULL";
             // Fix join
-            $getUsersSql = "SELECT u.email, u.full_name, e.id as enrollment_id 
+            $getUsersSql = "SELECT u.email, u.full_name, e.id as enrollment_id, c.id as candidate_id 
                             FROM enrollments e
                             JOIN candidates c ON e.candidate_id = c.id
                             JOIN users u ON c.user_id = u.id
@@ -84,6 +85,13 @@ try {
                 if (function_exists('send_email')) {
                     send_email($uRow['email'], $subject, $body);
                 }
+                
+                // Add Notification
+                $notifSql = "INSERT INTO notifications (candidate_id, type, related_schedule_id, message) VALUES (?, 'slot_reassignment_required', ?, ?)";
+                $notifStmt = $conn->prepare($notifSql);
+                $notifStmt->bind_param("iis", $uRow['candidate_id'], $scheduleId, $body);
+                $notifStmt->execute();
+                $notifStmt->close();
             }
             $uStmt->close();
             

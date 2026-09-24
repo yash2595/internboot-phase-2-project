@@ -561,12 +561,7 @@
 }
 
 .ib-auth-page:has(.ib-register-role) .ib-password-wrap .ib-input {
-  padding-right: 38px;
-}
-
-.ib-auth-page:has(.ib-register-role) .ib-toggle-password {
-  right: 10px;
-  font-size: 1rem;
+  padding-right: 13px;
 }
 
 .ib-auth-page:has(.ib-register-role) #formAlert,
@@ -767,7 +762,7 @@
 }
 
 .ib-login-page #loginForm .ib-password-wrap .ib-input {
-  padding-right: 48px;
+  padding-right: 13px;
 }
 
 .ib-login-page #loginForm .ib-btn-primary {

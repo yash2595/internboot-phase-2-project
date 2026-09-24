@@ -92,7 +92,6 @@ $pageTitle = 'Log In — InternBoot';
         </div>
         <div class="ib-password-wrap">
           <input type="password" class="ib-input" id="password" name="password" autocomplete="current-password" required>
-          <button type="button" class="ib-toggle-password" data-target="password" aria-label="Show password"></button>
         </div>
       </div>
 

@@ -130,14 +130,12 @@ $pageTitle = 'Register — InternBoot';
             <label for="password">Password</label>
             <div class="ib-password-wrap">
               <input type="password" class="ib-input" id="password" name="password" minlength="8" autocomplete="new-password" required>
-              <button type="button" class="ib-toggle-password" data-target="password" aria-label="Show password"></button>
             </div>
           </div>
           <div class="ib-form-row">
             <label for="confirm_password">Confirm Password</label>
             <div class="ib-password-wrap">
               <input type="password" class="ib-input" id="confirm_password" name="confirm_password" minlength="8" autocomplete="new-password" required>
-              <button type="button" class="ib-toggle-password" data-target="confirm_password" aria-label="Show password"></button>
             </div>
           </div>
 

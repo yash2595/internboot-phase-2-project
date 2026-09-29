@@ -508,10 +508,10 @@
     set("completedAssessments", data.completed_assessments);
     set("certificates", data.certificates);
     set("completedAssessmentCount", data.completed_assessments);
-    set("pendingAssessmentCount", data.pending_attempt_count || 0);
+    set("pendingAssessmentCount", data.eligible_candidates || 0);
 
     const totalAssessments =
-      (data.completed_assessments || 0) + (data.pending_attempt_count || 0);
+      (data.completed_assessments || 0) + (data.eligible_candidates || 0);
     const completedPct = totalAssessments
       ? Math.round((data.completed_assessments / totalAssessments) * 100)
       : 0;
@@ -2219,6 +2219,112 @@
           cBtn.textContent = "Generate Certificate";
           cBtn.disabled = false;
         }
+      };
+    }
+  }
+
+  async function loadPlacements() {
+    const [certData, resultData] = await Promise.all([
+      api("certificates").catch(() => ({ certificates: [] })),
+      api("results").catch(() => ({ results: [] }))
+    ]);
+    const certs = certData.certificates || [];
+    const results = resultData.results || [];
+    
+    const placements = certs.map(c => {
+      const res = results.find(r => r.email === c.email);
+      return {
+        ...c,
+        percentage: res ? res.percentage : (c.percentage || "N/A"),
+        company: c.company || "—",
+        placed: !!c.company
+      };
+    });
+
+    const set = (id, v) => {
+      const el = $("#" + id);
+      if (el) el.textContent = v;
+    };
+
+    set("placementReadyCount", placements.length);
+    for (let i = 1; i <= 5; i++) {
+      set(`placementLevel${i}Count`, placements.filter(p => Number(p.level) === i).length);
+    }
+    set("placedCount", placements.filter(p => p.placed).length);
+
+    const tbody = $("#emptyPlacement")?.parentElement || document.querySelector("tbody");
+    if (!tbody) return;
+
+    if (placements.length > 0) {
+      tbody.innerHTML = placements.map(p => `
+        <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition" data-placement="true" data-level="level ${p.level}">
+          <td class="px-6 py-5 align-middle">
+            <div>
+              <p class="font-medium text-slate-900">${escapeHtml(p.full_name)}</p>
+              <p class="text-xs text-slate-500">${escapeHtml(p.email)}</p>
+            </div>
+          </td>
+          <td class="px-6 py-5 align-middle">
+            ${badge(`Level ${p.level}`, "blue")}
+          </td>
+          <td class="px-6 py-5 align-middle font-medium text-slate-700">
+            ${p.percentage !== "N/A" ? `${p.percentage}%` : '—'}
+          </td>
+          <td class="px-6 py-5 align-middle text-slate-500">
+            ${escapeHtml(p.company)}
+          </td>
+          <td class="px-6 py-5 align-middle">
+            <button class="update-placement-btn rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:border-intern-blue hover:text-intern-blue transition">Edit</button>
+          </td>
+        </tr>
+      `).join("");
+    } else {
+      tbody.innerHTML = `
+        <tr id="emptyPlacement">
+          <td class="px-6 py-12 text-center text-sm text-slate-600" colspan="5">
+            No candidates found
+          </td>
+        </tr>
+      `;
+    }
+    
+    wirePlacementFilters(placements);
+  }
+
+  function wirePlacementFilters(placements) {
+    const search = $("#placementSearch"),
+          level = $("#placementLevelFilter"),
+          exportBtn = $("#exportPlacementCsvBtn");
+    
+    const run = () => {
+      const q = (search?.value || "").toLowerCase(),
+            l = (level?.value || "").toLowerCase();
+            
+      $$("tr[data-placement]").forEach(row => {
+        row.style.display = 
+          row.textContent.toLowerCase().includes(q) &&
+          sameFilterValue(row.dataset.level, l)
+            ? ""
+            : "none";
+      });
+    };
+    
+    search?.addEventListener("input", run);
+    level?.addEventListener("change", run);
+
+    if (exportBtn && placements) {
+      exportBtn.onclick = () => {
+        let csv = "Name,Email,Level,Score,Company\n";
+        placements.forEach(p => {
+          csv += `"${p.full_name}","${p.email}","Level ${p.level}","${p.percentage !== "N/A" ? p.percentage + "%" : "-"}","${p.company}"\n`;
+        });
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "placements.csv";
+        a.click();
+        window.URL.revokeObjectURL(url);
       };
     }
   }

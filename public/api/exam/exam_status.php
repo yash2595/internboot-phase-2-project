@@ -27,7 +27,16 @@ try {
         if ($latest) {
             $attemptId = (int)$latest['id'];
         } else {
-            send_json_response('error', 'No attempt found for this candidate', null, 404);
+            $prefSql = "SELECT preferred_date, preferred_time_slot FROM enrollments WHERE candidate_id = ? ORDER BY id DESC LIMIT 1";
+            $prefStmt = $conn->prepare($prefSql);
+            $prefStmt->bind_param("i", $candidateId);
+            $prefStmt->execute();
+            $pref = $prefStmt->get_result()->fetch_assoc();
+            if ($pref && !empty($pref['preferred_date'])) {
+                send_json_response('error', 'Preference saved, awaiting batch formation', ['preferred_date' => $pref['preferred_date'], 'preferred_time_slot' => $pref['preferred_time_slot']], 404);
+            } else {
+                send_json_response('error', 'No attempt found for this candidate', null, 404);
+            }
         }
     }
 
@@ -163,7 +172,7 @@ try {
         $slotEndTime = !empty($attempt['slot_end_time']) ? $attempt['slot_end_time'] : null;
 
         if ($examDate !== null && $slotStartTime !== null && $slotEndTime !== null) {
-            // Compare full datetimes — avoids timezone/date-string mismatch bugs
+            // Compare full datetimes  avoids timezone/date-string mismatch bugs
             $slotStart = new DateTime($examDate . " " . $slotStartTime);
             $slotEnd = new DateTime($examDate . " " . $slotEndTime);
             if ($slotEndTime < $slotStartTime) { $slotEnd->modify("+1 day"); }

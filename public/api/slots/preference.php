@@ -227,8 +227,8 @@ if ($method === 'GET') {
             $preferredTimeSlot = $schedInfo['start_time'] . '-' . $schedInfo['end_time'];
         }
         $enrollmentId = (int)$enrollment['id'];
-        $upPref = $conn->prepare("UPDATE enrollments SET preferred_date = ?, preferred_time_slot = ? WHERE id = ?");
-        $upPref->bind_param("ssi", $preferredDate, $preferredTimeSlot, $enrollmentId);
+        $upPref = $conn->prepare("UPDATE enrollments SET preferred_date = ?, preferred_time_slot = ?, provisional_schedule_id = ? WHERE id = ?");
+        $upPref->bind_param("ssii", $preferredDate, $preferredTimeSlot, $provisionalScheduleId, $enrollmentId);
         $upPref->execute();
         $upPref->close();
 

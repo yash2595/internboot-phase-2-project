@@ -159,11 +159,15 @@
           <a
             href="placement.html"
             data-page="placement.html"
-            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-blue-50 hover:bg-white/10 hover:text-white transition-all duration-200"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/20 text-white font-semibold transition-all duration-200"
           >
             <i data-lucide="briefcase-business" class="w-5 h-5 shrink-0"></i>
 
-            <span>Placement</span>
+            <span class="truncate"> Placement </span>
+
+            <span
+              class="ml-auto w-2 h-2 rounded-full bg-blue-200 shrink-0"
+            ></span>
           </a>
         </nav>
 
@@ -770,7 +774,7 @@
             const eligibilityStat = document.getElementById("pl-stat-eligibility");
             if (eligibilityStat) {
               const candLevel = payload.data.candidate?.level;
-              eligibilityStat.textContent = candLevel && candLevel !== "—" ? candLevel : "Pending";
+              eligibilityStat.textContent = candLevel && candLevel !== "—" ? candLevel : "—";
             }
 
 

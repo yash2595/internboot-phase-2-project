@@ -16,8 +16,12 @@ function request_body(): array {
 require_once __DIR__ . '/../../../src/core/candidate_resolver.php';
 
 function get_fee(mysqli $conn): float {
-    // Always return fixed total: ₹2,999 base + 18% GST = ₹3,538.82
-    return 3538.82;
+    $s = $conn->prepare("SELECT setting_value FROM settings WHERE setting_key='exam_fee' LIMIT 1");
+    $s->execute();
+    $r = $s->get_result()->fetch_assoc();
+    $s->close();
+    $baseFee = $r ? (float)$r['setting_value'] : 3538.82;
+    return round($baseFee * 1.18, 2);
 }
 
 $action = $_GET['action'] ?? '';

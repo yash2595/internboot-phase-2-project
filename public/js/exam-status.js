@@ -30,12 +30,12 @@ async function initExamStatusModule() {
                     </div>`;
                 return;
             }
-            if (payload.message === "No attempt found for this candidate") {
+            if (payload.message === "Preference saved, awaiting batch formation") {
                 container.innerHTML = `
-                    <div class="notice notice-info" style="background:#edf4ff; border:1px solid #d4e4ff; color:#1c52b8; padding:24px; border-radius:10px; text-align:center;">
-                        <h2 style="margin:0 0 10px; color:#17243a; font-size:20px;">No Slot Booked Yet</h2>
-                        <p style="margin:0 0 16px; color:#4b5563;">You haven't booked an exam slot yet. Please select an available slot from your assigned batch.</p>
-                        <a href="batches-slots.html" class="btn btn-ib-primary" style="background:#2563eb; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; display:inline-block; font-weight:700;">Go to Batches &amp; Slots →</a>
+                    <div class="notice notice-success" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:24px; border-radius:10px; text-align:center;">
+                        <h2 style="margin:0 0 10px; color:#17243a; font-size:20px;">Preference Saved</h2>
+                        <p style="margin:0 0 16px; color:#4b5563;">Your choice for <strong>${escapeHtml(payload.data?.preferred_date || 'your preferred date')}</strong> has been recorded. Once 100 candidates choose this slot, the batch will be created automatically.</p>
+                        <a href="batches-slots.html" class="btn btn-ib-primary" style="background:#18a56a; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; display:inline-block; font-weight:700;">View Batch Details →</a>
                     </div>`;
                 return;
             }

@@ -303,7 +303,7 @@ async function handleBookSlotClick(btn) {
                 </div>`;
         }
 
-        await loadAvailableSlots(assessmentId);
+        await initSlotsModule();
 
         document.querySelectorAll(".btn-book-slot").forEach(b => {
             b.disabled = true;
@@ -528,7 +528,7 @@ async function handleSetPreferenceClick(btn) {
                 </div>`;
         }
 
-        await loadPreferences(assessmentId);
+        await initSlotsModule();
 
     } catch (err) {
         btn.disabled = false;

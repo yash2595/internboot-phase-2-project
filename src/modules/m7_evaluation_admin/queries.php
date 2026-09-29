@@ -40,7 +40,7 @@ function get_dashboard_stats(mysqli $conn): array
     return [
         'total_registrations' => (int)q_value($conn, 'SELECT COUNT(*) FROM candidates'),
         'paid_candidates' => (int)q_value($conn, "SELECT COUNT(DISTINCT candidate_id) FROM payments WHERE status = 'success'"),
-        'eligible_candidates' => (int)q_value($conn, "SELECT COUNT(*) FROM enrollments WHERE eligibility_status = 'eligible'"),
+        'eligible_candidates' => (int)q_value($conn, "SELECT COUNT(DISTINCT e.candidate_id) FROM enrollments e WHERE e.eligibility_status = 'eligible' AND NOT EXISTS (SELECT 1 FROM attempts at LEFT JOIN results r ON r.attempt_id = at.id WHERE at.candidate_id = e.candidate_id AND (at.status = 'submitted' OR r.id IS NOT NULL))"),
         'upcoming_batches' => (int)q_value($conn, "SELECT COUNT(DISTINCT b.id) FROM batches b JOIN exam_schedules s ON s.batch_id=b.id WHERE s.exam_date >= CURDATE() AND s.status='scheduled'"),
         'available_slots' => (int)q_value($conn, "SELECT COALESCE(SUM(seats_remaining),0) FROM exam_slots es JOIN exam_schedules s ON s.id=es.exam_schedule_id WHERE s.exam_date >= CURDATE() AND s.status='scheduled'"),
         'completed_assessments' => (int)q_value($conn, "SELECT COUNT(DISTINCT at.id) FROM attempts at LEFT JOIN results r ON r.attempt_id=at.id WHERE at.status='submitted' OR r.id IS NOT NULL"),
@@ -101,7 +101,11 @@ function get_candidates(mysqli $conn): array
           WHEN EXISTS(SELECT 1 FROM attempts ax WHERE ax.candidate_id=c.id AND ax.status IN ('in_progress','submitted','expired')) THEN 'pending'
           ELSE 'not-started'
         END assessment_status,
-        (SELECT r.level_assigned FROM results r JOIN attempts ax ON ax.id=r.attempt_id WHERE ax.candidate_id=c.id ORDER BY r.created_at DESC LIMIT 1) level_assigned
+        (SELECT r.level_assigned FROM results r JOIN attempts ax ON ax.id=r.attempt_id WHERE ax.candidate_id=c.id ORDER BY r.created_at DESC LIMIT 1) level_assigned,
+        CASE
+          WHEN EXISTS(SELECT 1 FROM certificates ce WHERE ce.candidate_id=c.id) THEN 'issued'
+          ELSE 'not-issued'
+        END certificate_status
       FROM candidates c
       JOIN users u ON u.id=c.user_id
       ORDER BY c.created_at DESC");
@@ -230,7 +234,7 @@ function get_placement_records(mysqli $conn): array
       FROM placement_records pr
       JOIN candidates c ON c.id=pr.candidate_id
       JOIN users u ON u.id=c.user_id
-      LEFT JOIN results r ON r.id=pr.result_id
+      JOIN results r ON r.id=pr.result_id
       ORDER BY pr.updated_at DESC");
 }
 

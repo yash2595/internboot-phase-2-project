@@ -48,7 +48,7 @@ try {
             p.id AS payment_id, p.assessment_id AS payment_assessment_id, p.amount AS payment_amount,
             p.status AS payment_status, p.reference_number, p.payment_date, p.created_at AS payment_created_at,
             e.id AS enrollment_id, e.assessment_id AS enrollment_assessment_id, e.payment_id AS enrollment_payment_id,
-            e.batch_id, e.eligibility_status, e.created_at AS enrollment_created_at,
+            e.batch_id, e.eligibility_status, e.created_at AS enrollment_created_at, e.preferred_date, e.preferred_time_slot,
             ass.id AS assessment_id, ass.title AS assessment_title, ass.description AS assessment_description,
             ass.duration_minutes, ass.total_questions, ass.status AS assessment_status
         FROM candidates c
@@ -61,7 +61,7 @@ try {
             LIMIT 1
         ) p ON 1=1
         LEFT JOIN (
-            SELECT id, assessment_id, payment_id, batch_id, eligibility_status, created_at
+            SELECT id, assessment_id, payment_id, batch_id, eligibility_status, created_at, preferred_date, preferred_time_slot
             FROM enrollments
             WHERE candidate_id = ?
             ORDER BY id DESC
@@ -110,6 +110,8 @@ try {
         'eligibility_status' => $row['eligibility_status'],
         'created_at' => $row['enrollment_created_at'],
         'assessment_title' => $row['assessment_title'],
+        'preferred_date' => $row['preferred_date'],
+        'preferred_time_slot' => $row['preferred_time_slot'],
     ] : null;
 
     $assessment = ($row['assessment_id'] !== null) ? [
@@ -240,6 +242,9 @@ try {
             'status' => $batchStatus,
             'candidates' => (string)($batchRow['candidate_count'] ?? 0) . ' registered'
         ];
+    } elseif ($enrollmentRow && !empty($enrollmentRow['preferred_date'])) {
+        $batch['name'] = 'Awaiting Formation';
+        $batch['status'] = 'Preference Saved';
     }
 
     /* 3. Candidate's own attempt for the assessment */
@@ -302,9 +307,17 @@ try {
         }
     } elseif ($batchRow) {
         $exam['status'] = 'Slot Not Booked';
+    } elseif ($enrollmentRow && !empty($enrollmentRow['preferred_date'])) {
+        $exam['status'] = 'Preference Saved';
+        $exam['exam_date'] = date('Y-m-d', strtotime($enrollmentRow['preferred_date']));
+        $exam['date'] = date('d M Y', strtotime($enrollmentRow['preferred_date']));
+        if (!empty($enrollmentRow['preferred_time_slot'])) {
+            $exam['time'] = $enrollmentRow['preferred_time_slot'];
+            $exam['slot_time'] = $enrollmentRow['preferred_time_slot'];
+        }
     }
 
-    $result = ['score' => '— / 100', 'level' => '—', 'level_assigned' => null, 'status' => 'Pending', 'evaluation' => 'Pending'];
+    $result = ['score' => '— / 100', 'level' => '—', 'level_assigned' => null, 'status' => '—', 'evaluation' => '—'];
     if ($resultRow) {
         $percentage = (float)$resultRow['percentage'];
         $level = $resultRow['level_assigned'];
@@ -318,7 +331,7 @@ try {
         ];
     }
 
-    $certificate = ['number' => 'Not issued', 'level' => 'Not assigned', 'issueDate' => '—', 'status' => 'Pending'];
+    $certificate = ['number' => 'Not issued', 'level' => 'Not assigned', 'issueDate' => '—', 'status' => '—'];
     if ($certificateRow) {
         $certificate = [
             'number' => $certificateRow['certificate_number'],

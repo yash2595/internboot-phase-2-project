@@ -11,3 +11,7 @@ composer.phar
 
 public/uploads/*
 !public/uploads/.gitkeep
+*.log
+bin/
+gh.zip
+*.exe

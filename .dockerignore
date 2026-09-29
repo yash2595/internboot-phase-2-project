@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+!.env.example
+bin
+*.zip
+*.log
+vendor
+tests
+.phpunit.cache

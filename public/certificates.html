@@ -27,7 +27,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-<body class="min-h-screen bg-[#eef4ff] text-slate-700">
+<body class="min-h-screen bg-[#eef4ff] text-slate-600">
   <div class="min-h-screen flex">
     <!-- =====================================================
            SIDEBAR
@@ -36,7 +36,7 @@
     <aside
       class="fixed inset-y-0 left-0 z-50 hidden md:flex w-[250px] flex-col overflow-hidden bg-gradient-to-b from-[#294fae] to-[#347de9] text-white">
       <!-- Logo -->
-      <div class="h-16 px-6 flex items-center border-b border-white/15 shrink-0">
+      <div class="h-16 px-5 flex items-center border-b border-white/15 shrink-0">
         <a href="dashboard.html" class="flex items-center gap-3 min-w-0">
           <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden">
             <img src="assets/internboot-logo.png" alt="InternBoot logo" class="w-full h-full object-contain" />
@@ -159,7 +159,7 @@
         ====================================================== -->
 
       <header
-        class="fixed top-0 right-0 left-[250px] z-40 h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between">
+        class="fixed top-0 right-0 left-[250px] z-40 h-16 bg-white border-b border-slate-200 px-5 flex items-center justify-between">
         <!-- Page Title -->
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
@@ -168,7 +168,7 @@
 
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <h1 class="text-sm font-semibold text-slate-700">
+              <h1 class="text-sm font-semibold text-slate-600">
                 Certificates
               </h1>
 
@@ -194,7 +194,7 @@
           </div>
 
           <div class="user hidden sm:flex flex-col min-w-0">
-            <strong class="text-[13px] font-semibold text-slate-700 truncate max-w-40">
+            <strong class="text-[13px] font-semibold text-slate-600 truncate max-w-40">
               <span data-candidate="name"></span>
             </strong>
 
@@ -209,14 +209,14 @@
              CONTENT
         ====================================================== -->
 
-      <section class="p-6 pt-[88px]">
+      <section class="p-5 pt-[88px]">
         <div class="max-w-[1400px] mx-auto w-full">
           <!-- =================================================
                  HERO
             ================================================== -->
 
           <section
-            class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#24479d] via-[#2f61c7] to-[#4388f3] px-5 sm:px-6 lg:px-8 py-6 md:py-7 mb-6 text-white">
+            class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#24479d] via-[#2f61c7] to-[#4388f3] px-4 sm:px-5 lg:px-6 py-5 md:py-7 mb-5 text-white">
             <!-- Background decoration -->
             <div class="absolute -right-14 -top-20 w-56 h-56 rounded-full bg-white/10"></div>
 
@@ -249,16 +249,16 @@
                  CERTIFICATE CONTENT
             ================================================== -->
 
-          <div id="certificate-main-container" class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+          <div id="certificate-main-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
             <!-- Status / Actions -->
             <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-              <div class="p-6 border-b border-slate-100 flex items-center justify-between gap-4">
+              <div class="p-5 border-b border-slate-100 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                     <i data-lucide="award" class="w-5 h-5"></i>
                   </div>
                   <div>
-                    <h2 class="text-base font-semibold text-slate-700">Certificate Status</h2>
+                    <h2 class="text-base font-semibold text-slate-600">Certificate Status</h2>
                     <p class="text-[13px] text-slate-500 mt-0.5">Your certificate availability</p>
                   </div>
                 </div>
@@ -270,12 +270,12 @@
 
               <!-- JS updates this container with Download/View OR Loading -->
               <div id="certificate-state-container"
-                class="flex-1 p-6 flex flex-col items-center justify-center text-center">
+                class="flex-1 p-5 flex flex-col items-center justify-center text-center">
                 <div
                   class="mx-auto w-12 h-12 rounded-xl bg-white border border-blue-100 flex items-center justify-center text-blue-600 mb-4">
                   <i data-lucide="badge-check" class="w-6 h-6"></i>
                 </div>
-                <h2 class="text-base font-semibold text-slate-700">Loading Certificate Status...</h2>
+                <h2 class="text-base font-semibold text-slate-600">Loading Certificate Status...</h2>
                 <p class="mt-2 text-[13px] text-slate-500">Please wait while we check your certificate information.</p>
               </div>
             </section>
@@ -283,40 +283,40 @@
             <!-- Certificate Details -->
             <section id="certificate-preview-card"
               class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" style="display: none">
-              <div class="p-6">
+              <div class="p-5">
                 <div class="flex items-center gap-3 mb-5">
                   <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                     <i data-lucide="file-badge" class="w-5 h-5"></i>
                   </div>
                   <div>
-                    <h2 class="text-base font-semibold text-slate-700">Certificate Information</h2>
+                    <h2 class="text-base font-semibold text-slate-600">Certificate Information</h2>
                   </div>
                 </div>
 
                 <!-- Certificate Information -->
                 <div class="divide-y divide-slate-100">
                   <!-- Certificate Number -->
-                  <div class="py-4 first:pt-0 flex items-center justify-between gap-6">
+                  <div class="py-3 first:pt-0 flex items-center justify-between gap-5">
                     <span class="text-[13px] text-slate-500">
                       Certificate Number
                     </span>
-                    <span class="text-[13px] font-semibold text-slate-700 text-right">
+                    <span class="text-[13px] font-semibold text-slate-600 text-right">
                       <span data-certificate="number"></span>
                     </span>
                   </div>
 
                   <!-- Level -->
-                  <div class="py-4 flex items-center justify-between gap-6">
+                  <div class="py-3 flex items-center justify-between gap-5">
                     <span class="text-[13px] text-slate-500"> Level </span>
-                    <span class="text-[13px] font-semibold text-slate-700 text-right">
+                    <span class="text-[13px] font-semibold text-slate-600 text-right">
                       <span data-certificate="level"></span>
                     </span>
                   </div>
 
                   <!-- Issue Date -->
-                  <div class="py-4 last:pb-0 flex items-center justify-between gap-6">
+                  <div class="py-3 last:pb-0 flex items-center justify-between gap-5">
                     <span class="text-[13px] text-slate-500"> Issue Date </span>
-                    <span class="text-[13px] font-semibold text-slate-700 text-right">
+                    <span class="text-[13px] font-semibold text-slate-600 text-right">
                       <span data-certificate="issue_date"></span>
                     </span>
                   </div>
@@ -329,14 +329,14 @@
                  INFORMATION
             ================================================== -->
 
-          <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
-            <div class="flex items-start gap-4">
+          <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+            <div class="flex items-start gap-3">
               <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                 <i data-lucide="info" class="w-5 h-5"></i>
               </div>
 
               <div>
-                <h3 class="text-[13px] font-semibold text-slate-700">
+                <h3 class="text-[13px] font-semibold text-slate-600">
                   About Your Certificate
                 </h3>
 

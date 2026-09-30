@@ -51,7 +51,7 @@
     </style>
   </head>
 
-  <body class="bg-[#eef3ff] text-slate-700 antialiased">
+  <body class="bg-[#eef3ff] text-slate-600 antialiased">
     <div class="min-h-screen">
       <!-- =====================================================
            SIDEBAR
@@ -62,7 +62,7 @@
       >
         <!-- Logo -->
         <div
-          class="h-16 px-6 flex items-center border-b border-white/10 shrink-0"
+          class="h-16 px-5 flex items-center border-b border-white/10 shrink-0"
         >
           <a href="dashboard.html" class="flex items-center gap-3">
             <div
@@ -251,7 +251,7 @@
         ================================================== -->
 
         <header
-          class="fixed top-0 right-0 left-0 lg:left-[250px] z-40 h-16 bg-white border-b border-slate-200 px-4 sm:px-5 lg:px-6 flex items-center justify-between"
+          class="fixed top-0 right-0 left-0 lg:left-[250px] z-40 h-16 bg-white border-b border-slate-200 px-4 sm:px-4 lg:px-5 flex items-center justify-between"
         >
           <!-- Header Left -->
           <div class="flex items-center gap-3 min-w-0">
@@ -264,7 +264,7 @@
             <div class="min-w-0">
               <div class="flex items-center gap-2">
                 <h1
-                  class="text-sm font-semibold text-slate-700 whitespace-nowrap"
+                  class="text-sm font-semibold text-slate-600 whitespace-nowrap"
                 >
                   Payments
                 </h1>
@@ -297,7 +297,7 @@
 
             <div class="hidden sm:flex flex-col min-w-0">
               <strong
-                class="text-[13px] font-semibold text-slate-700 truncate max-w-40"
+                class="text-[13px] font-semibold text-slate-600 truncate max-w-40"
               >
                 <span data-candidate="name"></span>
               </strong>
@@ -313,7 +313,7 @@
              PAGE CONTENT
         ================================================== -->
 
-        <section class="w-full p-4 sm:p-5 lg:p-6 pt-[84px] lg:pt-[88px]">
+        <section class="w-full p-4 sm:p-4 lg:p-5 pt-[84px] lg:pt-[88px]">
           <div class="max-w-[1400px] mx-auto w-full">
             <!-- =================================================
                  PAYMENT ALERT
@@ -321,9 +321,9 @@
 
             <div
               id="payment-alert"
-              class="hidden mb-6 bg-white border border-slate-200 border-l-4 border-l-blue-600 rounded-2xl shadow-sm"
+              class="hidden mb-5 bg-white border border-slate-200 border-l-4 border-l-blue-600 rounded-2xl shadow-sm"
             >
-              <div id="payment-alert-body" class="p-5"></div>
+              <div id="payment-alert-body" class="p-4"></div>
             </div>
 
             <!-- =================================================
@@ -332,7 +332,7 @@
 
             <section
               id="payment-action-card"
-              class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#21489f] via-[#2f63c8] to-[#4388f2] p-6 sm:p-7 lg:p-8 mb-6 text-white shadow-sm"
+              class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#21489f] via-[#2f63c8] to-[#4388f2] p-5 sm:p-7 lg:p-6 mb-5 text-white shadow-sm"
             >
               <!-- Decorative circles -->
               <div
@@ -344,7 +344,7 @@
               ></div>
 
               <div
-                class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
+                class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5"
               >
                 <!-- Assessment -->
                 <div class="min-w-0">
@@ -389,7 +389,7 @@
                 >
                   <button
                     id="btn-pay"
-                    class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-semibold text-[13px] shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-semibold text-[13px] shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
                     type="button"
                   >
                     <i data-lucide="wallet-cards" class="w-4 h-4"></i>
@@ -405,17 +405,17 @@
             ================================================== -->
 
             <div
-              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5"
             >
               <!-- Total Fee -->
               <div
-                class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5"
+                class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4"
               >
-                <div class="flex items-start justify-between gap-4">
+                <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
                     <p class="text-[13px] font-medium text-slate-500">Total Fee</p>
 
-                    <strong class="block mt-2 text-lg font-bold text-slate-700">
+                    <strong class="block mt-2 text-lg font-bold text-slate-600">
                       <span data-payment="totalFee">₹3,538.82</span>
                     </strong>
                   </div>
@@ -430,9 +430,9 @@
 
               <!-- Paid Amount -->
               <div
-                class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5"
+                class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4"
               >
-                <div class="flex items-start justify-between gap-4">
+                <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
                     <p class="text-[13px] font-medium text-slate-500">
                       Paid Amount
@@ -456,9 +456,9 @@
 
               <!-- Payment Status -->
               <div
-                class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5"
+                class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4"
               >
-                <div class="flex items-start justify-between gap-4">
+                <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
                     <p class="text-[13px] font-medium text-slate-500">
                       Payment Status
@@ -482,16 +482,16 @@
 
               <!-- Transaction -->
               <div
-                class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5"
+                class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4"
               >
-                <div class="flex items-start justify-between gap-4">
+                <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
                     <p class="text-[13px] font-medium text-slate-500">
                       Transaction
                     </p>
 
                     <strong
-                      class="block mt-2 text-base font-bold text-slate-700 truncate"
+                      class="block mt-2 text-base font-bold text-slate-600 truncate"
                     >
                       <span data-payment="transactionId"> — </span>
                     </strong>
@@ -514,7 +514,7 @@
               class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden"
             >
               <!-- Header -->
-              <div class="px-5 sm:px-6 py-5 border-b border-slate-200">
+              <div class="px-4 sm:px-5 py-4 border-b border-slate-200">
                 <div class="flex items-center gap-3">
                   <div
                     class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0"
@@ -523,7 +523,7 @@
                   </div>
 
                   <div>
-                    <h2 class="text-sm font-semibold text-slate-700">
+                    <h2 class="text-sm font-semibold text-slate-600">
                       Payment Details
                     </h2>
 
@@ -535,17 +535,17 @@
               </div>
 
               <!-- Details -->
-              <div class="p-5 sm:p-6">
+              <div class="p-4 sm:p-5">
                 <div class="divide-y divide-slate-100">
                   <!-- Assessment -->
-                  <div class="py-4 first:pt-0">
+                  <div class="py-3 first:pt-0">
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
                       <span class="text-[13px] text-slate-500"> Assessment </span>
 
                       <span
-                        class="text-[13px] font-semibold text-slate-700 sm:text-right"
+                        class="text-[13px] font-semibold text-slate-600 sm:text-right"
                       >
                         <span data-assessment="title"> — </span>
                       </span>
@@ -553,14 +553,14 @@
                   </div>
 
                   <!-- Payment ID -->
-                  <div class="py-4">
+                  <div class="py-3">
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
                       <span class="text-[13px] text-slate-500"> Payment ID </span>
 
                       <span
-                        class="text-[13px] font-semibold text-slate-700 sm:text-right break-all"
+                        class="text-[13px] font-semibold text-slate-600 sm:text-right break-all"
                       >
                         <span data-payment="paymentId"> — </span>
                       </span>
@@ -568,7 +568,7 @@
                   </div>
 
                   <!-- Transaction ID -->
-                  <div class="py-4">
+                  <div class="py-3">
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
@@ -577,7 +577,7 @@
                       </span>
 
                       <span
-                        class="text-[13px] font-semibold text-slate-700 sm:text-right break-all"
+                        class="text-[13px] font-semibold text-slate-600 sm:text-right break-all"
                       >
                         <span data-payment="transactionId"> — </span>
                       </span>
@@ -585,14 +585,14 @@
                   </div>
 
                   <!-- Amount -->
-                  <div class="py-4">
+                  <div class="py-3">
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
                       <span class="text-[13px] text-slate-500"> Amount </span>
 
                       <span
-                        class="text-[13px] font-bold text-slate-700 sm:text-right"
+                        class="text-[13px] font-bold text-slate-600 sm:text-right"
                       >
                         <span data-payment="totalFee"> — </span>
                       </span>
@@ -600,14 +600,14 @@
                   </div>
 
                   <!-- Payment Date -->
-                  <div class="py-4">
+                  <div class="py-3">
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
                       <span class="text-[13px] text-slate-500"> Payment Date </span>
 
                       <span
-                        class="text-[13px] font-semibold text-slate-700 sm:text-right"
+                        class="text-[13px] font-semibold text-slate-600 sm:text-right"
                       >
                         <span data-payment="paymentDate"> — </span>
                       </span>
@@ -615,7 +615,7 @@
                   </div>
 
                   <!-- Payment Method -->
-                  <div class="py-4">
+                  <div class="py-3">
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
@@ -624,7 +624,7 @@
                       </span>
 
                       <span
-                        class="text-[13px] font-semibold text-slate-700 sm:text-right"
+                        class="text-[13px] font-semibold text-slate-600 sm:text-right"
                       >
                         <span data-payment="method"> — </span>
                       </span>
@@ -632,7 +632,7 @@
                   </div>
 
                   <!-- Status -->
-                  <div class="py-4">
+                  <div class="py-3">
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
                     >

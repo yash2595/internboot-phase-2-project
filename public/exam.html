@@ -14,7 +14,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-<body class="min-h-screen bg-[#eef3ff] text-slate-700 overflow-x-hidden">
+<body class="min-h-screen bg-[#eef3ff] text-slate-600 overflow-x-hidden">
   <div class="min-h-screen">
     <!-- =====================================================
            SIDEBAR
@@ -23,7 +23,7 @@
     <aside
       class="fixed inset-y-0 left-0 z-50 w-[250px] bg-gradient-to-b from-[#294fae] to-[#347de9] text-white flex flex-col overflow-hidden">
       <!-- Logo -->
-      <div class="h-16 px-6 flex items-center border-b border-white/10 shrink-0">
+      <div class="h-16 px-5 flex items-center border-b border-white/10 shrink-0">
         <a href="dashboard.html" class="flex items-center gap-3 min-w-0">
           <div class="w-11 h-11 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden">
             <img src="assets/internboot-logo.png" alt="InternBoot logo" class="h-9 w-auto object-contain" />
@@ -162,7 +162,7 @@
         ====================================================== -->
 
       <header
-        class="fixed top-0 right-0 left-[250px] z-40 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+        class="fixed top-0 right-0 left-[250px] z-40 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-5">
         <!-- Left -->
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
@@ -171,7 +171,7 @@
 
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <h1 class="text-lg font-bold tracking-tight text-slate-700">
+              <h1 class="text-lg font-bold tracking-tight text-slate-600">
                 Exam Status
               </h1>
 
@@ -196,7 +196,7 @@
           </div>
 
           <div class="hidden sm:block min-w-0">
-            <div class="text-[13px] font-medium text-slate-700 max-w-40 truncate">
+            <div class="text-[13px] font-medium text-slate-600 max-w-40 truncate">
               <span data-candidate="name"></span>
             </div>
 
@@ -211,14 +211,14 @@
              CONTENT
         ====================================================== -->
 
-      <section class="min-h-screen bg-[#eef3ff] px-4 sm:px-5 lg:px-6 pt-[88px] pb-8">
+      <section class="min-h-screen bg-[#eef3ff] px-4 sm:px-4 lg:px-5 pt-[88px] pb-6">
         <div class="max-w-[1600px] mx-auto w-full">
           <!-- =================================================
                  HERO
             ================================================== -->
 
           <section
-            class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#24479d] via-[#2f61c7] to-[#4388f3] px-5 sm:px-6 lg:px-8 py-6 md:py-7 mb-6 text-white">
+            class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#24479d] via-[#2f61c7] to-[#4388f3] px-4 sm:px-5 lg:px-6 py-5 md:py-7 mb-5 text-white">
             <!-- Background decoration -->
             <div class="absolute -right-14 -top-20 w-56 h-56 rounded-full bg-white/10"></div>
 
@@ -252,17 +252,17 @@
                  EXAM DETAILS
             ================================================== -->
 
-          <section class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-            <div class="p-5 md:p-6">
+          <section class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-5">
+            <div class="p-4 md:p-5">
               <!-- Card Header -->
-              <div class="flex items-center justify-between gap-4 mb-5">
+              <div class="flex items-center justify-between gap-3 mb-5">
                 <div class="flex items-center gap-3 min-w-0">
                   <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                     <i data-lucide="clipboard-check" class="w-5 h-5"></i>
                   </div>
 
                   <div class="min-w-0">
-                    <h2 class="text-base font-semibold text-slate-700">
+                    <h2 class="text-base font-semibold text-slate-600">
                       Examination Details
                     </h2>
 
@@ -282,7 +282,7 @@
 
               <!-- Dynamic Exam Content -->
               <div id="exam-details-body" class="min-h-[180px]">
-                <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
                   <div
                     class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0">
                     <i data-lucide="loader-circle" class="w-4 h-4 text-blue-600 animate-spin"></i>
@@ -298,14 +298,14 @@
                  SUPPORTING INFORMATION
             ================================================== -->
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Exam Schedule -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
               <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
                 <i data-lucide="calendar-check" class="w-5 h-5"></i>
               </div>
 
-              <h3 class="text-[13px] font-semibold text-slate-700">
+              <h3 class="text-[13px] font-semibold text-slate-600">
                 Exam Schedule
               </h3>
 
@@ -316,12 +316,12 @@
             </div>
 
             <!-- Assessment Status -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
               <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
                 <i data-lucide="shield-check" class="w-5 h-5"></i>
               </div>
 
-              <h3 class="text-[13px] font-semibold text-slate-700">
+              <h3 class="text-[13px] font-semibold text-slate-600">
                 Assessment Status
               </h3>
 
@@ -332,12 +332,12 @@
             </div>
 
             <!-- Help -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
               <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
                 <i data-lucide="circle-help" class="w-5 h-5"></i>
               </div>
 
-              <h3 class="text-[13px] font-semibold text-slate-700">Need Help?</h3>
+              <h3 class="text-[13px] font-semibold text-slate-600">Need Help?</h3>
 
               <p class="text-[13px] text-slate-500 mt-2 leading-6">
                 Contact support if your examination information is missing or

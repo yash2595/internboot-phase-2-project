@@ -12,10 +12,10 @@ function initStudentResponsiveShell() {
     document.body.classList.add("overflow-x-hidden");
     sidebar.classList.remove("hidden", "md:flex");
     sidebar.classList.add("flex", "-translate-x-full", "transition-transform", "duration-200", "lg:translate-x-0");
-    main.classList.remove("ml-[293px]", "w-[calc(100%-293px)]");
-    main.classList.add("ml-0", "w-full", "lg:ml-[293px]", "lg:w-[calc(100%-293px)]");
-    header.classList.remove("left-[293px]");
-    header.classList.add("left-0", "lg:left-[293px]", "px-4", "sm:px-6");
+    main.classList.remove("ml-[250px]", "w-[calc(100%-250px)]");
+    main.classList.add("ml-0", "w-full", "lg:ml-[250px]", "lg:w-[calc(100%-250px)]");
+    header.classList.remove("left-[250px]");
+    header.classList.add("left-0", "lg:left-[250px]", "px-4", "sm:px-6");
     main.querySelectorAll("table").forEach((table) => {
         table.classList.add("min-w-[640px]");
         table.parentElement?.classList.add("max-w-full", "overflow-x-auto");

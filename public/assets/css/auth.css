@@ -40,7 +40,7 @@
 
 /* LEFT BRAND PANEL */
 .ib-brand-panel {
-  background: linear-gradient(160deg, var(--ib-purple) 0%, var(--ib-blue) 100%);
+  background: linear-gradient(165deg, #172f69 0%, #2052b7 55%, #2862e5 100%);
   color: #fff;
   display: flex;
   flex-direction: column;

@@ -39,6 +39,28 @@ async function initExamStatusModule() {
                     </div>`;
                 return;
             }
+            if (payload.message === "Batch assigned, no attempt yet") {
+                const dateRaw = payload.data?.exam_date;
+                const dateStr = dateRaw ? new Date(dateRaw).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "your scheduled date";
+                
+                const formatTime = (timeRaw) => {
+                    if (!timeRaw) return "";
+                    const dt = new Date(`1970-01-01T${timeRaw}Z`);
+                    return dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' });
+                };
+                
+                const timeStart = formatTime(payload.data?.start_time);
+                const timeEnd = formatTime(payload.data?.end_time);
+                const timeStr = timeStart && timeEnd ? ` from <strong>${timeStart} - ${timeEnd}</strong>` : "";
+
+                container.innerHTML = `
+                    <div class="notice notice-success" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:24px; border-radius:10px; text-align:center;">
+                        <h2 style="margin:0 0 10px; color:#17243a; font-size:20px;">Batch Scheduled</h2>
+                        <p style="margin:0 0 16px; color:#4b5563;">Your batch is scheduled on <strong>${escapeHtml(dateStr)}</strong>${timeStr}. Your exam slot is confirmed and you will be able to start the exam from this page when it begins.</p>
+                        <a href="batches-slots.html" class="btn btn-ib-primary" style="background:#18a56a; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; display:inline-block; font-weight:700;">View Batch Details →</a>
+                    </div>`;
+                return;
+            }
             container.innerHTML = `
                 <div class="notice notice-error" style="background:#fdf2f2; border:1px solid #f8cdcd; color:#b91c1c; padding:20px; border-radius:10px; text-align:center;">
                     <h3 style="margin:0 0 10px; font-size:18px;">Attempt Access Error</h3>

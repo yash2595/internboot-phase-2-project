@@ -226,6 +226,7 @@ try {
         };
         $enrollment = [
             'id' => 'ENR-' . $enrollmentRow['id'],
+            'assessment_id' => $enrollmentRow['assessment_id'],
             'date' => !empty($enrollmentRow['created_at']) ? date('d M Y', strtotime($enrollmentRow['created_at'])) : '—',
             'status' => $enrollmentStatus
         ];
@@ -240,6 +241,8 @@ try {
             'id' => 'BATCH-' . $batchRow['id'],
             'mentor' => '—',
             'status' => $batchStatus,
+            'date' => !empty($batchRow['exam_date']) ? date('d M Y', strtotime($batchRow['exam_date'])) : '—',
+            'time' => !empty($batchRow['start_time']) && !empty($batchRow['end_time']) ? date('h:i A', strtotime($batchRow['start_time'])) . ' - ' . date('h:i A', strtotime($batchRow['end_time'])) : '—',
             'candidates' => (string)($batchRow['candidate_count'] ?? 0) . ' registered'
         ];
     } elseif ($enrollmentRow && !empty($enrollmentRow['preferred_date'])) {
@@ -306,7 +309,16 @@ try {
             $exam['status'] = ucwords(str_replace('_', ' ', $attStatus));
         }
     } elseif ($batchRow) {
-        $exam['status'] = 'Slot Not Booked';
+        $exam['status'] = 'Slot Selected';
+        if (!empty($batchRow['exam_date'])) {
+            $exam['exam_date'] = date('Y-m-d', strtotime($batchRow['exam_date']));
+            $exam['date'] = date('d M Y', strtotime($batchRow['exam_date']));
+        }
+        if (!empty($batchRow['start_time']) && !empty($batchRow['end_time'])) {
+            $timeFormatted = date('h:i A', strtotime($batchRow['start_time'])) . ' – ' . date('h:i A', strtotime($batchRow['end_time']));
+            $exam['time'] = $timeFormatted;
+            $exam['slot_time'] = $timeFormatted;
+        }
     } elseif ($enrollmentRow && !empty($enrollmentRow['preferred_date'])) {
         $exam['status'] = 'Preference Saved';
         $exam['exam_date'] = date('Y-m-d', strtotime($enrollmentRow['preferred_date']));
@@ -362,16 +374,15 @@ try {
         $placement['applicable'] = true;
         $placement['status'] = 'eligible';
         $placement['statusLabel'] = 'Eligible';
-    }
 
-    if ($placementRow) {
-        $rawStatus = $placementRow['placement_status'] ?? '';
-        $placement['applicable']  = true;
-        $placement['status']      = $rawStatus;
-        $placement['statusLabel'] = $placementStatusLabels[$rawStatus] ?? ucfirst(str_replace('_', ' ', $rawStatus));
-        $placement['company']     = $placementRow['company_name'] ?: null;
-        $placement['notes']       = $placementRow['notes'] ?: null;
-        $placement['updated_at']  = !empty($placementRow['updated_at']) ? date('d M Y', strtotime($placementRow['updated_at'])) : null;
+        if ($placementRow) {
+            $rawStatus = $placementRow['placement_status'] ?? '';
+            $placement['status']      = $rawStatus;
+            $placement['statusLabel'] = $placementStatusLabels[$rawStatus] ?? ucfirst(str_replace('_', ' ', $rawStatus));
+            $placement['company']     = $placementRow['company_name'] ?: null;
+            $placement['notes']       = $placementRow['notes'] ?: null;
+            $placement['updated_at']  = !empty($placementRow['updated_at']) ? date('d M Y', strtotime($placementRow['updated_at'])) : null;
+        }
     }
 
     $profileStatus = !empty($candidate['profile_details']) ? 'Verified' : 'Basic Profile';
@@ -400,6 +411,7 @@ try {
         ],
         'payment' => $payment,
         'enrollment' => $enrollment,
+        'assessment' => $assessment,
         'batch' => $batch,
         'exam' => $exam,
         'result' => $result,

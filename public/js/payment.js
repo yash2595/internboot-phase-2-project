@@ -96,8 +96,8 @@ function renderDetails(data) {
     // 2. Assessment Info
     if (assessment) {
         currentAssessmentId = assessment.id;
-        setText("#assessment-title", assessment.title || "Assessment");
-        setText('[data-assessment="title"]', assessment.title || "Assessment");
+        setText("#assessment-title", "Level Assessment Test");
+        setText('[data-assessment="title"]', "Level Assessment Test");
 
         const durationText = assessment.duration ? `${assessment.duration} mins` : "60 mins";
         setText("#assessment-meta", `Duration: ${durationText}`);
@@ -449,7 +449,16 @@ function updateAvatar(name) {
 function setStatusBadge(text, colorClass) {
     const badge = document.getElementById("payment-status-badge");
     if (badge) {
-        badge.className = `badge ${colorClass}`;
+        let bg = "bg-emerald-50", textCol = "text-emerald-700", dot = "bg-emerald-500";
+        if (colorClass === "blue") { bg = "bg-blue-50"; textCol = "text-blue-700"; dot = "bg-blue-500"; }
+        else if (colorClass === "yellow") { bg = "bg-amber-50"; textCol = "text-amber-700"; dot = "bg-amber-500"; }
+        else if (colorClass === "gray") { bg = "bg-slate-100"; textCol = "text-slate-600"; dot = "bg-slate-400"; }
+        
+        badge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold ${bg} ${textCol}`;
+        
+        const dotSpan = badge.querySelector('span:not([data-payment="status"])');
+        if (dotSpan) dotSpan.className = `w-1.5 h-1.5 rounded-full ${dot}`;
+        
         const span = badge.querySelector('[data-payment="status"]') || badge;
         span.textContent = text;
     }
@@ -473,7 +482,12 @@ function setStatCardStatus(text, colorClass) {
 function setEnrollmentBadge(text, colorClass) {
     const badge = document.getElementById("enrollment-badge");
     if (badge) {
-        badge.className = `badge ${colorClass}`;
+        let bg = "bg-emerald-50", textCol = "text-emerald-700";
+        if (colorClass === "blue") { bg = "bg-blue-50"; textCol = "text-blue-700"; }
+        else if (colorClass === "yellow") { bg = "bg-amber-50"; textCol = "text-amber-700"; }
+        else if (colorClass === "gray") { bg = "bg-slate-100"; textCol = "text-slate-500"; }
+
+        badge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold ${bg} ${textCol}`;
         const span = badge.querySelector('[data-enrollment="status"]') || badge;
         span.textContent = text;
     }

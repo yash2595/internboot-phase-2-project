@@ -170,6 +170,34 @@ function get_candidate_enrollment(int $candidateId, int $assessmentId, mysqli $c
     $row = $result->fetch_assoc();
     $stmt->close();
 
+    if (!$row) {
+        // Self-heal: check if candidate has a successful payment for this assessment
+        $payStmt = $conn->prepare("SELECT id FROM payments WHERE candidate_id = ? AND assessment_id = ? AND status = 'success' LIMIT 1");
+        if ($payStmt) {
+            $payStmt->bind_param("ii", $candidateId, $assessmentId);
+            $payStmt->execute();
+            $payRes = $payStmt->get_result();
+            if ($payRow = $payRes->fetch_assoc()) {
+                // Auto-create enrollment
+                $insStmt = $conn->prepare("INSERT INTO enrollments (candidate_id, assessment_id, payment_id, eligibility_status) VALUES (?, ?, ?, 'eligible') ON DUPLICATE KEY UPDATE eligibility_status = 'eligible'");
+                if ($insStmt) {
+                    $insStmt->bind_param("iii", $candidateId, $assessmentId, $payRow['id']);
+                    $insStmt->execute();
+                    $insStmt->close();
+                    
+                    // Re-fetch enrollment
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ii", $candidateId, $assessmentId);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $row = $result->fetch_assoc();
+                    $stmt->close();
+                }
+            }
+            $payStmt->close();
+        }
+    }
+
     return $row ?: null;
 }
 
@@ -216,6 +244,34 @@ function get_candidate_enrollment_for_update(int $candidateId, int $assessmentId
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
     $stmt->close();
+
+    if (!$row) {
+        // Self-heal: check if candidate has a successful payment for this assessment
+        $payStmt = $conn->prepare("SELECT id FROM payments WHERE candidate_id = ? AND assessment_id = ? AND status = 'success' LIMIT 1");
+        if ($payStmt) {
+            $payStmt->bind_param("ii", $candidateId, $assessmentId);
+            $payStmt->execute();
+            $payRes = $payStmt->get_result();
+            if ($payRow = $payRes->fetch_assoc()) {
+                // Auto-create enrollment
+                $insStmt = $conn->prepare("INSERT INTO enrollments (candidate_id, assessment_id, payment_id, eligibility_status) VALUES (?, ?, ?, 'eligible') ON DUPLICATE KEY UPDATE eligibility_status = 'eligible'");
+                if ($insStmt) {
+                    $insStmt->bind_param("iii", $candidateId, $assessmentId, $payRow['id']);
+                    $insStmt->execute();
+                    $insStmt->close();
+                    
+                    // Re-fetch enrollment with FOR UPDATE
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ii", $candidateId, $assessmentId);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $row = $result->fetch_assoc();
+                    $stmt->close();
+                }
+            }
+            $payStmt->close();
+        }
+    }
 
     return $row ?: null;
 }

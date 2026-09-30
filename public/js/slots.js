@@ -64,7 +64,7 @@ async function initSlotsModule() {
             if (batchNameEl) batchNameEl.textContent = data.batch.name || "Awaiting Formation";
             if (batchStatusEl) {
                 batchStatusEl.textContent = data.batch.status || "Pending";
-                batchStatusEl.className = `badge ${data.batch.status === "Assigned" ? "green" : "gray"}`;
+                batchStatusEl.className = (data.batch.status === "Scheduled" || data.batch.status === "Assigned") ? "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[13px] font-semibold shrink-0" : "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[13px] font-semibold shrink-0";
             }
             if (batchCandEl) batchCandEl.textContent = data.batch.candidates || "—";
         }
@@ -93,8 +93,8 @@ async function initSlotsModule() {
             return;
         }
 
-        // Check enrollment eligibility
-        const isEligible = data.enrollment && (data.enrollment.eligibility_status === "eligible" || data.enrollment.status === "Enrolled");
+        // Check enrollment eligibility based on payment
+        const isEligible = data.payment && data.payment.status === "Paid";
         if (!isEligible) {
             if (noticeContainer) {
                 noticeContainer.innerHTML = `
@@ -113,14 +113,22 @@ async function initSlotsModule() {
         // Check if candidate is awaiting batch formation
         const isAwaitingBatch = !data.batch || !data.batch.name || data.batch.name === "—" || data.batch.name === "Not Assigned" || data.batch.status === "Pending" || !data.batch.id || data.batch.id === "—";
         if (isAwaitingBatch) {
-            const assessmentId = data.assessment ? data.assessment.id : 1;
+            const assessmentId = (data.enrollment && data.enrollment.assessment_id) ? data.enrollment.assessment_id : (data.assessment ? data.assessment.id : 1);
             await loadPreferences(assessmentId, data.batch_not_formed_alert);
             return;
         }
 
-        // Fetch available slots
-        const assessmentId = data.assessment ? data.assessment.id : 1;
-        await loadAvailableSlots(assessmentId);
+        // Candidate already has a batch assigned
+        const slotsCard = document.getElementById("available-slots-card");
+        if (slotsCard) {
+            slotsCard.style.display = "none";
+        }
+        
+        // Ensure "My Booked Slot" is visible if they have a batch
+        const myBookedCard = document.getElementById("my-booked-slot-card");
+        if (myBookedCard && (!data.exam || !data.exam.status || data.exam.status === "—")) {
+            myBookedCard.style.display = "block";
+        }
 
     } catch (err) {
         console.error("Slots module error:", err);
@@ -137,21 +145,26 @@ function updateBookedSlotSection(dashData) {
     const bookedDateEl = document.getElementById("booked-exam-date");
     const bookedTimeEl = document.getElementById("booked-slot-time");
     const bookedStatusEl = document.getElementById("booked-slot-status");
+    const myBookedCard = document.getElementById("my-booked-slot-card");
 
     const attemptId = localStorage.getItem("ib_attempt_id");
 
     if (dashData.exam && dashData.exam.status && dashData.exam.status !== "—" && dashData.exam.status !== "Not Started") {
-        if (bookedDateEl) bookedDateEl.textContent = dashData.exam.exam_date || "Scheduled";
+        if (myBookedCard) myBookedCard.style.display = "block";
+        if (bookedDateEl) bookedDateEl.textContent = dashData.exam.date || dashData.exam.exam_date || "Scheduled";
         if (bookedTimeEl) bookedTimeEl.textContent = dashData.exam.slot_time || "Assigned Slot";
         if (bookedStatusEl) {
             bookedStatusEl.textContent = dashData.exam.status;
-            bookedStatusEl.className = "badge green";
+            bookedStatusEl.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold shrink-0";
         }
     } else if (attemptId) {
+        if (myBookedCard) myBookedCard.style.display = "block";
         if (bookedStatusEl) {
             bookedStatusEl.textContent = "Booked";
-            bookedStatusEl.className = "badge green";
+            bookedStatusEl.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold shrink-0";
         }
+    } else {
+        if (myBookedCard) myBookedCard.style.display = "none";
     }
 }
 
@@ -193,7 +206,7 @@ async function loadAvailableSlots(assessmentId) {
         }
 
         slotsListEl.innerHTML = `
-            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:16px;">
+            <div style="display:flex; gap:16px; overflow-x:auto; padding-bottom:12px; scroll-snap-type: x mandatory; scrollbar-width: thin;">
                 ${slots.map(s => {
                     const dayLabel = getWeekdayLabel(s.exam_date);
                     const dateHeader = dayLabel ? `${dayLabel} (${s.exam_date || ''})` : (s.exam_date || '');
@@ -201,7 +214,7 @@ async function loadAvailableSlots(assessmentId) {
                     const endTimeFormatted = formatHHMM(s.end_time);
                     const isFull = s.seats_remaining <= 0;
                     return `
-                    <div style="border:1px solid ${isFull ? '#f1f5f9' : '#dbeafe'}; border-radius:14px; padding:20px 22px; background:${isFull ? '#f8fafc' : '#fff'}; box-shadow:0 2px 12px rgba(37,99,235,0.06); transition:box-shadow 0.2s;">
+                    <div style="flex: 0 0 calc(33.333% - 11px); min-width: 280px; scroll-snap-align: start; border:1px solid ${isFull ? '#f1f5f9' : '#dbeafe'}; border-radius:14px; padding:20px 22px; background:${isFull ? '#f8fafc' : '#fff'}; box-shadow:0 2px 12px rgba(37,99,235,0.06); transition:box-shadow 0.2s;">
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
                             <div style="width:40px; height:40px; border-radius:10px; background:#eff6ff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                                 <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>
@@ -407,7 +420,7 @@ async function loadPreferences(assessmentId, initialNotifAlert = null) {
             `;
         }
 
-        html += `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:18px;">`;
+        html += `<div style="display:flex; gap:18px; overflow-x:auto; padding-bottom:12px; scroll-snap-type: x mandatory; scrollbar-width: thin;">`;
 
         options.forEach(opt => {
             const dayLabel = getWeekdayLabel(opt.date);
@@ -423,7 +436,7 @@ async function loadPreferences(assessmentId, initialNotifAlert = null) {
                               (currentPref.preferred_date === opt.date && currentPref.preferred_time_slot === opt.time_slot);
 
             html += `
-            <div style="border:1px solid ${isCurrent ? '#10b981' : '#e2e8f0'}; border-radius:12px; padding:20px; background:${isCurrent ? '#f0fdf4' : '#ffffff'}; box-shadow:0 2px 10px rgba(0,0,0,0.03); display:flex; flex-direction:column; justify-content:space-between;">
+            <div style="flex: 0 0 calc(33.333% - 12px); min-width: 280px; scroll-snap-align: start; border:1px solid ${isCurrent ? '#10b981' : '#e2e8f0'}; border-radius:12px; padding:20px; background:${isCurrent ? '#f0fdf4' : '#ffffff'}; box-shadow:0 2px 10px rgba(0,0,0,0.03); display:flex; flex-direction:column; justify-content:space-between;">
                 <div>
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
                         <div style="font-weight:700; font-size:16px; color:#1e293b;">

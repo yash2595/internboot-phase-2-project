@@ -313,7 +313,7 @@ function get_batches(mysqli $conn): array
         es.capacity as capacity,
         s.is_closed,
         s.batch_alert_sent,
-        (SELECT COUNT(*) FROM enrollments e WHERE e.provisional_schedule_id = s.id AND e.eligibility_status = 'eligible' AND e.batch_id IS NULL) as candidate_count
+        (SELECT COUNT(*) FROM enrollments e WHERE (e.provisional_schedule_id = s.id OR e.batch_id = b.id) AND e.eligibility_status = 'eligible') as candidate_count
         FROM exam_schedules s
         JOIN batches b ON s.batch_id = b.id
         JOIN assessments a ON b.assessment_id = a.id

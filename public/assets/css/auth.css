@@ -1058,6 +1058,38 @@
   height: 42px; /* Squeezed */
   border-radius: 12px;
   font-size: 0.9rem;
+  
+  /* Sweep effect setup */
+  background: transparent;
+  color: var(--ib-blue);
+  border: 1px solid var(--ib-blue);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  transition: color 0.3s ease;
+}
+
+.ib-login-page #loginForm .ib-btn-primary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 100%;
+  background: var(--ib-blue);
+  z-index: -1;
+  transition: width 0.4s ease;
+}
+
+.ib-login-page #loginForm .ib-btn-primary:hover::before,
+.ib-login-page #loginForm .ib-btn-primary:focus::before {
+  width: 100%;
+}
+
+.ib-login-page #loginForm .ib-btn-primary:hover,
+.ib-login-page #loginForm .ib-btn-primary:focus {
+  color: #fff;
+  background: transparent;
 }
 
 .ib-login-page .ib-login-divider {
@@ -1090,19 +1122,45 @@
   width: 154px;
   margin: 0 auto;
   padding: 8px 16px; /* Squeezed */
-  border: 2px solid #d9e4f3;
+  border: 1px solid var(--ib-blue);
   border-radius: 11px;
   color: var(--ib-blue);
+  background: transparent;
   font-size: 0.82rem;
   font-weight: 700;
   text-align: center;
   text-decoration: none;
+  
+  /* Sweep effect setup */
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  transition: color 0.3s ease;
 }
 
-.ib-login-page .ib-login-register:hover {
-  border-color: var(--ib-blue);
-  background: #f3f7ff;
+.ib-login-page .ib-login-register::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 100%;
+  background: var(--ib-blue);
+  z-index: -1;
+  transition: width 0.4s ease;
 }
+
+.ib-login-page .ib-login-register:hover::before,
+.ib-login-page .ib-login-register:focus::before {
+  width: 100%;
+}
+
+.ib-login-page .ib-login-register:hover,
+.ib-login-page .ib-login-register:focus {
+  color: #fff;
+  background: transparent;
+}
+
 
 .ib-login-page .ib-login-security {
   margin: 22px 0 0;

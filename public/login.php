@@ -104,17 +104,17 @@ $pageTitle = 'Log In — InternBoot';
 
   .logo-icon-box {
     width: 60px; height: 60px;
-    background: rgba(255,255,255,0.15);
-    border: 2px solid rgba(255,255,255,0.3);
+    background: #ffffff;
+    border: 2px solid #ffffff;
     border-radius: 18px;
     display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
     animation: logoPulse 3s ease-in-out infinite;
     overflow: hidden;
   }
 
-  .logo-icon-box:hover { transform: rotate(15deg) scale(1.1); background: rgba(255,255,255,0.25); box-shadow: 0 8px 30px rgba(255,255,255,0.15); }
+  .logo-icon-box:hover { transform: rotate(15deg) scale(1.1); background: #ffffff; box-shadow: 0 8px 30px rgba(255,255,255,0.4); }
   @keyframes logoPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); } 50% { box-shadow: 0 0 0 12px rgba(255,255,255,0); } }
 
   .logo-text { font-size: 34px; font-weight: 900; color: #ffffff; letter-spacing: -1px; }

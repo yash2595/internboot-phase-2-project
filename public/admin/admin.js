@@ -1272,11 +1272,11 @@
             .map(
               (s) => `
       <tr class="hover:bg-slate-50">
-        <td class="px-6 py-4 font-medium">${escapeHtml(s.batch_number)}</td>
-        <td class="px-6 py-4 text-slate-500">${escapeHtml(s.start_time?.slice(0, 5) || "")} - ${escapeHtml(s.end_time?.slice(0, 5) || "")}</td>
-        <td class="px-6 py-4">${s.capacity}</td><td class="px-6 py-4">${s.allocated}</td><td class="px-6 py-4">${s.seats_remaining}</td>
-        <td class="px-6 py-4">${badge(s.seats_remaining > 0 ? "Available" : "Full", s.seats_remaining > 0 ? "green" : "red")}</td>
-        <td class="px-6 py-4 text-right">
+        <td class="px-4 py-3 font-medium font-mono text-xs">${escapeHtml(s.batch_number)}</td>
+        <td class="px-4 py-3 text-slate-500 text-xs">${escapeHtml(s.start_time?.slice(0, 5) || "")} - ${escapeHtml(s.end_time?.slice(0, 5) || "")}</td>
+        <td class="px-4 py-3 text-xs">${s.capacity}</td><td class="px-4 py-3 text-xs">${s.allocated}</td><td class="px-4 py-3 text-xs">${s.seats_remaining}</td>
+        <td class="px-4 py-3 text-xs">${badge(s.seats_remaining > 0 ? "Available" : "Full", s.seats_remaining > 0 ? "green" : "red")}</td>
+        <td class="px-4 py-3 text-right">
           <button class="delete-batch rounded-lg bg-red-50 hover:bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-600 transition" data-batch-id="${s.batch_id}">Delete</button>
         </td>
       </tr>`,

@@ -206,8 +206,7 @@
   background: #EAF1FF;
   padding: 8px 16px;
   border-radius: 999px;
-  margin-bottom: 20px;
-}
+  margin-bottom: 8px; }
 
 .ib-dot {
   width: 7px;
@@ -299,8 +298,7 @@
 
 /* FORM FIELDS */
 .ib-form-row {
-  margin-bottom: 20px;
-}
+  margin-bottom: 8px; }
 
 .ib-form-row label {
   display: block;
@@ -364,7 +362,7 @@
   padding: 12px 16px;
   border-radius: 12px;
   font-size: 0.9rem;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   font-weight: 500;
 }
 
@@ -718,8 +716,7 @@
 }
 
 .ib-login-page #loginForm .ib-form-row {
-  margin-bottom: 20px;
-}
+  margin-bottom: 8px; }
 
 .ib-login-page #loginForm .ib-form-row label {
   font-size: 0.84rem;
@@ -806,7 +803,7 @@
 }
 
 .ib-login-page .ib-auth-sub {
-  margin-bottom: 20px; /* Squeezed */
+  margin-bottom: 12px; /* Squeezed */
   color: #91a1ba;
   font-size: 0.84rem;
 }
@@ -1110,7 +1107,7 @@
 /* LOGIN PAGE BRAND PANEL REPLICA */
 .ib-login-brand {
   min-height: unset;
-  padding: 30px 40px;
+  padding: 20px 24px;
   justify-content: flex-start;
   background: linear-gradient(165deg, #172f69 0%, #2052b7 55%, #2862e5 100%);
   position: relative;
@@ -1119,30 +1116,25 @@
 
 .ib-brand-logo-alt {
   width: 170px;
-  margin-bottom: 12px;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
+  margin-bottom: 6px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
 }
 
 .ib-brand-kicker {
-  margin: 0 0 24px;
-  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 12px; color: rgba(255, 255, 255, 0.7);
   font-size: 0.9rem;
   font-weight: 500;
 }
 
 .ib-login-welcome {
-  padding: 24px 28px;
+  padding: 14px 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.08);
-  margin-bottom: 30px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  margin-bottom: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
 .ib-login-welcome h2 {
-  margin: 0 0 12px;
-  color: #fff;
-  font-size: 1.5rem;
+  margin: 0 0 4px; color: #fff; font-size: 1.3rem;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -1164,8 +1156,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
-}
+  margin-bottom: 8px; }
 
 .ib-login-features .icon-box {
   width: 36px;
@@ -1191,8 +1182,8 @@
 /* Illustration styling matching screenshot */
 .ib-login-illustration {
   position: relative;
-  height: 160px;
-  margin-top: 20px;
+  height: 110px; transform: scale(0.85); transform-origin: top left;
+  margin-top: 4px;
 }
 
 .login-now-badge {
@@ -1262,3 +1253,6 @@
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
   z-index: 15;
 }
+
+
+

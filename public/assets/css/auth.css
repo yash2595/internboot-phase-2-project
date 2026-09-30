@@ -857,22 +857,22 @@
 
 /* Login reference layout */
 .ib-login-page .ib-brand-kicker {
-  margin: -4px 0 28px;
+  margin: -4px 0 16px; /* Squeezed */
   color: rgba(255, 255, 255, 0.68);
   font-size: 0.92rem;
   font-weight: 600;
 }
 
 .ib-login-page .ib-login-welcome {
-  padding: 24px 22px;
+  padding: 16px 22px; /* Squeezed */
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 15px;
   background: rgba(255, 255, 255, 0.1);
-  margin-bottom: 26px;
+  margin-bottom: 16px; /* Squeezed */
 }
 
 .ib-login-page .ib-login-welcome h2 {
-  margin: 0 0 10px;
+  margin: 0 0 6px; /* Squeezed */
   color: #fff;
   font-size: 1.45rem;
   line-height: 1.2;
@@ -997,7 +997,7 @@
 }
 
 .ib-login-page .ib-form-panel {
-  padding: 78px 44px 32px;
+  padding: 24px 44px 16px; /* Squeezed */
 }
 
 .ib-login-page .ib-auth-card {
@@ -1028,13 +1028,13 @@
 }
 
 .ib-login-page .ib-auth-sub {
-  margin-bottom: 34px;
+  margin-bottom: 20px; /* Squeezed */
   color: #91a1ba;
   font-size: 0.84rem;
 }
 
 .ib-login-page #loginForm .ib-form-row {
-  margin-bottom: 26px;
+  margin-bottom: 14px; /* Squeezed */
 }
 
 .ib-login-page #loginForm .ib-form-row label {
@@ -1043,7 +1043,7 @@
 }
 
 .ib-login-page #loginForm .ib-input {
-  height: 50px;
+  height: 42px; /* Squeezed */
   border: 2px solid #d9e4f3;
   border-radius: 12px;
   font-size: 0.95rem;
@@ -1055,7 +1055,7 @@
 }
 
 .ib-login-page #loginForm .ib-btn-primary {
-  height: 52px;
+  height: 42px; /* Squeezed */
   border-radius: 12px;
   font-size: 0.9rem;
 }
@@ -1064,7 +1064,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 25px 0 18px;
+  margin: 16px 0 12px; /* Squeezed */
   color: #9aabc3;
   font-size: 0.72rem;
   font-weight: 700;
@@ -1079,7 +1079,7 @@
 }
 
 .ib-login-page .ib-login-new {
-  margin: 0 0 14px;
+  margin: 0 0 10px; /* Squeezed */
   color: #9aabc3;
   font-size: 0.82rem;
   text-align: center;
@@ -1089,7 +1089,7 @@
   display: block;
   width: 154px;
   margin: 0 auto;
-  padding: 11px 16px;
+  padding: 8px 16px; /* Squeezed */
   border: 2px solid #d9e4f3;
   border-radius: 11px;
   color: var(--ib-blue);

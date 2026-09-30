@@ -1275,7 +1275,7 @@
         <td class="px-4 py-3 font-medium font-mono text-xs">${escapeHtml(s.batch_number)}</td>
         <td class="px-4 py-3 text-slate-500 text-xs">${escapeHtml(s.start_time?.slice(0, 5) || "")} - ${escapeHtml(s.end_time?.slice(0, 5) || "")}</td>
         <td class="px-4 py-3 text-xs">${s.capacity}</td><td class="px-4 py-3 text-xs">${s.allocated}</td><td class="px-4 py-3 text-xs">${s.seats_remaining}</td>
-        <td class="px-4 py-3 text-xs">${badge(s.seats_remaining > 0 ? "Available" : "Full", s.seats_remaining > 0 ? "green" : "red")}</td>
+        <td class="px-4 py-3 text-xs">${badge("Available", "green")}</td>
         <td class="px-4 py-3 text-right">
           <button class="delete-batch rounded-lg bg-red-50 hover:bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-600 transition" data-batch-id="${s.batch_id}">Delete</button>
         </td>
@@ -1313,8 +1313,7 @@
               );
               const matchingSlots = slots.filter(
                 (s) =>
-                  options.some((b) => Number(b.id) === Number(s.batch_id)) &&
-                  Number(s.seats_remaining) > 0,
+                  options.some((b) => Number(b.id) === Number(s.batch_id)),
               );
               return `<tr class="hover:bg-slate-50">
         <td class="px-6 py-4 font-medium">${escapeHtml(c.full_name)}</td>
@@ -1323,7 +1322,7 @@
         <td class="px-6 py-4">
           <select class="allocation-slot rounded-lg border border-slate-200 px-2 py-2 text-xs" data-enrollment="${c.enrollment_id}">
             <option value="">Select slot</option>
-            ${matchingSlots.map((s) => `<option value="${s.slot_id}">${escapeHtml(s.batch_number)} · ${escapeHtml(s.start_time.slice(0, 5))} (${s.seats_remaining} left)</option>`).join("")}
+            ${matchingSlots.map((s) => `<option value="${s.slot_id}">${escapeHtml(s.batch_number)} · ${escapeHtml(s.start_time.slice(0, 5))}</option>`).join("")}
           </select>
         </td>
         <td class="px-6 py-4"><button class="allocate-candidate rounded-lg bg-intern-blue px-3 py-2 text-xs font-medium text-white" data-enrollment="${c.enrollment_id}">Assign</button></td>
@@ -1363,6 +1362,28 @@
 
     const pendingRequestsBody = $("#pendingRequestsTableBody");
     const pendingRequests = data.pending_requests || [];
+
+    // Alert notification logic for 100+ candidates threshold
+    const readyRequests = pendingRequests.filter((r) => Number(r.candidate_count) >= 100);
+    const alertContainer = $("#pendingBatchAlertContainer");
+    if (readyRequests.length > 0) {
+      if (alertContainer) {
+        alertContainer.innerHTML = `
+          <div class="mb-4 p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 font-bold text-xl shadow-xs">🔔</div>
+              <div>
+                <div class="font-bold text-sm text-amber-950">Action Required: 100+ Candidate Threshold Reached!</div>
+                <div class="text-xs text-amber-800 mt-0.5">${readyRequests.length} pending request group(s) have reached 100 or more candidates. Please click "Create Batch" below to create the batch.</div>
+              </div>
+            </div>
+          </div>`;
+      }
+      notify(`🔔 Action Required: ${readyRequests.length} batch request(s) reached 100+ candidates! Create batch now.`);
+    } else if (alertContainer) {
+      alertContainer.innerHTML = "";
+    }
+
     if (pendingRequestsBody) {
       if (pendingRequests.length === 0) {
         pendingRequestsBody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-sm text-slate-500">No pending batch requests.</td></tr>`;

@@ -243,10 +243,6 @@ function book_exam_slot(int $candidateId, int $assessmentId, int $examSlotId, my
         throw new Exception("Exam slot time has already passed today and cannot be booked");
     }
 
-    if ((int)$slot['seats_remaining'] <= 0) {
-        throw new Exception("Selected exam slot is fully booked. No seats remaining.");
-    }
-
     // 4. Begin Database Transaction for atomic checks, seat decrement & attempt creation
     $conn->begin_transaction();
 
@@ -265,11 +261,8 @@ function book_exam_slot(int $candidateId, int $assessmentId, int $examSlotId, my
             throw new Exception("Candidate already has a booked slot for this assessment (Attempt ID: " . $existingAttemptInTx['id'] . ")");
         }
 
-        // Concurrency Guard 3: Query-level concurrency check - atomically decrement only if seats_remaining > 0
-        $affectedRows = decrement_slot_capacity($examSlotId, $conn);
-        if ($affectedRows === 0) {
-            throw new Exception("Selected exam slot is fully booked. No seats remaining.");
-        }
+        // Decrement slot capacity atomically
+        decrement_slot_capacity($examSlotId, $conn);
 
         // Insert new exam attempt record
         $attemptId = insert_attempt($candidateId, $assessmentId, $examSlotId, $conn);

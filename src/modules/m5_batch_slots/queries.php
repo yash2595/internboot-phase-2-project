@@ -368,7 +368,7 @@ function decrement_slot_capacity(int $slotId, mysqli $conn): int {
     $sql = "UPDATE exam_slots 
             SET seats_remaining = seats_remaining - 1, 
                 updated_at = NOW() 
-            WHERE id = ? AND seats_remaining > 0";
+            WHERE id = ?";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         throw new Exception("Failed to prepare slot decrement query: " . (@$conn->error ?: 'query error'));

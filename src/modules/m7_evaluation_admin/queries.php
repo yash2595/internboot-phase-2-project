@@ -646,7 +646,6 @@ function allocate_candidate_to_batch(mysqli $conn,int $enrollmentId,int $batchId
             FROM exam_slots es JOIN exam_schedules s ON s.id=es.exam_schedule_id JOIN batches b ON b.id=s.batch_id
             WHERE es.id=? FOR UPDATE','i',[$slotId]);
         if(!$slot || (int)$slot['batch_id']!==$batchId) throw new InvalidArgumentException('Invalid slot for this batch.');
-        if((int)$slot['seats_remaining']<=0) throw new InvalidArgumentException('Selected slot is full.');
         if((int)$slot['assessment_id']!==(int)$enrollment['assessment_id']) throw new InvalidArgumentException('Candidate assessment does not match this batch.');
         if($slot['schedule_status']!=='scheduled') throw new InvalidArgumentException('This exam schedule is not open for allocation.');
         if($slot['exam_date'] < date('Y-m-d')) throw new InvalidArgumentException('Cannot allocate a candidate to a past exam date.');
@@ -654,9 +653,8 @@ function allocate_candidate_to_batch(mysqli $conn,int $enrollmentId,int $batchId
         $stmt=$conn->prepare('UPDATE enrollments SET batch_id=?,updated_at=NOW() WHERE id=?');
         $stmt->bind_param('ii',$batchId,$enrollmentId); $stmt->execute(); $stmt->close();
 
-        $stmt=$conn->prepare('UPDATE exam_slots SET seats_remaining=seats_remaining-1,updated_at=NOW() WHERE id=? AND seats_remaining>0');
+        $stmt=$conn->prepare('UPDATE exam_slots SET seats_remaining=seats_remaining-1,updated_at=NOW() WHERE id=?');
         $stmt->bind_param('i',$slotId); $stmt->execute();
-        if($stmt->affected_rows!==1) { $stmt->close(); throw new RuntimeException('Slot allocation failed.'); }
         $stmt->close();
 
         $stmt = $conn->prepare('INSERT INTO attempts (candidate_id, assessment_id, exam_slot_id, status, created_at) VALUES (?, ?, ?, "in_progress", NOW())');

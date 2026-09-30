@@ -1239,61 +1239,73 @@
   </section>
 
   <!-- ============ FOOTER ============ -->
-  <footer class="ib-footer">
-    <div class="container">
+  <footer class="ib-footer text-white" style="background-color: #000; padding: 60px 0 25px; font-size: 0.95rem;">
+    <div class="container position-relative">
       <div class="row g-4">
-        <div class="col-lg-4">
-          <a class="navbar-brand d-inline-flex mb-3 align-items-center" href="index.html" aria-label="InternBoot Home">
-            <img src="assets/internboot-logo.png" alt="InternBoot" class="footer-logo-img">
+        <!-- Column 1 -->
+        <div class="col-lg-4 pe-lg-5">
+          <a class="navbar-brand d-inline-block mb-4" href="index.html#home" aria-label="InternBoot Home">
+            <img src="assets/internboot-logo.png" alt="InternBoot" class="footer-logo-img" style="height: 45px; background: white; padding: 6px; border-radius: 4px;">
           </a>
-          <p class="footer-note">
-            InternBoot standardizes fresher talent assessment and connects ambitious graduates with verified internships
-            and full-time hiring partners across India.
+          <p class="text-white-50 mb-4 pe-lg-4" style="line-height: 1.6;">
+            InternBoot connects ambitious graduates with verified internships and top hiring partners across India.
           </p>
-        </div>
-
-        <div class="col-6 col-lg-2">
-          <h4>Platform</h4>
-          <ul class="list-unstyled">
-            <li><a href="index.html#how">How it works</a></li>
-            <li><a href="index.html#levels">Level Tiers</a></li>
-            <li><a href="index.html#pattern">Exam Pattern</a></li>
-            <li><a href="index.html#fee">Fee Structure</a></li>
-            <li><a href="index.html#faq">Candidate FAQs</a></li>
-          </ul>
-        </div>
-
-        <div class="col-6 col-lg-2">
-          <h4>Candidate</h4>
-          <ul class="list-unstyled">
-            <li><a href="register.php">Register</a></li>
-            <li><a href="login.php">Login</a></li>
-            <li><a href="contact.html" class="text-primary fw-bold">Candidate Support</a></li>
-          </ul>
-        </div>
-
-        <div class="col-lg-4">
-          <h4>Reach us</h4>
-          <ul class="list-unstyled footer-contact">
-            <li><i class="bi bi-envelope"></i> <a href="mailto:support@internboot.com">support@internboot.com</a></li>
-            <li><i class="bi bi-chat-dots"></i> <a href="contact.html">Candidate Helpdesk &amp; Support</a></li>
-            <li><i class="bi bi-globe"></i> <a href="https://internboot.com">internboot.com</a></li>
-            <li><i class="bi bi-geo-alt"></i> <span>Noida, India</span></li>
-          </ul>
-          <div class="footer-social">
-            <a href="https://www.linkedin.com/showcase/internboot/" aria-label="LinkedIn"><i
-                class="bi bi-linkedin"></i></a>
-            <a href="https://www.instagram.com/employmentexpressllp/" aria-label="Instagram"><i
-                class="bi bi-instagram"></i></a>
-            <a href="https://www.youtube.com/@internboot" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
-            <a href="https://www.facebook.com/internboot" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+          <div class="d-flex gap-3 mt-3">
+            <a href="https://www.linkedin.com/showcase/internboot/" class="text-white d-flex align-items-center justify-content-center rounded-circle" style="width: 38px; height: 38px; background: #1e40af; text-decoration: none; transition: 0.3s;" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+            <a href="https://www.instagram.com/internboot_official?stkn=bTV0bXh0aGV0aG8w" class="text-white d-flex align-items-center justify-content-center rounded-circle" style="width: 38px; height: 38px; background: #1e40af; text-decoration: none; transition: 0.3s;" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+            <a href="https://www.facebook.com/internboot" class="text-white d-flex align-items-center justify-content-center rounded-circle" style="width: 38px; height: 38px; background: #1e40af; text-decoration: none; transition: 0.3s;" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+            <a href="https://www.youtube.com/@Internboot-k7m" class="text-white d-flex align-items-center justify-content-center rounded-circle" style="width: 38px; height: 38px; background: #1e40af; text-decoration: none; transition: 0.3s;" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
           </div>
+        </div>
+
+        <!-- Column 2: Platform -->
+        <div class="col-6 col-lg-3 ps-lg-4">
+          <h5 class="fw-bold mb-2 text-white fs-5">Platform</h5>
+          <div style="height: 2px; width: 35px; background-color: rgba(255,255,255,0.4); margin-bottom: 24px;"></div>
+          <ul class="list-unstyled d-flex flex-column gap-3 mb-0">
+            <li><a href="index.html#how" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>How it works</a></li>
+            <li><a href="index.html#levels" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Levels</a></li>
+            <li><a href="index.html#pattern" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Pattern</a></li>
+            <li><a href="index.html#fee" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Fee</a></li>
+            <li><a href="index.html#contact" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Contact Us</a></li>
+            <li><a href="index.html#faq" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>FAQs</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 3: Candidate -->
+        <div class="col-6 col-lg-2">
+          <h5 class="fw-bold mb-2 text-white fs-5">Candidate</h5>
+          <div style="height: 2px; width: 35px; background-color: rgba(255,255,255,0.4); margin-bottom: 24px;"></div>
+          <ul class="list-unstyled d-flex flex-column gap-3 mb-0">
+            <li><a href="register.php" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Register</a></li>
+            <li><a href="login.php" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Login</a></li>
+            <li><a href="index.html#contact" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Contact Us</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 4: Reach us -->
+        <div class="col-lg-3 position-relative d-flex flex-column">
+          <h5 class="fw-bold mb-2 text-white fs-5">Reach us</h5>
+          <div style="height: 2px; width: 35px; background-color: rgba(255,255,255,0.4); margin-bottom: 24px;"></div>
+          <ul class="list-unstyled d-flex flex-column gap-3 mb-5">
+            <li><a href="mailto:support@internboot.com" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>support@internboot.com</a></li>
+            <li><a href="index.html#contact" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Candidate Support Desk</a></li>
+            <li><a href="https://internboot.com" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>internboot.com</a></li>
+            <li><span class="text-white"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Noida, India</span></li>
+          </ul>
         </div>
       </div>
 
-      <div class="footer-base">
-        <span>&copy; <span id="year">2026</span> InternBoot — Employment Express Verband LLP</span>
-        <span><a href="privacy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms of Service</a></span>
+      <hr class="mt-4 mb-4 border-white opacity-25">
+
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center text-white-50" style="font-size: 0.85rem;">
+        <div class="mb-3 mb-md-0">
+          &copy; <span id="year">2026</span> <span class="text-white fw-bold">InternBoot</span>. All rights reserved.
+        </div>
+        <div>
+          <a href="terms.html" class="text-white text-decoration-none">Terms of Services</a> <span class="mx-2 text-white-50">|</span> 
+          <a href="privacy.html" class="text-white text-decoration-none">Privacy Policy</a>
+        </div>
       </div>
     </div>
   </footer>

@@ -217,7 +217,7 @@ function get_certificates(mysqli $conn): array
 
 function sync_placement_records(mysqli $conn): void
 {
-    $results=q_all($conn,"SELECT r.id result_id,at.candidate_id FROM results r JOIN attempts at ON at.id=r.attempt_id LEFT JOIN placement_records pr ON pr.result_id=r.id WHERE pr.id IS NULL AND r.level_assigned <= 2");
+    $results=q_all($conn,"SELECT r.id result_id,at.candidate_id FROM results r JOIN attempts at ON at.id=r.attempt_id LEFT JOIN placement_records pr ON pr.result_id=r.id WHERE pr.id IS NULL AND r.level_assigned <= 5");
     if(!$results) return;
     $stmt=$conn->prepare("INSERT INTO placement_records(candidate_id,result_id,placement_status) VALUES(?,?,'eligible')");
     foreach($results as $row){

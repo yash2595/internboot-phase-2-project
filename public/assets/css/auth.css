@@ -477,7 +477,7 @@
 
 .ib-auth-page:has(.ib-register-role) .ib-auth-grid {
   grid-template-columns: 0.82fr 1.18fr;
-  max-width: 1030px;
+  max-width: 900px; /* Reduced width */
   min-height: unset;
   height: auto;
   margin: auto;
@@ -687,7 +687,7 @@
 
 .ib-login-page .ib-auth-grid {
   grid-template-columns: 0.82fr 1.18fr;
-  max-width: 1030px;
+  max-width: 900px; /* Reduced width */
   min-height: unset;
   height: auto;
   margin: auto;

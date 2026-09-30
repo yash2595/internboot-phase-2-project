@@ -16,7 +16,7 @@ $pageTitle = 'Register — InternBoot';
 <title><?= htmlspecialchars($pageTitle) ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
-<link rel="stylesheet" href="assets/css/auth.css?v=19">
+<link rel="stylesheet" href="assets/css/auth.css?v=22">
 </head>
 <body>
 

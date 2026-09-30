@@ -54,34 +54,34 @@ $pageTitle = 'Log In — InternBoot';
 
     <section class="ib-brand-panel">
       <img src="assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-brand-logo">
-      <h2 class="ib-brand-title">Your Gateway to Professional Growth</h2>
+      <h2 class="ib-brand-title" style="font-size: 1.45rem; text-transform: uppercase; letter-spacing: 0.5px;">Program Progression Flow</h2>
       <ul class="ib-brand-features">
         <li>
-          <span class="feature-icon"><i class="bi bi-bar-chart-steps"></i></span>
+          <span class="feature-icon"><i class="bi bi-check-circle"></i></span>
           <div class="feature-text">
-            <strong>Level 1-5 Assessment</strong>
-            <span>Structured skill evaluation</span>
+            <strong>Enrolled</strong>
+            <span>Submitted</span>
           </div>
         </li>
         <li>
-          <span class="feature-icon"><i class="bi bi-patch-check"></i></span>
+          <span class="feature-icon"><i class="bi bi-file-earmark-text"></i></span>
           <div class="feature-text">
-            <strong>Verified Certificate</strong>
-            <span>Strengthen your resume instantly</span>
+            <strong>LOI</strong>
+            <span>Received</span>
           </div>
         </li>
         <li>
-          <span class="feature-icon"><i class="bi bi-speedometer2"></i></span>
+          <span class="feature-icon"><i class="bi bi-play-circle"></i></span>
           <div class="feature-text">
-            <strong>Personalized Dashboard</strong>
-            <span>Track your learning journey</span>
+            <strong>Start Course</strong>
+            <span>Materials Unlocked</span>
           </div>
         </li>
         <li>
-          <span class="feature-icon"><i class="bi bi-people"></i></span>
+          <span class="feature-icon"><i class="bi bi-award"></i></span>
           <div class="feature-text">
-            <strong>Mentor Connect</strong>
-            <span>Engage with industry experts</span>
+            <strong>Earn Badges</strong>
+            <span>Level 1-5 Completed</span>
           </div>
         </li>
       </ul>

@@ -54,34 +54,27 @@ $pageTitle = 'Log In — InternBoot';
 
     <section class="ib-brand-panel">
       <img src="assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-brand-logo">
-      <h2 class="ib-brand-title">Program Progression Flow</h2>
+      <h2 class="ib-brand-title">Your Gateway to Professional Growth</h2>
       <ul class="ib-brand-features">
         <li>
-          <span class="feature-icon"><i class="bi bi-check-circle"></i></span>
+          <span class="feature-icon"><i class="bi bi-patch-check"></i></span>
           <div class="feature-text">
-            <strong>Enrolled</strong>
-            <span>Submitted</span>
+            <strong>Verified Certificates</strong>
+            <span>Industry recognized internship certificates</span>
           </div>
         </li>
         <li>
-          <span class="feature-icon"><i class="bi bi-file-earmark-text"></i></span>
+          <span class="feature-icon"><i class="bi bi-code-slash"></i></span>
           <div class="feature-text">
-            <strong>LOI</strong>
-            <span>Received</span>
+            <strong>Real-World Projects</strong>
+            <span>Work on live projects with expert guidance</span>
           </div>
         </li>
         <li>
-          <span class="feature-icon"><i class="bi bi-play-circle"></i></span>
+          <span class="feature-icon"><i class="bi bi-people"></i></span>
           <div class="feature-text">
-            <strong>Start Course</strong>
-            <span>Materials Unlocked</span>
-          </div>
-        </li>
-        <li>
-          <span class="feature-icon"><i class="bi bi-award"></i></span>
-          <div class="feature-text">
-            <strong>Earn Badges</strong>
-            <span>Level 1-5 Completed</span>
+            <strong>Expert Mentorship</strong>
+            <span>Learn directly from industry professionals</span>
           </div>
         </li>
       </ul>

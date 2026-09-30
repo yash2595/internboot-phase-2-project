@@ -28,38 +28,31 @@ $pageTitle = 'Register — InternBoot';
       <h2 class="ib-brand-title">Your Gateway to Professional Growth</h2>
       <ul class="ib-brand-features">
         <li>
-          <span class="feature-icon"><i class="bi bi-bar-chart-steps"></i></span>
-          <div class="feature-text">
-            <strong>Level 1-5 Assessment</strong>
-            <span>Structured skill evaluation</span>
-          </div>
-        </li>
-        <li>
-          <span class="feature-icon"><i class="bi bi-stopwatch"></i></span>
-          <div class="feature-text">
-            <strong>Instant Evaluation</strong>
-            <span>Get your results within minutes</span>
-          </div>
-        </li>
-        <li>
           <span class="feature-icon"><i class="bi bi-patch-check"></i></span>
           <div class="feature-text">
-            <strong>Verified Certificate</strong>
-            <span>Strengthen your resume instantly</span>
+            <strong>Verified Certificates</strong>
+            <span>Industry recognized internship certificates</span>
           </div>
         </li>
         <li>
-          <span class="feature-icon"><i class="bi bi-briefcase"></i></span>
+          <span class="feature-icon"><i class="bi bi-code-slash"></i></span>
           <div class="feature-text">
-            <strong>Direct Placement</strong>
-            <span>Connect with 650+ hiring partners</span>
+            <strong>Real-World Projects</strong>
+            <span>Work on live projects with expert guidance</span>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon"><i class="bi bi-people"></i></span>
+          <div class="feature-text">
+            <strong>Expert Mentorship</strong>
+            <span>Learn directly from industry professionals</span>
           </div>
         </li>
       </ul>
       <div class="ib-brand-stats">
-        <span><i class="bi bi-mortarboard" style="font-size:1.2rem; margin-right:4px;"></i> <strong>10,000+</strong><br><small style="font-size:0.7em; letter-spacing:1px; opacity:0.8;">STUDENTS</small></span>
-        <span><i class="bi bi-briefcase" style="font-size:1.2rem; margin-right:4px;"></i> <strong>500+</strong><br><small style="font-size:0.7em; letter-spacing:1px; opacity:0.8;">COMPANIES</small></span>
-        <span><i class="bi bi-star" style="font-size:1.2rem; margin-right:4px;"></i> <strong>4.9/5</strong><br><small style="font-size:0.7em; letter-spacing:1px; opacity:0.8;">RATING</small></span>
+        <span><strong>10,000+</strong><small>STUDENTS</small></span>
+        <span><strong>500+</strong><small>COMPANIES</small></span>
+        <span><strong>4.9/5</strong><small>RATING</small></span>
       </div>
     </section>
 

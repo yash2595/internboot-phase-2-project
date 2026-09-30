@@ -45,7 +45,7 @@ $pageTitle = 'Log In — InternBoot';
 <title><?= htmlspecialchars($pageTitle) ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
-<link rel="stylesheet" href="assets/css/auth.css?v=27">
+<link rel="stylesheet" href="assets/css/auth.css?v=28">
 </head>
 <body>
 
@@ -57,24 +57,17 @@ $pageTitle = 'Log In — InternBoot';
       <h2 class="ib-brand-title">Your Gateway to Professional Growth</h2>
       <ul class="ib-brand-features">
         <li>
-          <span class="feature-icon"><i class="bi bi-patch-check"></i></span>
+          <span class="feature-icon"><i class="bi bi-file-earmark-bar-graph"></i></span>
           <div class="feature-text">
-            <strong>Verified Certificates</strong>
-            <span>Industry recognized internship certificates</span>
+            <strong>Assessment Test</strong>
+            <span>Take the Level-1 Assessment Test</span>
           </div>
         </li>
         <li>
-          <span class="feature-icon"><i class="bi bi-code-slash"></i></span>
+          <span class="feature-icon"><i class="bi bi-unlock"></i></span>
           <div class="feature-text">
-            <strong>Real-World Projects</strong>
-            <span>Work on live projects with expert guidance</span>
-          </div>
-        </li>
-        <li>
-          <span class="feature-icon"><i class="bi bi-people"></i></span>
-          <div class="feature-text">
-            <strong>Expert Mentorship</strong>
-            <span>Learn directly from industry professionals</span>
+            <strong>Unlock Placement</strong>
+            <span>Clear Levels 1 to 5 and unlock placement</span>
           </div>
         </li>
       </ul>

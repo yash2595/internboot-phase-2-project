@@ -51,7 +51,7 @@
     </style>
   </head>
 
-  <body class="min-h-screen bg-[#eef3ff] text-slate-900 antialiased">
+  <body class="min-h-screen bg-[#eef3ff] text-slate-700 antialiased">
     <div class="min-h-screen">
       <!-- =====================================================
            SIDEBAR
@@ -76,9 +76,9 @@
             </div>
 
             <div>
-              <div class="text-lg font-bold leading-tight">Internboot</div>
+              <div class="text-base font-bold leading-tight">Internboot</div>
 
-              <div class="text-xs text-blue-100">Student Dashboard</div>
+              <div class="text-[11px] text-blue-100">Student Dashboard</div>
             </div>
           </a>
         </div>
@@ -201,7 +201,7 @@
             <!-- Avatar -->
             <div
               id="sidebar-student-avatar"
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-base"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-sm"
             >
               <span data-candidate="initials">KB</span>
             </div>
@@ -211,12 +211,12 @@
               <p
                 id="sidebar-student-name"
                 data-candidate="name"
-                class="truncate text-sm font-bold leading-tight text-white"
+                class="truncate text-[13px] font-bold leading-tight text-white"
               >
                 Student
               </p>
 
-              <p class="mt-0.5 text-xs leading-tight text-blue-100/80">
+              <p class="mt-0.5 text-[11px] leading-tight text-blue-100/80">
                 Student
               </p>
             </div>
@@ -265,19 +265,19 @@
             <div class="min-w-0">
               <div class="flex items-center gap-2">
                 <h1
-                  class="text-base font-semibold text-slate-900 whitespace-nowrap"
+                  class="text-sm font-semibold text-slate-700 whitespace-nowrap"
                 >
                   Enrollment
                 </h1>
 
                 <span
-                  class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium"
+                  class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-[11px] font-medium"
                 >
                   Status
                 </span>
               </div>
 
-              <p class="hidden md:block text-xs text-slate-500">
+              <p class="hidden md:block text-[11px] text-slate-500">
                 View your enrollment information and next steps
               </p>
             </div>
@@ -298,12 +298,12 @@
 
             <div class="hidden sm:flex flex-col min-w-0">
               <strong
-                class="text-sm font-semibold text-slate-800 truncate max-w-40"
+                class="text-[13px] font-semibold text-slate-700 truncate max-w-40"
               >
                 <span data-candidate="name"></span>
               </strong>
 
-              <small class="text-xs text-slate-500 truncate max-w-48">
+              <small class="text-[11px] text-slate-500 truncate max-w-48">
                 <span data-candidate="email"></span>
               </small>
             </div>
@@ -339,7 +339,7 @@
                 <!-- Hero Content -->
                 <div class="min-w-0">
                   <span
-                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 text-white/90 text-xs font-semibold mb-4"
+                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 text-white/90 text-[11px] font-semibold mb-4"
                   >
                     <i data-lucide="badge-check" class="w-4 h-4"></i>
 
@@ -348,14 +348,14 @@
 
                   <h2
                     id="enrollment-hero-title"
-                    class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight"
+                    class="text-xl sm:text-3xl lg:text-4xl font-bold tracking-tight"
                   >
                     Enrollment Confirmed
                   </h2>
 
                   <p
                     id="enrollment-hero-desc"
-                    class="mt-3 text-sm sm:text-base text-blue-100 max-w-3xl leading-6"
+                    class="mt-3 text-[13px] sm:text-sm text-blue-100 max-w-3xl leading-6"
                   >
                     Your payment has been verified and your enrollment has been
                     created successfully.
@@ -365,7 +365,7 @@
                 <!-- Status -->
                 <div class="shrink-0">
                   <div
-                    class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-blue-700 text-sm font-semibold shadow-sm"
+                    class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-blue-700 text-[13px] font-semibold shadow-sm"
                   >
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
 
@@ -399,11 +399,11 @@
                     </div>
 
                     <div>
-                      <h2 class="text-base font-semibold text-slate-900">
+                      <h2 class="text-sm font-semibold text-slate-700">
                         Enrollment Details
                       </h2>
 
-                      <p class="text-xs text-slate-500 mt-0.5">
+                      <p class="text-[11px] text-slate-500 mt-0.5">
                         Your current enrollment information
                       </p>
                     </div>
@@ -423,13 +423,13 @@
                             <i data-lucide="hash" class="w-4 h-4"></i>
                           </div>
 
-                          <span class="text-sm text-slate-500">
+                          <span class="text-[13px] text-slate-500">
                             Enrollment ID
                           </span>
                         </div>
 
                         <span
-                          class="text-sm font-semibold text-slate-800 text-right break-all"
+                          class="text-[13px] font-semibold text-slate-700 text-right break-all"
                         >
                           <span data-enrollment="id"></span>
                         </span>
@@ -446,13 +446,13 @@
                             <i data-lucide="user-round" class="w-4 h-4"></i>
                           </div>
 
-                          <span class="text-sm text-slate-500">
+                          <span class="text-[13px] text-slate-500">
                             Candidate
                           </span>
                         </div>
 
                         <span
-                          class="text-sm font-semibold text-slate-800 text-right"
+                          class="text-[13px] font-semibold text-slate-700 text-right"
                         >
                           <span data-candidate="name"></span>
                         </span>
@@ -469,13 +469,13 @@
                             <i data-lucide="calendar-days" class="w-4 h-4"></i>
                           </div>
 
-                          <span class="text-sm text-slate-500">
+                          <span class="text-[13px] text-slate-500">
                             Enrollment Date
                           </span>
                         </div>
 
                         <span
-                          class="text-sm font-semibold text-slate-800 text-right"
+                          class="text-[13px] font-semibold text-slate-700 text-right"
                         >
                           <span data-candidate="registrationDate"></span>
                         </span>
@@ -492,14 +492,14 @@
                             <i data-lucide="circle-check" class="w-4 h-4"></i>
                           </div>
 
-                          <span class="text-sm text-slate-500"> Status </span>
+                          <span class="text-[13px] text-slate-500"> Status </span>
                         </div>
 
                         <span>
                           <span
                             id="enrollment-status-badge"
                             data-enrollment="status"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold"
                           >
                             <span
                               class="w-1.5 h-1.5 rounded-full bg-emerald-500"
@@ -531,11 +531,11 @@
                     </div>
 
                     <div>
-                      <h2 class="text-base font-semibold text-slate-900">
+                      <h2 class="text-sm font-semibold text-slate-700">
                         Next Step
                       </h2>
 
-                      <p class="text-xs text-slate-500 mt-0.5">
+                      <p class="text-[11px] text-slate-500 mt-0.5">
                         What happens after enrollment
                       </p>
                     </div>

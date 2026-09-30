@@ -52,7 +52,7 @@
     </style>
   </head>
 
-  <body class="bg-[#eef3ff] text-slate-900 antialiased">
+  <body class="bg-[#eef3ff] text-slate-700 antialiased">
     <div class="min-h-screen">
       <!-- =====================================================
            SIDEBAR
@@ -77,9 +77,9 @@
             </div>
 
             <div class="min-w-0">
-              <div class="text-lg font-bold leading-tight">Internboot</div>
+              <div class="text-base font-bold leading-tight">Internboot</div>
 
-              <div class="text-xs text-blue-100">Student Dashboard</div>
+              <div class="text-[11px] text-blue-100">Student Dashboard</div>
             </div>
           </a>
         </div>
@@ -202,7 +202,7 @@
             <!-- Avatar -->
             <div
               id="sidebar-student-avatar"
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-base"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-sm"
             >
               <span data-candidate="initials">KB</span>
             </div>
@@ -212,12 +212,12 @@
               <p
                 id="sidebar-student-name"
                 data-candidate="name"
-                class="truncate text-sm font-bold leading-tight text-white"
+                class="truncate text-[13px] font-bold leading-tight text-white"
               >
                 Student
               </p>
 
-              <p class="mt-0.5 text-xs leading-tight text-blue-100/80">
+              <p class="mt-0.5 text-[11px] leading-tight text-blue-100/80">
                 Student
               </p>
             </div>
@@ -264,13 +264,13 @@
             </div>
 
             <strong
-              class="text-lg font-semibold text-slate-800 whitespace-nowrap"
+              class="text-base font-semibold text-slate-700 whitespace-nowrap"
             >
               My Profile
             </strong>
 
             <span
-              class="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-semibold"
+              class="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-semibold"
             >
               Account
             </span>
@@ -291,12 +291,12 @@
 
             <div class="hidden sm:flex flex-col min-w-0">
               <strong
-                class="text-sm font-semibold text-slate-800 truncate max-w-40"
+                class="text-[13px] font-semibold text-slate-700 truncate max-w-40"
               >
                 <span data-candidate="name"></span>
               </strong>
 
-              <small class="text-xs text-slate-500 truncate max-w-48">
+              <small class="text-[11px] text-slate-500 truncate max-w-48">
                 <span data-candidate="email"></span>
               </small>
             </div>
@@ -338,7 +338,7 @@
                 <!-- Hero Content -->
                 <div class="min-w-0">
                   <div
-                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 text-white/90 text-xs font-medium mb-3"
+                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 text-white/90 text-[11px] font-medium mb-3"
                   >
                     <i data-lucide="user-check" class="w-4 h-4"></i>
 
@@ -351,7 +351,7 @@
                     <span data-candidate="name"></span>
                   </h1>
 
-                  <p class="mt-2 text-base text-blue-50">
+                  <p class="mt-2 text-sm text-blue-50">
                     Candidate ID:
 
                     <span
@@ -365,13 +365,13 @@
                 <div class="shrink-0 flex flex-wrap justify-end gap-3">
                   <button
                     onclick="document.getElementById('editProfileModal').classList.remove('hidden')"
-                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-medium text-xs transition-colors duration-200 shadow-sm"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-medium text-[11px] transition-colors duration-200 shadow-sm"
                   >
                     <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                     Edit Profile
                   </button>
                   <span
-                    class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-blue-700 font-semibold text-sm shadow-sm"
+                    class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-blue-700 font-semibold text-[13px] shadow-sm"
                   >
                     <span
                       class="w-2.5 h-2.5 rounded-full bg-emerald-500"
@@ -406,11 +406,11 @@
                   </div>
 
                   <div class="min-w-0">
-                    <h2 class="text-base font-semibold text-slate-900">
+                    <h2 class="text-sm font-semibold text-slate-700">
                       Personal Information
                     </h2>
 
-                    <p class="text-xs text-slate-500 mt-0.5">
+                    <p class="text-[11px] text-slate-500 mt-0.5">
                       Your registered contact details
                     </p>
                   </div>
@@ -428,13 +428,13 @@
                         class="w-4 h-4 text-slate-400 shrink-0"
                       ></i>
 
-                      <span class="text-sm text-slate-500 whitespace-nowrap">
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
                         Full Name
                       </span>
                     </div>
 
                     <span
-                      class="text-sm font-semibold text-slate-800 text-right break-words"
+                      class="text-[13px] font-semibold text-slate-700 text-right break-words"
                     >
                       <span data-candidate="name"></span>
                     </span>
@@ -450,13 +450,13 @@
                         class="w-4 h-4 text-slate-400 shrink-0"
                       ></i>
 
-                      <span class="text-sm text-slate-500 whitespace-nowrap">
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
                         Email
                       </span>
                     </div>
 
                     <span
-                      class="text-sm font-semibold text-slate-800 text-right break-all"
+                      class="text-[13px] font-semibold text-slate-700 text-right break-all"
                     >
                       <span data-candidate="email"></span>
                     </span>
@@ -472,13 +472,13 @@
                         class="w-4 h-4 text-slate-400 shrink-0"
                       ></i>
 
-                      <span class="text-sm text-slate-500 whitespace-nowrap">
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
                         Phone
                       </span>
                     </div>
 
                     <span
-                      class="text-sm font-semibold text-slate-800 text-right"
+                      class="text-[13px] font-semibold text-slate-700 text-right"
                     >
                       <span data-candidate="phone"></span>
                     </span>
@@ -499,7 +499,7 @@
                     </div>
 
                     <span
-                      class="text-[13px] font-medium text-slate-800 text-right truncate"
+                      class="text-[13px] font-medium text-slate-700 text-right truncate"
                     >
                       <a href="#" target="_blank" class="text-intern-blue hover:underline" data-candidate="linkedin">Not Provided</a>
                     </span>
@@ -520,7 +520,7 @@
                     </div>
 
                     <span
-                      class="text-[13px] font-medium text-slate-800 text-right truncate"
+                      class="text-[13px] font-medium text-slate-700 text-right truncate"
                     >
                       <a href="#" target="_blank" class="text-intern-blue hover:underline" data-candidate="github">Not Provided</a>
                     </span>
@@ -546,11 +546,11 @@
                   </div>
 
                   <div class="min-w-0">
-                    <h2 class="text-base font-semibold text-slate-900">
+                    <h2 class="text-sm font-semibold text-slate-700">
                       Candidate Details
                     </h2>
 
-                    <p class="text-xs text-slate-500 mt-0.5">
+                    <p class="text-[11px] text-slate-500 mt-0.5">
                       Registration and account information
                     </p>
                   </div>
@@ -568,13 +568,13 @@
                         class="w-4 h-4 text-slate-400 shrink-0"
                       ></i>
 
-                      <span class="text-sm text-slate-500 whitespace-nowrap">
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
                         Candidate ID
                       </span>
                     </div>
 
                     <span
-                      class="text-sm font-semibold text-slate-800 text-right"
+                      class="text-[13px] font-semibold text-slate-700 text-right"
                     >
                       <span data-candidate="candidateId"></span>
                     </span>
@@ -590,13 +590,13 @@
                         class="w-4 h-4 text-slate-400 shrink-0"
                       ></i>
 
-                      <span class="text-sm text-slate-500 whitespace-nowrap">
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
                         Registration Date
                       </span>
                     </div>
 
                     <span
-                      class="text-sm font-semibold text-slate-800 text-right"
+                      class="text-[13px] font-semibold text-slate-700 text-right"
                     >
                       <span data-candidate="registrationDate"></span>
                     </span>
@@ -612,7 +612,7 @@
                         class="w-4 h-4 text-slate-400 shrink-0"
                       ></i>
 
-                      <span class="text-sm text-slate-500 whitespace-nowrap">
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
                         Current Level
                       </span>
                     </div>
@@ -621,7 +621,7 @@
                       <span
                         id="profile-level-badge"
                         data-result="level_assigned"
-                        class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold"
+                        class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold"
                       >
                         Not assigned yet
                       </span>
@@ -638,7 +638,7 @@
                         class="w-4 h-4 text-slate-400 shrink-0"
                       ></i>
 
-                      <span class="text-sm text-slate-500 whitespace-nowrap">
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
                         Registration Status
                       </span>
                     </div>
@@ -646,7 +646,7 @@
                     <span class="shrink-0">
                       <span
                         data-candidate="registrationStatus"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold"
                       >
                         Registered
                       </span>
@@ -663,7 +663,7 @@
                         class="w-4 h-4 text-slate-400 shrink-0"
                       ></i>
 
-                      <span class="text-sm text-slate-500 whitespace-nowrap">
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
                         Profile Status
                       </span>
                     </div>
@@ -672,7 +672,7 @@
                       <span
                         id="profile-status-badge"
                         data-candidate="profileStatus"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold"
                       >
                         Verified
                       </span>
@@ -703,11 +703,11 @@
                     </div>
 
                     <div>
-                      <h2 class="text-base font-semibold text-slate-900">
+                      <h2 class="text-sm font-semibold text-slate-700">
                         Certificate
                       </h2>
 
-                      <p class="text-xs text-slate-500 mt-0.5">
+                      <p class="text-[11px] text-slate-500 mt-0.5">
                         Certification status and availability
                       </p>
                     </div>
@@ -716,7 +716,7 @@
                   <!-- View Certificate -->
                   <a
                     href="certificates.html"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 text-sm font-semibold transition"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 text-[13px] font-semibold transition"
                   >
                     View Certificate
 
@@ -739,11 +739,11 @@
                     </div>
 
                     <div class="min-w-0">
-                      <p class="text-sm font-semibold text-slate-800">
+                      <p class="text-[13px] font-semibold text-slate-700">
                         InternBoot Certificate
                       </p>
 
-                      <p class="text-xs text-slate-500 mt-1">
+                      <p class="text-[11px] text-slate-500 mt-1">
                         Your certificate will appear here once it is issued.
                       </p>
                     </div>
@@ -753,7 +753,7 @@
                   <div class="shrink-0">
                     <span
                       id="profile-cert-status"
-                      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-semibold"
+                      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[11px] font-semibold"
                     >
                       <span class="w-2 h-2 rounded-full bg-slate-400"></span>
 
@@ -832,35 +832,35 @@
                 <i data-lucide="pencil" class="h-5 w-5 text-intern-blue"></i>
               </div>
               <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                <h3 class="text-lg leading-6 font-semibold text-slate-900" id="modal-title">
+                <h3 class="text-base leading-6 font-semibold text-slate-700" id="modal-title">
                   Edit Profile
                 </h3>
                 <div class="mt-4 space-y-4">
                   <div>
-                    <label class="block text-sm font-medium text-slate-700">Full Name</label>
-                    <input type="text" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-sm px-4 py-2.5 border outline-none transition-all" placeholder="John Doe">
+                    <label class="block text-[13px] font-medium text-slate-700">Full Name</label>
+                    <input type="text" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-[13px] px-4 py-2.5 border outline-none transition-all" placeholder="John Doe">
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700">Phone</label>
-                    <input type="text" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-sm px-4 py-2.5 border outline-none transition-all" placeholder="1234567890">
+                    <label class="block text-[13px] font-medium text-slate-700">Phone</label>
+                    <input type="text" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-[13px] px-4 py-2.5 border outline-none transition-all" placeholder="1234567890">
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700">LinkedIn Profile URL</label>
-                    <input type="url" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-sm px-4 py-2.5 border outline-none transition-all" placeholder="https://linkedin.com/in/username">
+                    <label class="block text-[13px] font-medium text-slate-700">LinkedIn Profile URL</label>
+                    <input type="url" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-[13px] px-4 py-2.5 border outline-none transition-all" placeholder="https://linkedin.com/in/username">
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-slate-700">GitHub Profile URL</label>
-                    <input type="url" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-sm px-4 py-2.5 border outline-none transition-all" placeholder="https://github.com/username">
+                    <label class="block text-[13px] font-medium text-slate-700">GitHub Profile URL</label>
+                    <input type="url" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-[13px] px-4 py-2.5 border outline-none transition-all" placeholder="https://github.com/username">
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <div class="bg-slate-50 px-4 py-4 sm:px-6 sm:flex sm:flex-row-reverse">
-            <button type="button" onclick="document.getElementById('editProfileModal').classList.add('hidden')" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-5 py-2 bg-intern-blue text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-intern-blue sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+            <button type="button" onclick="document.getElementById('editProfileModal').classList.add('hidden')" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-5 py-2 bg-intern-blue text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-intern-blue sm:ml-3 sm:w-auto sm:text-[13px] transition-colors">
               Save Changes
             </button>
-            <button type="button" onclick="document.getElementById('editProfileModal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center rounded-xl border border-slate-300 shadow-sm px-5 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-intern-blue sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+            <button type="button" onclick="document.getElementById('editProfileModal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center rounded-xl border border-slate-300 shadow-sm px-5 py-2 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-intern-blue sm:mt-0 sm:ml-3 sm:w-auto sm:text-[13px] transition-colors">
               Cancel
             </button>
           </div>

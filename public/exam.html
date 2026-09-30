@@ -14,7 +14,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-<body class="min-h-screen bg-[#eef3ff] text-slate-900 overflow-x-hidden">
+<body class="min-h-screen bg-[#eef3ff] text-slate-700 overflow-x-hidden">
   <div class="min-h-screen">
     <!-- =====================================================
            SIDEBAR
@@ -30,9 +30,9 @@
           </div>
 
           <div class="min-w-0">
-            <div class="text-lg font-bold leading-tight">Internboot</div>
+            <div class="text-base font-bold leading-tight">Internboot</div>
 
-            <div class="text-xs text-blue-100">Student Dashboard</div>
+            <div class="text-[11px] text-blue-100">Student Dashboard</div>
           </div>
         </a>
       </div>
@@ -122,18 +122,18 @@
           class="flex items-center gap-3 rounded-xl bg-white/10 border border-white/10 px-3 py-2.5 hover:bg-white/15 transition-all duration-200">
           <!-- Avatar -->
           <div id="sidebar-student-avatar"
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-base">
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-sm">
             <span data-candidate="initials">KB</span>
           </div>
 
           <!-- Student Details -->
           <div class="min-w-0 flex-1">
             <p id="sidebar-student-name" data-candidate="name"
-              class="truncate text-sm font-bold leading-tight text-white">
+              class="truncate text-[13px] font-bold leading-tight text-white">
               Student
             </p>
 
-            <p class="mt-0.5 text-xs leading-tight text-blue-100/80">
+            <p class="mt-0.5 text-[11px] leading-tight text-blue-100/80">
               Student
             </p>
           </div>
@@ -171,17 +171,17 @@
 
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <h1 class="text-xl font-bold tracking-tight text-slate-800">
+              <h1 class="text-lg font-bold tracking-tight text-slate-700">
                 Exam Status
               </h1>
 
               <span
-                class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium">
+                class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-[11px] font-medium">
                 Assessment
               </span>
             </div>
 
-            <p class="hidden md:block text-xs text-slate-500 mt-0.5">
+            <p class="hidden md:block text-[11px] text-slate-500 mt-0.5">
               View your current examination status and assessment information
             </p>
           </div>
@@ -196,11 +196,11 @@
           </div>
 
           <div class="hidden sm:block min-w-0">
-            <div class="text-sm font-medium text-slate-700 max-w-40 truncate">
+            <div class="text-[13px] font-medium text-slate-700 max-w-40 truncate">
               <span data-candidate="name"></span>
             </div>
 
-            <div class="text-xs text-slate-500 max-w-48 truncate">
+            <div class="text-[11px] text-slate-500 max-w-48 truncate">
               <span data-candidate="email"></span>
             </div>
           </div>
@@ -231,17 +231,17 @@
 
             <div class="relative z-10 max-w-4xl">
               <div
-                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-xs font-semibold mb-4">
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-[11px] font-semibold mb-4">
                 <i data-lucide="clipboard-check" class="w-4 h-4"></i>
 
                 Assessment
               </div>
 
-              <h2 class="text-2xl md:text-3xl font-bold tracking-tight">
+              <h2 class="text-xl md:text-3xl font-bold tracking-tight">
                 Exam Status
               </h2>
 
-              <p class="mt-2 text-sm md:text-base text-blue-50 leading-6 max-w-3xl">
+              <p class="mt-2 text-[13px] md:text-sm text-blue-50 leading-6 max-w-3xl">
                 View your current examination status, schedule, and assessment
                 information.
               </p>
@@ -262,18 +262,18 @@
                   </div>
 
                   <div class="min-w-0">
-                    <h2 class="text-lg font-semibold text-slate-900">
+                    <h2 class="text-base font-semibold text-slate-700">
                       Examination Details
                     </h2>
 
-                    <p class="text-sm text-slate-500 mt-0.5">
+                    <p class="text-[13px] text-slate-500 mt-0.5">
                       Your latest assessment information
                     </p>
                   </div>
                 </div>
 
                 <span
-                  class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold shrink-0">
+                  class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold shrink-0">
                   <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
 
                   Assessment
@@ -288,7 +288,7 @@
                     <i data-lucide="loader-circle" class="w-4 h-4 text-blue-600 animate-spin"></i>
                   </div>
 
-                  <p class="text-sm text-slate-500">Loading exam status...</p>
+                  <p class="text-[13px] text-slate-500">Loading exam status...</p>
                 </div>
               </div>
             </div>
@@ -305,11 +305,11 @@
                 <i data-lucide="calendar-check" class="w-5 h-5"></i>
               </div>
 
-              <h3 class="text-sm font-semibold text-slate-900">
+              <h3 class="text-[13px] font-semibold text-slate-700">
                 Exam Schedule
               </h3>
 
-              <p class="text-sm text-slate-500 mt-2 leading-6">
+              <p class="text-[13px] text-slate-500 mt-2 leading-6">
                 Your assigned exam date and slot will appear in the
                 examination details above.
               </p>
@@ -321,11 +321,11 @@
                 <i data-lucide="shield-check" class="w-5 h-5"></i>
               </div>
 
-              <h3 class="text-sm font-semibold text-slate-900">
+              <h3 class="text-[13px] font-semibold text-slate-700">
                 Assessment Status
               </h3>
 
-              <p class="text-sm text-slate-500 mt-2 leading-6">
+              <p class="text-[13px] text-slate-500 mt-2 leading-6">
                 Your current assessment eligibility and status are managed by
                 the InternBoot system.
               </p>
@@ -337,9 +337,9 @@
                 <i data-lucide="circle-help" class="w-5 h-5"></i>
               </div>
 
-              <h3 class="text-sm font-semibold text-slate-900">Need Help?</h3>
+              <h3 class="text-[13px] font-semibold text-slate-700">Need Help?</h3>
 
-              <p class="text-sm text-slate-500 mt-2 leading-6">
+              <p class="text-[13px] text-slate-500 mt-2 leading-6">
                 Contact support if your examination information is missing or
                 appears incorrect.
               </p>

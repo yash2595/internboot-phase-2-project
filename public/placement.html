@@ -31,7 +31,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
   </head>
 
-  <body class="bg-slate-50 text-slate-900">
+  <body class="bg-slate-50 text-slate-700">
     <div class="min-h-screen">
       <!-- =====================================================
            SIDEBAR
@@ -55,9 +55,9 @@
             </div>
 
             <div>
-              <div class="text-lg font-bold leading-tight">Internboot</div>
+              <div class="text-base font-bold leading-tight">Internboot</div>
 
-              <div class="text-xs text-blue-100">Student Dashboard</div>
+              <div class="text-[11px] text-blue-100">Student Dashboard</div>
             </div>
           </a>
         </div>
@@ -182,7 +182,7 @@
             <!-- Avatar -->
             <div
               id="sidebar-student-avatar"
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-base"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-sm"
             >
               <span data-candidate="initials">KB</span>
             </div>
@@ -192,12 +192,12 @@
               <p
                 id="sidebar-student-name"
                 data-candidate="name"
-                class="truncate text-sm font-bold leading-tight text-white"
+                class="truncate text-[13px] font-bold leading-tight text-white"
               >
                 Student
               </p>
 
-              <p class="mt-0.5 text-xs leading-tight text-blue-100/80">
+              <p class="mt-0.5 text-[11px] leading-tight text-blue-100/80">
                 Student
               </p>
             </div>
@@ -240,18 +240,18 @@
 
             <div class="min-w-0">
               <div class="flex items-center gap-3">
-                <h1 class="truncate text-xl font-bold text-slate-900">
+                <h1 class="truncate text-lg font-bold text-slate-700">
                   Placement
                 </h1>
 
                 <span
-                  class="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-intern-blue"
+                  class="rounded-full bg-blue-50 px-3 py-1 text-[13px] font-medium text-intern-blue"
                 >
                   Career
                 </span>
               </div>
 
-              <p class="truncate text-sm text-slate-500">
+              <p class="truncate text-[13px] text-slate-500">
                 Track your placement eligibility and career status
               </p>
             </div>
@@ -264,18 +264,18 @@
             class="flex shrink-0 items-center gap-3 rounded-full px-2 py-1.5 transition hover:bg-slate-50"
           >
             <div
-              class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-lg font-medium text-intern-blue"
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-base font-medium text-intern-blue"
               data-candidate="initials"
             >
               --
             </div>
 
             <div class="hidden min-w-0 sm:block">
-              <div class="truncate text-sm font-semibold text-slate-900">
+              <div class="truncate text-[13px] font-semibold text-slate-700">
                 <span data-candidate="name"></span>
               </div>
 
-              <div class="text-sm text-slate-500">Candidate</div>
+              <div class="text-[13px] text-slate-500">Candidate</div>
             </div>
           </a>
         </header>
@@ -310,18 +310,18 @@
 
             <div class="relative z-10 max-w-4xl">
               <div
-                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-xs font-semibold mb-4"
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-[11px] font-semibold mb-4"
               >
                 <i data-lucide="briefcase-business" class="w-4 h-4"></i>
                 Career
               </div>
 
-              <h2 class="text-2xl md:text-3xl font-bold tracking-tight">
+              <h2 class="text-xl md:text-3xl font-bold tracking-tight">
                 Placement
               </h2>
 
               <p
-                class="mt-2 text-sm md:text-base text-blue-50 leading-6 max-w-3xl"
+                class="mt-2 text-[13px] md:text-sm text-blue-50 leading-6 max-w-3xl"
               >
                 Track your placement eligibility, company consideration, and
                 current career status.
@@ -348,11 +348,11 @@
                 </div>
 
                 <div>
-                  <h2 class="text-lg font-bold text-slate-900">
+                  <h2 class="text-base font-bold text-slate-700">
                     Placement Consideration
                   </h2>
 
-                  <p class="mt-1 text-sm text-slate-500">
+                  <p class="mt-1 text-[13px] text-slate-500">
                     Your current placement consideration details.
                   </p>
                 </div>
@@ -360,7 +360,7 @@
 
               <span
                 id="pl-badge"
-                class="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700"
+                class="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[13px] font-medium text-blue-700"
               >
                 <span
                   class="placement-status-dot h-2 w-2 rounded-full bg-current"
@@ -377,7 +377,7 @@
                 class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div
-                  class="flex items-center gap-3 text-sm font-medium text-slate-600"
+                  class="flex items-center gap-3 text-[13px] font-medium text-slate-500"
                 >
                   <i
                     data-lucide="circle-check"
@@ -389,7 +389,7 @@
 
                 <div
                   id="pl-status-value"
-                  class="text-sm font-semibold text-slate-900"
+                  class="text-[13px] font-semibold text-slate-700"
                 >
                   —
                 </div>
@@ -401,7 +401,7 @@
                 class="hidden flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div
-                  class="flex items-center gap-3 text-sm font-medium text-slate-600"
+                  class="flex items-center gap-3 text-[13px] font-medium text-slate-500"
                 >
                   <i
                     data-lucide="building-2"
@@ -413,7 +413,7 @@
 
                 <div
                   id="pl-company"
-                  class="text-sm font-semibold text-slate-900"
+                  class="text-[13px] font-semibold text-slate-700"
                 >
                   —
                 </div>
@@ -425,7 +425,7 @@
                 class="hidden flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div
-                  class="flex items-center gap-3 text-sm font-medium text-slate-600"
+                  class="flex items-center gap-3 text-[13px] font-medium text-slate-500"
                 >
                   <i
                     data-lucide="message-square-text"
@@ -437,7 +437,7 @@
 
                 <div
                   id="pl-notes"
-                  class="max-w-xl text-right text-sm text-slate-700"
+                  class="max-w-xl text-right text-[13px] text-slate-700"
                 >
                   —
                 </div>
@@ -448,7 +448,7 @@
                 class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div
-                  class="flex items-center gap-3 text-sm font-medium text-slate-600"
+                  class="flex items-center gap-3 text-[13px] font-medium text-slate-500"
                 >
                   <i data-lucide="clock-3" class="h-5 w-5 text-intern-blue"></i>
 
@@ -457,7 +457,7 @@
 
                 <div
                   id="pl-updated"
-                  class="text-sm font-semibold text-slate-900"
+                  class="text-[13px] font-semibold text-slate-700"
                 >
                   —
                 </div>
@@ -479,11 +479,11 @@
                 <i data-lucide="clipboard-list" class="h-6 w-6"></i>
               </div>
 
-              <h2 class="text-xl font-bold text-slate-900">
+              <h2 class="text-lg font-bold text-slate-700">
                 Placement Not Applicable
               </h2>
 
-              <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-500">
+              <p class="mt-3 max-w-3xl text-[13px] leading-6 text-slate-500">
                 Placement consideration applies to candidates who complete their assessment and achieve any level from
                 <strong class="font-semibold text-slate-700">Level 1</strong> to <strong class="font-semibold text-slate-700">Level 5</strong>.
                 Complete your
@@ -515,11 +515,11 @@
               </div>
 
               <div>
-                <strong class="block text-sm font-bold text-slate-900">
+                <strong class="block text-[13px] font-bold text-slate-700">
                   Placement Eligibility
                 </strong>
 
-                <span class="mt-1 block text-sm text-slate-500">
+                <span class="mt-1 block text-[13px] text-slate-500">
                   Candidates from all performance levels (1 to 5) are considered
                   for placement opportunities based on their profile.
                 </span>
@@ -528,7 +528,7 @@
 
             <div class="flex flex-wrap gap-2">
               <span
-                class="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-blue-700 shadow-sm whitespace-nowrap"
+                class="rounded-full bg-white px-3 py-1.5 text-[11px] font-medium text-blue-700 shadow-sm whitespace-nowrap"
               >
                 All Levels (1-5) Eligible
               </span>
@@ -549,11 +549,11 @@
                 <i data-lucide="activity" class="h-5 w-5"></i>
               </div>
 
-              <p class="text-sm text-slate-500">Status</p>
+              <p class="text-[13px] text-slate-500">Status</p>
 
               <strong
                 id="pl-stat-status"
-                class="mt-1 block truncate text-lg font-bold text-slate-900"
+                class="mt-1 block truncate text-base font-bold text-slate-700"
               >
                 —
               </strong>
@@ -569,11 +569,11 @@
                 <i data-lucide="building-2" class="h-5 w-5"></i>
               </div>
 
-              <p class="text-sm text-slate-500">Company</p>
+              <p class="text-[13px] text-slate-500">Company</p>
 
               <strong
                 id="pl-stat-company"
-                class="mt-1 block truncate text-lg font-bold text-slate-900"
+                class="mt-1 block truncate text-base font-bold text-slate-700"
               >
                 —
               </strong>
@@ -589,11 +589,11 @@
                 <i data-lucide="calendar-clock" class="h-5 w-5"></i>
               </div>
 
-              <p class="text-sm text-slate-500">Last Update</p>
+              <p class="text-[13px] text-slate-500">Last Update</p>
 
               <strong
                 id="pl-stat-updated"
-                class="mt-1 block truncate text-lg font-bold text-slate-900"
+                class="mt-1 block truncate text-base font-bold text-slate-700"
               >
                 —
               </strong>
@@ -609,11 +609,11 @@
                 <i data-lucide="layers-3" class="h-5 w-5"></i>
               </div>
 
-              <p class="text-sm text-slate-500">Eligibility</p>
+              <p class="text-[13px] text-slate-500">Eligibility</p>
 
               <strong
                 id="pl-stat-eligibility"
-                class="mt-1 block truncate text-lg font-bold text-slate-900"
+                class="mt-1 block truncate text-base font-bold text-slate-700"
               >
                 Level 1–5
               </strong>

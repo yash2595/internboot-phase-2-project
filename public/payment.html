@@ -51,7 +51,7 @@
     </style>
   </head>
 
-  <body class="bg-[#eef3ff] text-slate-900 antialiased">
+  <body class="bg-[#eef3ff] text-slate-700 antialiased">
     <div class="min-h-screen">
       <!-- =====================================================
            SIDEBAR
@@ -76,9 +76,9 @@
             </div>
 
             <div>
-              <div class="text-lg font-bold leading-tight">Internboot</div>
+              <div class="text-base font-bold leading-tight">Internboot</div>
 
-              <div class="text-xs text-blue-100">Student Dashboard</div>
+              <div class="text-[11px] text-blue-100">Student Dashboard</div>
             </div>
           </a>
         </div>
@@ -200,7 +200,7 @@
             <!-- Avatar -->
             <div
               id="sidebar-student-avatar"
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-base"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-sm"
             >
               <span data-candidate="initials">KB</span>
             </div>
@@ -210,12 +210,12 @@
               <p
                 id="sidebar-student-name"
                 data-candidate="name"
-                class="truncate text-sm font-bold leading-tight text-white"
+                class="truncate text-[13px] font-bold leading-tight text-white"
               >
                 Student
               </p>
 
-              <p class="mt-0.5 text-xs leading-tight text-blue-100/80">
+              <p class="mt-0.5 text-[11px] leading-tight text-blue-100/80">
                 Student
               </p>
             </div>
@@ -264,19 +264,19 @@
             <div class="min-w-0">
               <div class="flex items-center gap-2">
                 <h1
-                  class="text-base font-semibold text-slate-900 whitespace-nowrap"
+                  class="text-sm font-semibold text-slate-700 whitespace-nowrap"
                 >
                   Payments
                 </h1>
 
                 <span
-                  class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium"
+                  class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-[11px] font-medium"
                 >
                   Registration
                 </span>
               </div>
 
-              <p class="hidden md:block text-xs text-slate-500">
+              <p class="hidden md:block text-[11px] text-slate-500">
                 Registration fee and transaction history
               </p>
             </div>
@@ -289,7 +289,7 @@
             title="Open My Profile"
           >
             <div
-              class="avatar w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-semibold text-sm shrink-0"
+              class="avatar w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-semibold text-[13px] shrink-0"
               data-candidate="initials"
             >
               --
@@ -297,12 +297,12 @@
 
             <div class="hidden sm:flex flex-col min-w-0">
               <strong
-                class="text-sm font-semibold text-slate-800 truncate max-w-40"
+                class="text-[13px] font-semibold text-slate-700 truncate max-w-40"
               >
                 <span data-candidate="name"></span>
               </strong>
 
-              <small class="text-xs text-slate-500 truncate max-w-48">
+              <small class="text-[11px] text-slate-500 truncate max-w-48">
                 <span data-candidate="email"></span>
               </small>
             </div>
@@ -350,7 +350,7 @@
                 <div class="min-w-0">
                   <span
                     id="assessment-badge"
-                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 text-white/90 text-xs font-semibold mb-4"
+                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 text-white/90 text-[11px] font-semibold mb-4"
                   >
                     <i data-lucide="clipboard-check" class="w-4 h-4"></i>
 
@@ -359,12 +359,12 @@
 
                   <h2
                     id="assessment-title"
-                    class="text-2xl sm:text-3xl font-bold tracking-tight"
+                    class="text-xl sm:text-3xl font-bold tracking-tight"
                   >
                     InternBoot Level Assessment
                   </h2>
 
-                  <p id="assessment-desc" class="mt-3 text-sm text-blue-100">
+                  <p id="assessment-desc" class="mt-3 text-[13px] text-blue-100">
                     Registration Fee:
 
                     <strong
@@ -389,7 +389,7 @@
                 >
                   <button
                     id="btn-pay"
-                    class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-semibold text-sm shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-semibold text-[13px] shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
                     type="button"
                   >
                     <i data-lucide="wallet-cards" class="w-4 h-4"></i>
@@ -413,9 +413,9 @@
               >
                 <div class="flex items-start justify-between gap-4">
                   <div class="min-w-0">
-                    <p class="text-sm font-medium text-slate-500">Total Fee</p>
+                    <p class="text-[13px] font-medium text-slate-500">Total Fee</p>
 
-                    <strong class="block mt-2 text-xl font-bold text-slate-900">
+                    <strong class="block mt-2 text-lg font-bold text-slate-700">
                       <span data-payment="totalFee">₹3,538.82</span>
                     </strong>
                   </div>
@@ -434,13 +434,13 @@
               >
                 <div class="flex items-start justify-between gap-4">
                   <div class="min-w-0">
-                    <p class="text-sm font-medium text-slate-500">
+                    <p class="text-[13px] font-medium text-slate-500">
                       Paid Amount
                     </p>
 
                     <strong
                       id="stat-paid-amount"
-                      class="block mt-2 text-xl font-bold text-emerald-600"
+                      class="block mt-2 text-lg font-bold text-emerald-600"
                     >
                       <span data-payment="paidAmount">₹0</span>
                     </strong>
@@ -460,13 +460,13 @@
               >
                 <div class="flex items-start justify-between gap-4">
                   <div class="min-w-0">
-                    <p class="text-sm font-medium text-slate-500">
+                    <p class="text-[13px] font-medium text-slate-500">
                       Payment Status
                     </p>
 
                     <strong
                       id="stat-payment-status"
-                      class="block mt-2 text-xl font-bold text-emerald-600"
+                      class="block mt-2 text-lg font-bold text-emerald-600"
                     >
                       <span data-payment="status"> — </span>
                     </strong>
@@ -486,12 +486,12 @@
               >
                 <div class="flex items-start justify-between gap-4">
                   <div class="min-w-0">
-                    <p class="text-sm font-medium text-slate-500">
+                    <p class="text-[13px] font-medium text-slate-500">
                       Transaction
                     </p>
 
                     <strong
-                      class="block mt-2 text-lg font-bold text-slate-900 truncate"
+                      class="block mt-2 text-base font-bold text-slate-700 truncate"
                     >
                       <span data-payment="transactionId"> — </span>
                     </strong>
@@ -523,11 +523,11 @@
                   </div>
 
                   <div>
-                    <h2 class="text-base font-semibold text-slate-900">
+                    <h2 class="text-sm font-semibold text-slate-700">
                       Payment Details
                     </h2>
 
-                    <p class="text-xs text-slate-500 mt-0.5">
+                    <p class="text-[11px] text-slate-500 mt-0.5">
                       Complete details of your registration payment
                     </p>
                   </div>
@@ -542,10 +542,10 @@
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
-                      <span class="text-sm text-slate-500"> Assessment </span>
+                      <span class="text-[13px] text-slate-500"> Assessment </span>
 
                       <span
-                        class="text-sm font-semibold text-slate-800 sm:text-right"
+                        class="text-[13px] font-semibold text-slate-700 sm:text-right"
                       >
                         <span data-assessment="title"> — </span>
                       </span>
@@ -557,10 +557,10 @@
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
-                      <span class="text-sm text-slate-500"> Payment ID </span>
+                      <span class="text-[13px] text-slate-500"> Payment ID </span>
 
                       <span
-                        class="text-sm font-semibold text-slate-800 sm:text-right break-all"
+                        class="text-[13px] font-semibold text-slate-700 sm:text-right break-all"
                       >
                         <span data-payment="paymentId"> — </span>
                       </span>
@@ -572,12 +572,12 @@
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
-                      <span class="text-sm text-slate-500">
+                      <span class="text-[13px] text-slate-500">
                         Transaction ID
                       </span>
 
                       <span
-                        class="text-sm font-semibold text-slate-800 sm:text-right break-all"
+                        class="text-[13px] font-semibold text-slate-700 sm:text-right break-all"
                       >
                         <span data-payment="transactionId"> — </span>
                       </span>
@@ -589,10 +589,10 @@
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
-                      <span class="text-sm text-slate-500"> Amount </span>
+                      <span class="text-[13px] text-slate-500"> Amount </span>
 
                       <span
-                        class="text-sm font-bold text-slate-900 sm:text-right"
+                        class="text-[13px] font-bold text-slate-700 sm:text-right"
                       >
                         <span data-payment="totalFee"> — </span>
                       </span>
@@ -604,10 +604,10 @@
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
-                      <span class="text-sm text-slate-500"> Payment Date </span>
+                      <span class="text-[13px] text-slate-500"> Payment Date </span>
 
                       <span
-                        class="text-sm font-semibold text-slate-800 sm:text-right"
+                        class="text-[13px] font-semibold text-slate-700 sm:text-right"
                       >
                         <span data-payment="paymentDate"> — </span>
                       </span>
@@ -619,12 +619,12 @@
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     >
-                      <span class="text-sm text-slate-500">
+                      <span class="text-[13px] text-slate-500">
                         Payment Method
                       </span>
 
                       <span
-                        class="text-sm font-semibold text-slate-800 sm:text-right"
+                        class="text-[13px] font-semibold text-slate-700 sm:text-right"
                       >
                         <span data-payment="method"> — </span>
                       </span>
@@ -636,12 +636,12 @@
                     <div
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
                     >
-                      <span class="text-sm text-slate-500"> Status </span>
+                      <span class="text-[13px] text-slate-500"> Status </span>
 
                       <span class="sm:text-right">
                         <span
                           id="payment-status-badge"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold"
                         >
                           <span
                             class="w-1.5 h-1.5 rounded-full bg-emerald-500"
@@ -659,11 +659,11 @@
                       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
                     >
                       <div>
-                        <span class="text-sm text-slate-500">
+                        <span class="text-[13px] text-slate-500">
                           Enrollment Eligibility
                         </span>
 
-                        <p class="text-xs text-slate-400 mt-1">
+                        <p class="text-[11px] text-slate-400 mt-1">
                           Eligibility based on your payment status
                         </p>
                       </div>
@@ -671,7 +671,7 @@
                       <span class="sm:text-right">
                         <span
                           id="enrollment-badge"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold"
                         >
                           <span data-enrollment="status"> — </span>
                         </span>

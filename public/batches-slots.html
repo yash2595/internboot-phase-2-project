@@ -39,7 +39,7 @@
     </style>
   </head>
 
-  <body class="min-h-screen bg-[#eef3ff] text-slate-900">
+  <body class="min-h-screen bg-[#eef3ff] text-slate-700">
     <div class="min-h-screen">
       <!-- =====================================================
          SIDEBAR
@@ -66,7 +66,7 @@
             <div class="leading-tight">
               <div class="text-[20px] font-bold tracking-tight">Internboot</div>
 
-              <div class="text-xs text-white/85">Student Dashboard</div>
+              <div class="text-[11px] text-white/85">Student Dashboard</div>
             </div>
           </a>
         </div>
@@ -194,7 +194,7 @@
             <!-- Avatar -->
             <div
               id="sidebar-student-avatar"
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-base"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-sm"
             >
               <span data-candidate="initials">KB</span>
             </div>
@@ -204,12 +204,12 @@
               <p
                 id="sidebar-student-name"
                 data-candidate="name"
-                class="truncate text-sm font-bold leading-tight text-white"
+                class="truncate text-[13px] font-bold leading-tight text-white"
               >
                 Student
               </p>
 
-              <p class="mt-0.5 text-xs leading-tight text-blue-100/80">
+              <p class="mt-0.5 text-[11px] leading-tight text-blue-100/80">
                 Student
               </p>
             </div>
@@ -256,19 +256,19 @@
             <div class="min-w-0">
               <div class="flex items-center gap-2">
                 <h1
-                  class="text-base md:text-lg font-semibold text-slate-900 truncate"
+                  class="text-sm md:text-base font-semibold text-slate-700 truncate"
                 >
                   Batches &amp; Slots
                 </h1>
 
                 <span
-                  class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium"
+                  class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-medium"
                 >
                   Scheduling
                 </span>
               </div>
 
-              <p class="hidden md:block text-xs text-slate-500">
+              <p class="hidden md:block text-[11px] text-slate-500">
                 Manage your assigned batch and examination slot
               </p>
             </div>
@@ -289,12 +289,12 @@
 
             <div class="hidden sm:flex flex-col min-w-0">
               <strong
-                class="text-sm font-semibold text-slate-800 truncate max-w-40"
+                class="text-[13px] font-semibold text-slate-700 truncate max-w-40"
               >
                 <span data-candidate="name"></span>
               </strong>
 
-              <small class="text-xs text-slate-500 truncate max-w-48">
+              <small class="text-[11px] text-slate-500 truncate max-w-48">
                 <span data-candidate="email"></span>
               </small>
             </div>
@@ -329,7 +329,7 @@
                 <!-- Hero Content -->
                 <div class="max-w-4xl">
                   <div
-                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/15 text-xs font-medium mb-4"
+                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/15 text-[11px] font-medium mb-4"
                   >
                     <i data-lucide="calendar-check-2" class="w-4 h-4"></i>
 
@@ -342,7 +342,7 @@
                     Batches &amp; Slots
                   </h2>
 
-                  <p class="mt-3 text-sm md:text-base text-white/85 leading-6">
+                  <p class="mt-3 text-[13px] md:text-sm text-white/85 leading-6">
                     View your assigned batch, manage your examination schedule,
                     and check available exam slots.
                   </p>
@@ -389,18 +389,18 @@
                     </div>
 
                     <div class="min-w-0">
-                      <h2 class="text-base font-semibold text-slate-900">
+                      <h2 class="text-sm font-semibold text-slate-700">
                         Batch Details
                       </h2>
 
-                      <p class="text-xs text-slate-500 mt-0.5">
+                      <p class="text-[11px] text-slate-500 mt-0.5">
                         Your assigned training batch
                       </p>
                     </div>
                   </div>
 
                   <span
-                    class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold shrink-0"
+                    class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold shrink-0"
                   >
                     <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
 
@@ -421,12 +421,12 @@
                         <i data-lucide="layers" class="w-4 h-4"></i>
                       </div>
 
-                      <span class="text-sm text-slate-500"> Batch Name </span>
+                      <span class="text-[13px] text-slate-500"> Batch Name </span>
                     </div>
 
                     <span
                       id="batch-name"
-                      class="text-sm font-semibold text-slate-900 text-right break-words"
+                      class="text-[13px] font-semibold text-slate-700 text-right break-words"
                     >
                       —
                     </span>
@@ -443,12 +443,12 @@
                         <i data-lucide="activity" class="w-4 h-4"></i>
                       </div>
 
-                      <span class="text-sm text-slate-500"> Batch Status </span>
+                      <span class="text-[13px] text-slate-500"> Batch Status </span>
                     </div>
 
                     <span
                       id="batch-status-badge"
-                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold shrink-0"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold shrink-0"
                     >
                       —
                     </span>
@@ -463,14 +463,14 @@
                         <i data-lucide="users-round" class="w-4 h-4"></i>
                       </div>
 
-                      <span class="text-sm text-slate-500">
+                      <span class="text-[13px] text-slate-500">
                         Candidates Count
                       </span>
                     </div>
 
                     <span
                       id="batch-candidates"
-                      class="text-sm font-semibold text-slate-900 text-right"
+                      class="text-[13px] font-semibold text-slate-700 text-right"
                     >
                       —
                     </span>
@@ -498,18 +498,18 @@
                     </div>
 
                     <div class="min-w-0">
-                      <h2 class="text-base font-semibold text-slate-900">
+                      <h2 class="text-sm font-semibold text-slate-700">
                         My Booked Slot
                       </h2>
 
-                      <p class="text-xs text-slate-500 mt-0.5">
+                      <p class="text-[11px] text-slate-500 mt-0.5">
                         Your scheduled examination slot
                       </p>
                     </div>
                   </div>
 
                   <span
-                    class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold shrink-0"
+                    class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold shrink-0"
                   >
                     <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
 
@@ -530,12 +530,12 @@
                         <i data-lucide="calendar-days" class="w-4 h-4"></i>
                       </div>
 
-                      <span class="text-sm text-slate-500"> Exam Date </span>
+                      <span class="text-[13px] text-slate-500"> Exam Date </span>
                     </div>
 
                     <span
                       id="booked-exam-date"
-                      class="text-sm font-semibold text-slate-900 text-right"
+                      class="text-[13px] font-semibold text-slate-700 text-right"
                     >
                       —
                     </span>
@@ -552,12 +552,12 @@
                         <i data-lucide="clock-3" class="w-4 h-4"></i>
                       </div>
 
-                      <span class="text-sm text-slate-500"> Slot Time </span>
+                      <span class="text-[13px] text-slate-500"> Slot Time </span>
                     </div>
 
                     <span
                       id="booked-slot-time"
-                      class="text-sm font-semibold text-slate-900 text-right"
+                      class="text-[13px] font-semibold text-slate-700 text-right"
                     >
                       —
                     </span>
@@ -572,12 +572,12 @@
                         <i data-lucide="circle-check" class="w-4 h-4"></i>
                       </div>
 
-                      <span class="text-sm text-slate-500"> Status </span>
+                      <span class="text-[13px] text-slate-500"> Status </span>
                     </div>
 
                     <span
                       id="booked-slot-status"
-                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold shrink-0"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold shrink-0"
                     >
                       —
                     </span>
@@ -606,18 +606,18 @@
                   </div>
 
                   <div>
-                    <h2 class="text-base font-semibold text-slate-900">
+                    <h2 class="text-sm font-semibold text-slate-700">
                       Available Exam Slots
                     </h2>
 
-                    <p class="text-xs text-slate-500 mt-0.5">
+                    <p class="text-[11px] text-slate-500 mt-0.5">
                       Select an available slot when booking is open.
                     </p>
                   </div>
                 </div>
 
                 <span
-                  class="inline-flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold"
+                  class="inline-flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold"
                 >
                   <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
 
@@ -639,7 +639,7 @@
                     ></i>
                   </div>
 
-                  <p class="text-sm text-slate-500">
+                  <p class="text-[13px] text-slate-500">
                     Loading available slots...
                   </p>
                 </div>

@@ -384,10 +384,10 @@ function renderProfileState(source) {
 
         if (assignedLevel) {
             levelBadge.textContent = assignedLevel;
-            levelBadge.className = "badge blue";
+            levelBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold";
         } else {
             levelBadge.textContent = "Not assigned yet";
-            levelBadge.className = "badge gray";
+            levelBadge.className = "inline-flex items-center px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold";
         }
     }
 
@@ -395,7 +395,7 @@ function renderProfileState(source) {
     if (profileBadge) {
         if (source.enrollment && source.enrollment.status === "Enrolled") {
             profileBadge.textContent = "Enrolled";
-            profileBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold";
+            profileBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold";
         } else {
             profileBadge.textContent = "";
             profileBadge.className = "hidden"; // Tailwind class to hide if not enrolled

@@ -69,6 +69,20 @@ $pageTitle = 'Log In — InternBoot';
             <span>Strengthen your resume instantly</span>
           </div>
         </li>
+        <li>
+          <span class="feature-icon"><i class="bi bi-speedometer2"></i></span>
+          <div class="feature-text">
+            <strong>Personalized Dashboard</strong>
+            <span>Track your learning journey</span>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon"><i class="bi bi-people"></i></span>
+          <div class="feature-text">
+            <strong>Mentor Connect</strong>
+            <span>Engage with industry experts</span>
+          </div>
+        </li>
       </ul>
     </section>
 

@@ -45,7 +45,7 @@ $pageTitle = 'Log In — InternBoot';
 <title><?= htmlspecialchars($pageTitle) ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
-<link rel="stylesheet" href="assets/css/auth.css?v=33">
+<link rel="stylesheet" href="assets/css/auth.css?v=34">
 </head>
 <body>
 
@@ -94,7 +94,6 @@ $pageTitle = 'Log In — InternBoot';
 
         <p class="ib-login-eyebrow">👋 &nbsp;Welcome back</p>
         <h1 class="ib-auth-title">Student Login</h1>
-        <span class="ib-login-title-line"></span>
         <p class="ib-auth-sub">Enter your credentials to access your dashboard</p>
 
         <form id="loginForm" novalidate>
@@ -119,12 +118,12 @@ $pageTitle = 'Log In — InternBoot';
 
       <div id="formAlert" class="ib-alert d-none"></div>
 
-      <button type="submit" class="ib-btn-primary" id="loginBtn">Login to Dashboard</button>
+      <button type="submit" class="ib-btn-primary" id="loginBtn"><i class="bi bi-box-arrow-in-right"></i> LOGIN TO DASHBOARD</button>
         </form>
 
         <div class="ib-login-divider"><span>OR</span></div>
         <p class="ib-login-new">Don't have an account?</p>
-        <a class="ib-login-register" href="register.php">Register Here</a>
+        <a class="ib-login-register" href="register.php"><i class="bi bi-person-plus"></i> Register Here</a>
         <p class="ib-login-security">♧ &nbsp;256-bit SSL Encrypted&nbsp; · &nbsp;<strong>InternBoot</strong></p>
       </div>
     </section>

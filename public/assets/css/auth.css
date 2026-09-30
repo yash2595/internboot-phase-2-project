@@ -1110,7 +1110,7 @@
   padding: 24px 30px;
   justify-content: flex-start;
   background: linear-gradient(165deg, #172f69 0%, #2052b7 55%, #2862e5 100%);
-  position: relative; margin: 20px 0 20px 20px; border-radius: 20px;
+  position: relative; margin: 0; border-radius: 0;
   overflow: hidden;
 }
 
@@ -1257,3 +1257,57 @@
 
 
 
+
+
+/* LOGIN PAGE SPECIFIC FORM STYLING REPLICA */
+.ib-login-page #loginForm .ib-btn-primary {
+  background: #fff;
+  border: 1.5px solid var(--ib-blue);
+  color: var(--ib-blue);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+.ib-login-page #loginForm .ib-btn-primary:hover {
+  background: #f4f7ff;
+  border-color: #1a42b1;
+}
+
+.ib-login-page .ib-login-register {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 170px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  border: 1.5px solid #d4dfee;
+  border-radius: 8px;
+  color: var(--ib-blue);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.ib-login-page .ib-login-register:hover {
+  border-color: var(--ib-blue);
+  background: #f4f7ff;
+}
+
+.ib-login-page .ib-auth-sub {
+  margin-bottom: 24px;
+}
+
+.ib-login-page #loginForm .ib-form-row label {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  color: #7b88a0;
+  font-weight: 600;
+}

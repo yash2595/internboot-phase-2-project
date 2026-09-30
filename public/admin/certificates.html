@@ -23,33 +23,52 @@
 <body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden">
   <!-- Sidebar -->
   <aside id="sidebar"
-    class="w-64 bg-white border-r border-slate-200 h-full flex-shrink-0 transition-transform absolute lg:relative z-40 -translate-x-full lg:translate-x-0">
-    <div class="h-16 flex items-center px-6 border-b border-slate-200">
-      <img src="../assets/internboot-logo.png" alt="InternBoot Logo" class="h-8" />
+    class="w-64 bg-gradient-to-b from-[#294fae] to-[#347de9] text-white h-full flex-shrink-0 transition-transform absolute lg:relative z-40 -translate-x-full lg:translate-x-0 flex flex-col">
+    <div class="h-16 shrink-0 px-5 flex items-center border-b border-white/10">
+      <a href="index.html" class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 p-1 overflow-hidden">
+          <img src="../assets/internboot-logo.png" alt="InternBoot logo" class="w-full h-full object-contain" />
+        </div>
+        <div class="min-w-0 flex flex-col">
+          <span class="text-[10px] font-bold tracking-wider text-blue-200 uppercase leading-none">InternBoot</span>
+          <span class="text-base font-bold leading-tight text-white mt-0.5">Admin Panel</span>
+        </div>
+      </a>
     </div>
-    <nav class="p-4 space-y-1">
+
+    <div class="px-5 pt-6 pb-2">
+      <span class="text-[11px] font-bold text-blue-200 tracking-wider uppercase">Menu</span>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto px-3 space-y-1 scrollbar-hide">
       <a href="index.html"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"><i
-          data-lucide="layout-dashboard" class="h-5 w-5"></i> Dashboard</a>
+        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-blue-100 hover:bg-white/10 hover:text-white transition-all duration-200">
+        <i data-lucide="layout-dashboard" class="h-5 w-5"></i> Dashboard</a>
       <a href="candidates.html"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"><i
-          data-lucide="users" class="h-5 w-5"></i> Candidates</a>
+        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-blue-100 hover:bg-white/10 hover:text-white transition-all duration-200">
+        <i data-lucide="users" class="h-5 w-5"></i> Candidates</a>
       <a href="results.html"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"><i
-          data-lucide="file-check-2" class="h-5 w-5"></i> Results</a>
+        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-blue-100 hover:bg-white/10 hover:text-white transition-all duration-200">
+        <i data-lucide="file-check-2" class="h-5 w-5"></i> Results</a>
       <a href="certificates.html"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg bg-intern-blue font-medium text-white transition"><i
-          data-lucide="award" class="h-5 w-5"></i> Certificates</a>
+        class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/10 text-white font-medium transition-all duration-200">
+        <i data-lucide="award" class="h-5 w-5"></i> Certificates</a>
       <a href="questions.html"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"><i
-          data-lucide="help-circle" class="h-5 w-5"></i> Questions</a>
+        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-blue-100 hover:bg-white/10 hover:text-white transition-all duration-200">
+        <i data-lucide="help-circle" class="h-5 w-5"></i> Questions</a>
       <a href="batches.html"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"><i
-          data-lucide="calendar-days" class="h-5 w-5"></i> Batches</a>
+        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-blue-100 hover:bg-white/10 hover:text-white transition-all duration-200">
+        <i data-lucide="calendar-days" class="h-5 w-5"></i> Batches</a>
       <a href="placement.html"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"><i
-          data-lucide="building-2" class="h-5 w-5"></i> Placement</a>
+        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-blue-100 hover:bg-white/10 hover:text-white transition-all duration-200">
+        <i data-lucide="building-2" class="h-5 w-5"></i> Placement</a>
     </nav>
+
+    <div class="p-4 border-t border-white/10">
+      <a href="../login.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-blue-100 hover:bg-white/10 hover:text-white transition-all duration-200">
+        <i data-lucide="log-out" class="h-5 w-5"></i> Sign Out
+      </a>
+    </div>
   </aside>
 
   <!-- Overlay -->

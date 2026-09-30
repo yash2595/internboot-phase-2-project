@@ -15,7 +15,8 @@ $pageTitle = 'Register — InternBoot';
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= htmlspecialchars($pageTitle) ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-<link rel="stylesheet" href="assets/css/auth.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
+<link rel="stylesheet" href="assets/css/auth.css?v=19">
 </head>
 <body>
 
@@ -25,17 +26,40 @@ $pageTitle = 'Register — InternBoot';
     <section class="ib-brand-panel">
       <img src="assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-brand-logo">
       <h2 class="ib-brand-title">Your Gateway to Professional Growth</h2>
-      <p class="ib-brand-sub">Take your assessment, earn a verified certificate, and build a stronger path toward your next opportunity.</p>
       <ul class="ib-brand-features">
-        <li><strong>Level 1–5 Assessment</strong><span>Show what you know with a structured skill evaluation</span></li>
-        <li><strong>Verified Certification</strong><span>Earn an official certificate that strengthens your profile</span></li>
-        <li><strong>Practical Experience</strong><span>Work on real-world projects with expert guidance</span></li>
-        <li><strong>Placement Support</strong><span>Build your portfolio and move closer to your career goals</span></li>
+        <li>
+          <span class="feature-icon"><i class="bi bi-bar-chart-steps"></i></span>
+          <div class="feature-text">
+            <strong>Level 1-5 Assessment</strong>
+            <span>Structured skill evaluation</span>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon"><i class="bi bi-stopwatch"></i></span>
+          <div class="feature-text">
+            <strong>Instant Evaluation</strong>
+            <span>Get your results within minutes</span>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon"><i class="bi bi-patch-check"></i></span>
+          <div class="feature-text">
+            <strong>Verified Certificate</strong>
+            <span>Strengthen your resume instantly</span>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon"><i class="bi bi-briefcase"></i></span>
+          <div class="feature-text">
+            <strong>Direct Placement</strong>
+            <span>Connect with 650+ hiring partners</span>
+          </div>
+        </li>
       </ul>
       <div class="ib-brand-stats">
-        <span><strong>10,000+</strong>Students</span>
-        <span><strong>500+</strong>Companies</span>
-        <span><strong>4.9/5</strong>Rating</span>
+        <span><i class="bi bi-mortarboard" style="font-size:1.2rem; margin-right:4px;"></i> <strong>10,000+</strong><br><small style="font-size:0.7em; letter-spacing:1px; opacity:0.8;">STUDENTS</small></span>
+        <span><i class="bi bi-briefcase" style="font-size:1.2rem; margin-right:4px;"></i> <strong>500+</strong><br><small style="font-size:0.7em; letter-spacing:1px; opacity:0.8;">COMPANIES</small></span>
+        <span><i class="bi bi-star" style="font-size:1.2rem; margin-right:4px;"></i> <strong>4.9/5</strong><br><small style="font-size:0.7em; letter-spacing:1px; opacity:0.8;">RATING</small></span>
       </div>
     </section>
 
@@ -149,7 +173,9 @@ $pageTitle = 'Register — InternBoot';
 
           <div id="formAlert" class="ib-alert d-none"></div>
 
-          <button type="submit" class="ib-btn-primary" id="registerBtn">Register now</button>
+          <button type="submit" class="ib-btn-primary d-flex align-items-center justify-content-center gap-2" id="registerBtn">
+            <i class="bi bi-person-plus" style="font-size: 1.2rem;"></i> <span style="font-weight: 700;">CREATE ACCOUNT</span>
+          </button>
         </form>
 
         <form id="otpForm" novalidate class="d-none">
@@ -168,7 +194,19 @@ $pageTitle = 'Register — InternBoot';
           <button type="button" id="resendOtpBtn" class="ib-btn-primary" style="background: transparent; color: var(--ib-blue); margin-top: 12px; box-shadow: none;">Resend Code</button>
         </form>
 
-        <p class="ib-auth-footer">Already registered? <a href="login.php">Log in</a></p>
+        <div class="ib-auth-footer d-flex align-items-center justify-content-center gap-3 mt-4">
+          <span style="color: #64748b; font-size: 0.9rem;">Already have an account?</span>
+          <a href="login.php" class="ib-btn-outline d-flex align-items-center gap-2">
+            <i class="bi bi-box-arrow-in-right" style="font-size: 1.1rem;"></i> <span style="font-weight: 700;">Login Here</span>
+          </a>
+        </div>
+
+        <div class="text-center mt-4" style="font-size: 0.8rem; font-weight: 500;">
+          <i class="bi bi-lock" style="color: #10B981; font-size: 0.95rem; vertical-align: middle;"></i> 
+          <span style="color: #94a3b8; vertical-align: middle; margin-left: 2px;">256-bit SSL Encrypted</span> 
+          <span style="color: #94a3b8; margin: 0 4px;">&bull;</span> 
+          <strong style="color: var(--ib-blue); vertical-align: middle;">InternBoot</strong>
+        </div>
       </div>
     </section>
 

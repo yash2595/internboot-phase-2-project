@@ -523,11 +523,13 @@ a {
 }
 
 .hero-title {
-  font-size: clamp(2.4rem, 5.4vw, 3.55rem);
-  line-height: 1.08;
+  font-size: 50px;
+  font-weight: 800;
+  color: #333;
+  line-height: 1.15;
   margin-bottom: 1.35rem;
   max-width: 14ch;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 .hero-title .text-highlight {
@@ -2806,6 +2808,7 @@ a {
   font-size: 0.88rem;
   color: rgba(255, 255, 255, 0.75);
   line-height: 1.5;
+  margin-top: 1.25rem;
   margin-bottom: 1rem;
 }
 
@@ -3275,7 +3278,7 @@ a {
   }
 
   .hero-title {
-    font-size: 2.1rem;
+    font-size: 50px;
   }
 
   .hero-sub {
@@ -3940,4 +3943,38 @@ a {
 
 .btn-contact-submit:hover::before {
   width: 100%;
+}
+
+/* Floating Apply Now Button */
+.floating-apply-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background-color: #ff007f;
+  color: #fff !important;
+  padding: 0.85rem 1.75rem;
+  border-radius: 50px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(255, 0, 127, 0.4);
+  z-index: 1050;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.floating-apply-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(255, 0, 127, 0.5);
+}
+
+@media (max-width: 991px) {
+  .floating-apply-btn {
+    bottom: 5.5rem;
+    right: 1.5rem;
+    padding: 0.65rem 1.4rem;
+    font-size: 0.9rem;
+  }
 }

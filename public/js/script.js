@@ -9,8 +9,8 @@
 
 const IB_CONFIG = {
   /* --- money & batch --- */
-  fee: "₹2999 + 18% GST",
-  feeShort: "₹2999 + 18% GST",
+  fee: "₹2999 <span style='display:block; font-size:0.75em; font-weight:500; opacity:0.9; line-height:1; margin-top:0.25rem;'>+ 18% GST</span>",
+  feeShort: "₹2999 <span style='font-size:0.8em; opacity:0.9;'>+ 18% GST</span>",
   gstNote: "+ 18% GST applicable",
   batchSize: "100",
   batchNumber: "",
@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ---------- 1. Push config values into the page ---------- */
   document.querySelectorAll("[data-ib]").forEach(el => {
     const key = el.getAttribute("data-ib");
-    if (IB_CONFIG[key]) el.textContent = IB_CONFIG[key];
+    if (IB_CONFIG[key]) el.innerHTML = IB_CONFIG[key];
   });
 
   /* ---------- 2. Hero ladder with enhanced visuals & icons ---------- */

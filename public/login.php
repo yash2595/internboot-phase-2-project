@@ -45,40 +45,46 @@ $pageTitle = 'Log In — InternBoot';
 <title><?= htmlspecialchars($pageTitle) ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
-<link rel="stylesheet" href="assets/css/auth.css?v=30">
+<link rel="stylesheet" href="assets/css/auth.css?v=31">
 </head>
 <body>
 
 <main class="ib-auth-page ib-login-page">
   <div class="ib-auth-grid">
 
-    <section class="ib-brand-panel">
-      <img src="assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-brand-logo">
-      <h2 class="ib-brand-title">Your Gateway to Professional Growth</h2>
+    <section class="ib-login-brand">
+      <img src="assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-brand-logo-alt">
+      <p class="ib-brand-kicker">Your Gateway to Professional Growth</p>
+      
+      <div class="ib-login-welcome">
+        <h2>Welcome Back! 👋</h2>
+        <p>Log in to access your internship dashboard, track your progress, submit assignments, and download your certificates.</p>
+      </div>
 
-      <ul class="ib-brand-features">
+      <ul class="ib-login-features">
         <li>
-          <span class="feature-icon"><i class="bi bi-file-earmark-bar-graph"></i></span>
-          <div class="feature-text">
-            <strong>Assessment Test</strong>
-            <span>Take the 1-Level Assessment Test</span>
-          </div>
+          <span class="icon-box"><i class="bi bi-file-earmark-bar-graph"></i></span>
+          <span class="text">Take the 1-Level Assessment Test</span>
         </li>
         <li>
-          <span class="feature-icon"><i class="bi bi-unlock"></i></span>
-          <div class="feature-text">
-            <strong>Unlock Placement</strong>
-            <span>Clear Levels 1 to 5 and unlock placement</span>
-          </div>
+          <span class="icon-box"><i class="bi bi-unlock"></i></span>
+          <span class="text">Clear Levels 1 to 5 and unlock placement</span>
         </li>
         <li>
-          <span class="feature-icon"><i class="bi bi-patch-check"></i></span>
-          <div class="feature-text">
-            <strong>Verified Certificates</strong>
-            <span>Download verified certificates anytime</span>
-          </div>
+          <span class="icon-box"><i class="bi bi-patch-check"></i></span>
+          <span class="text">Download verified certificates anytime</span>
         </li>
       </ul>
+
+      <div class="ib-login-illustration" aria-hidden="true">
+        <div class="login-now-badge">Login Now! &rarr;</div>
+        <div class="ib-illustration-card">
+          <div class="chk-line"><i class="bi bi-check-circle-fill"></i> <div class="line"></div></div>
+          <div class="chk-line"><i class="bi bi-check-circle-fill"></i> <div class="line"></div></div>
+          <div class="chk-line"><i class="bi bi-check-circle-fill"></i> <div class="line"></div></div>
+        </div>
+        <span class="ib-illustration-check"><i class="bi bi-check-circle-fill"></i></span>
+      </div>
     </section>
 
     <section class="ib-form-panel">

@@ -1095,7 +1095,7 @@
                 </span>`
               : `<div class="flex gap-2">
                   ${q.approval_status !== "approved" ? `<button class="approve-question rounded-lg bg-green-50 px-3 py-2 text-xs font-medium text-green-600 hover:bg-green-100" data-id="${q.id}">Approve</button>` : ""}
-                  ${q.approval_status !== "rejected" ? `<button class="reject-question rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100" data-id="${q.id}">Reject</button>` : ""}
+                  ${q.approval_status === "pending" ? `<button class="reject-question rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100" data-id="${q.id}">Reject</button>` : ""}
                 </div>`;
 
             return `<tr data-question="true" data-level="${m ? `level ${m[1]}` : ""}" data-status="${escapeHtml(q.approval_status)}" data-used="${isArchived ? "1" : "0"}">

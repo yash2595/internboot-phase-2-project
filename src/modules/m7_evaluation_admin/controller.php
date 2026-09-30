@@ -266,9 +266,13 @@ function m7_handle_request(mysqli $conn): void
         case 'placement':
             $id=require_positive_int($body['id']??null,'id');
             $status=trim((string)($body['status']??''));
+            $company = isset($body['company_name']) ? trim((string)$body['company_name']) : null;
+            if (!empty($company) && $status === 'eligible') {
+                $status = 'placed';
+            }
             $allowed=['eligible','shortlisted','interviewing','placed','not_placed'];
             if(!in_array($status,$allowed,true)) throw new InvalidArgumentException('Invalid placement status.');
-            update_placement($conn,$id,$status,isset($body['company_name'])?(string)$body['company_name']:null,isset($body['notes'])?(string)$body['notes']:null);
+            update_placement($conn,$id,$status,$company,isset($body['notes'])?(string)$body['notes']:null);
             create_admin_log($conn,$_SESSION['user_id']??null,'update_placement',json_encode(['placement_id'=>$id,'status'=>$status]));
             send_json_response('success','Placement record updated successfully.');
 

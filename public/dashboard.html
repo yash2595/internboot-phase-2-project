@@ -39,21 +39,13 @@
         <div
           class="h-16 shrink-0 px-5 flex items-center border-b border-white/10"
         >
-          <a href="dashboard.html" class="flex items-center gap-3 min-w-0">
-            <div
-              class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden"
-            >
-              <img
-                src="assets/internboot-logo.png"
-                alt="InternBoot logo"
-                class="w-full h-full object-contain"
-              />
+          <a href="dashboard.html" class="flex items-center gap-3 min-w-0 ">
+            <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+              <img src="assets/internboot-logo.png" alt="InternBoot logo" class="w-9 h-9 object-contain" />
             </div>
-
             <div class="min-w-0">
-              <div class="text-base font-bold leading-tight">InternBoot</div>
-
-              <div class="text-[11px] text-blue-100 mt-0.5">Student Dashboard</div>
+              <div class="text-lg font-bold leading-tight">Internboot</div>
+              <div class="text-xs text-blue-100 mt-0.5">Student Dashboard</div>
             </div>
           </a>
         </div>
@@ -920,6 +912,11 @@
           if (!value) return false;
 
           const text = value.toString().trim().toLowerCase();
+          
+          if (text.includes("not ")) return false;
+          if (text.includes("unsuccessful")) return false;
+          if (text.includes("failed")) return false;
+          if (text.includes("pending")) return false;
 
           return completedWords.some((word) => text.includes(word));
         }

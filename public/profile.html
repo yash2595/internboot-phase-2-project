@@ -65,21 +65,13 @@
         <div
           class="h-16 px-5 flex items-center border-b border-white/10 shrink-0"
         >
-          <a href="dashboard.html" class="flex items-center gap-3 min-w-0">
-            <div
-              class="w-11 h-11 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden"
-            >
-              <img
-                src="assets/internboot-logo.png"
-                alt="InternBoot logo"
-                class="h-9 w-auto object-contain"
-              />
+          <a href="dashboard.html" class="flex items-center gap-3 min-w-0 ">
+            <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+              <img src="assets/internboot-logo.png" alt="InternBoot logo" class="w-9 h-9 object-contain" />
             </div>
-
             <div class="min-w-0">
-              <div class="text-base font-bold leading-tight">Internboot</div>
-
-              <div class="text-[11px] text-blue-100">Student Dashboard</div>
+              <div class="text-lg font-bold leading-tight">Internboot</div>
+              <div class="text-xs text-blue-100 mt-0.5">Student Dashboard</div>
             </div>
           </a>
         </div>
@@ -420,7 +412,7 @@
                 <div class="divide-y divide-slate-100">
                   <!-- Full Name -->
                   <div
-                    class="px-4 py-3 flex items-center justify-between gap-4"
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
                   >
                     <div class="flex items-center gap-3 min-w-0">
                       <i
@@ -442,7 +434,7 @@
 
                   <!-- Email -->
                   <div
-                    class="px-4 py-3 flex items-center justify-between gap-4"
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
                   >
                     <div class="flex items-center gap-3 min-w-0">
                       <i
@@ -464,7 +456,7 @@
 
                   <!-- Phone -->
                   <div
-                    class="px-4 py-3 flex items-center justify-between gap-4"
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
                   >
                     <div class="flex items-center gap-3 min-w-0">
                       <i
@@ -486,7 +478,7 @@
 
                   <!-- LinkedIn -->
                   <div
-                    class="px-4 py-3 flex items-center justify-between gap-4"
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
                   >
                     <div class="flex items-center gap-3 min-w-0">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 text-slate-400 shrink-0">
@@ -507,7 +499,7 @@
 
                   <!-- GitHub -->
                   <div
-                    class="px-4 py-3 flex items-center justify-between gap-4"
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
                   >
                     <div class="flex items-center gap-3 min-w-0">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 text-slate-400 shrink-0">
@@ -560,7 +552,7 @@
                 <div class="divide-y divide-slate-100">
                   <!-- Candidate ID -->
                   <div
-                    class="px-4 py-3 flex items-center justify-between gap-4"
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
                   >
                     <div class="flex items-center gap-3 min-w-0">
                       <i
@@ -582,7 +574,7 @@
 
                   <!-- Registration Date -->
                   <div
-                    class="px-4 py-3 flex items-center justify-between gap-4"
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
                   >
                     <div class="flex items-center gap-3 min-w-0">
                       <i
@@ -602,35 +594,9 @@
                     </span>
                   </div>
 
-                  <!-- Current Level -->
-                  <div
-                    class="px-4 py-3 flex items-center justify-between gap-4"
-                  >
-                    <div class="flex items-center gap-3 min-w-0">
-                      <i
-                        data-lucide="layers-3"
-                        class="w-4 h-4 text-slate-400 shrink-0"
-                      ></i>
-
-                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
-                        Current Level
-                      </span>
-                    </div>
-
-                    <span class="shrink-0">
-                      <span
-                        id="profile-level-badge"
-                        data-result="level_assigned"
-                        class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold"
-                      >
-                        Not assigned yet
-                      </span>
-                    </span>
-                  </div>
-
                   <!-- Registration Status -->
                   <div
-                    class="px-4 py-3 flex items-center justify-between gap-4"
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
                   >
                     <div class="flex items-center gap-3 min-w-0">
                       <i
@@ -653,9 +619,9 @@
                     </span>
                   </div>
 
-                  <!-- Profile Status -->
+<!-- Profile Status -->
                   <div
-                    class="px-4 py-3 flex items-center justify-between gap-4"
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
                   >
                     <div class="flex items-center gap-3 min-w-0">
                       <i
@@ -678,91 +644,21 @@
                       </span>
                     </span>
                   </div>
+                  <!-- Current Level -->
+                  <div class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <i data-lucide="layers-3" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">Current Level</span>
+                    </div>
+                    <span class="shrink-0">
+                      <span id="profile-level-badge" data-result="level_assigned" class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold">Not assigned yet</span>
+                    </span>
+                  </div>
                 </div>
               </section>
             </div>
 
-            <!-- =================================================
-                 CERTIFICATE
-            ================================================== -->
-
-            <section
-              id="profile-certificate-card"
-              class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
-            >
-              <!-- Certificate Header -->
-              <div class="px-4 py-3 border-b border-slate-100">
-                <div
-                  class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-                >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0"
-                    >
-                      <i data-lucide="award" class="w-5 h-5"></i>
-                    </div>
-
-                    <div>
-                      <h2 class="text-sm font-semibold text-slate-600">
-                        Certificate
-                      </h2>
-
-                      <p class="text-[11px] text-slate-500 mt-0.5">
-                        Certification status and availability
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- View Certificate -->
-                  <a
-                    href="certificates.html"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 text-[13px] font-semibold transition"
-                  >
-                    View Certificate
-
-                    <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-                  </a>
-                </div>
-              </div>
-
-              <!-- Certificate Content -->
-              <div id="profile-certificate-content" class="p-4">
-                <div
-                  class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-                >
-                  <!-- Certificate Info -->
-                  <div class="flex items-center gap-3 min-w-0">
-                    <div
-                      class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0"
-                    >
-                      <i data-lucide="file-badge" class="w-6 h-6"></i>
-                    </div>
-
-                    <div class="min-w-0">
-                      <p class="text-[13px] font-semibold text-slate-600">
-                        InternBoot Certificate
-                      </p>
-
-                      <p class="text-[11px] text-slate-500 mt-1">
-                        Your certificate will appear here once it is issued.
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Certificate Status -->
-                  <div class="shrink-0">
-                    <span
-                      id="profile-cert-status"
-                      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[11px] font-semibold"
-                    >
-                      <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-
-                      Not issued yet
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
+            
           </div>
         </section>
       </main>
@@ -901,15 +797,17 @@
             const phoneInput = document.getElementById('edit-phone');
             if (phoneInput && candidate.phone && candidate.phone !== '—') phoneInput.value = candidate.phone;
 
+            const formatUrl = (url) => url.match(/^https?:\/\//) ? url : 'https://' + url;
+
             if (pd.linkedin) {
               const el = document.querySelector('[data-candidate="linkedin"]');
-              if (el) { el.textContent = 'View Profile'; el.href = pd.linkedin; }
+              if (el) { el.textContent = 'View Profile'; el.href = formatUrl(pd.linkedin); }
               const input = document.getElementById('edit-linkedin');
               if (input) input.value = pd.linkedin;
             }
             if (pd.github) {
               const el = document.querySelector('[data-candidate="github"]');
-              if (el) { el.textContent = 'View Profile'; el.href = pd.github; }
+              if (el) { el.textContent = 'View Profile'; el.href = formatUrl(pd.github); }
               const input = document.getElementById('edit-github');
               if (input) input.value = pd.github;
             }

@@ -64,21 +64,13 @@
         <div
           class="h-16 px-5 flex items-center border-b border-white/10 shrink-0"
         >
-          <a href="dashboard.html" class="flex items-center gap-3">
-            <div
-              class="w-11 h-11 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden"
-            >
-              <img
-                src="assets/internboot-logo.png"
-                alt="InternBoot logo"
-                class="h-9 w-auto object-contain"
-              />
+          <a href="dashboard.html" class="flex items-center gap-3 min-w-0 ">
+            <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+              <img src="assets/internboot-logo.png" alt="InternBoot logo" class="w-9 h-9 object-contain" />
             </div>
-
-            <div>
-              <div class="text-base font-bold leading-tight">Internboot</div>
-
-              <div class="text-[11px] text-blue-100">Student Dashboard</div>
+            <div class="min-w-0">
+              <div class="text-lg font-bold leading-tight">Internboot</div>
+              <div class="text-xs text-blue-100 mt-0.5">Student Dashboard</div>
             </div>
           </a>
         </div>
@@ -361,7 +353,7 @@
                     id="assessment-title"
                     class="text-xl sm:text-3xl font-bold tracking-tight"
                   >
-                    InternBoot Level Assessment
+                    Level Assessment Test
                   </h2>
 
                   <p id="assessment-desc" class="mt-3 text-[13px] text-blue-100">
@@ -648,32 +640,6 @@
                           ></span>
 
                           <span data-payment="status"> — </span>
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Enrollment Eligibility -->
-                  <div class="pt-4">
-                    <div
-                      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-                    >
-                      <div>
-                        <span class="text-[13px] text-slate-500">
-                          Enrollment Eligibility
-                        </span>
-
-                        <p class="text-[11px] text-slate-400 mt-1">
-                          Eligibility based on your payment status
-                        </p>
-                      </div>
-
-                      <span class="sm:text-right">
-                        <span
-                          id="enrollment-badge"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold"
-                        >
-                          <span data-enrollment="status"> — </span>
                         </span>
                       </span>
                     </div>

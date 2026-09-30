@@ -27,12 +27,25 @@ try {
         if ($latest) {
             $attemptId = (int)$latest['id'];
         } else {
-            $prefSql = "SELECT preferred_date, preferred_time_slot FROM enrollments WHERE candidate_id = ? ORDER BY id DESC LIMIT 1";
+            $prefSql = "SELECT e.preferred_date, e.preferred_time_slot, e.batch_id, 
+                               es.exam_date, sl.start_time, sl.end_time 
+                        FROM enrollments e 
+                        LEFT JOIN batches b ON e.batch_id = b.id 
+                        LEFT JOIN exam_schedules es ON es.batch_id = b.id
+                        LEFT JOIN exam_slots sl ON sl.exam_schedule_id = es.id
+                        WHERE e.candidate_id = ? ORDER BY e.id DESC LIMIT 1";
             $prefStmt = $conn->prepare($prefSql);
             $prefStmt->bind_param("i", $candidateId);
             $prefStmt->execute();
             $pref = $prefStmt->get_result()->fetch_assoc();
-            if ($pref && !empty($pref['preferred_date'])) {
+            
+            if ($pref && !empty($pref['batch_id'])) {
+                send_json_response('error', 'Batch assigned, no attempt yet', [
+                    'exam_date' => $pref['exam_date'],
+                    'start_time' => $pref['start_time'],
+                    'end_time' => $pref['end_time']
+                ], 404);
+            } elseif ($pref && !empty($pref['preferred_date'])) {
                 send_json_response('error', 'Preference saved, awaiting batch formation', ['preferred_date' => $pref['preferred_date'], 'preferred_time_slot' => $pref['preferred_time_slot']], 404);
             } else {
                 send_json_response('error', 'No attempt found for this candidate', null, 404);

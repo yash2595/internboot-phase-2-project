@@ -26,7 +26,29 @@ if ($method === 'GET') {
 
     $enrollment = get_candidate_enrollment($candidateId, $assessmentId, $conn);
     if (!$enrollment) {
-        send_json_response('error', 'Candidate is not enrolled in the specified assessment', null, 403);
+        // Self-heal: check if candidate has a successful payment for this assessment
+        $payStmt = $conn->prepare("SELECT id FROM payments WHERE candidate_id = ? AND assessment_id = ? AND status = 'success' LIMIT 1");
+        if ($payStmt) {
+            $payStmt->bind_param("ii", $candidateId, $assessmentId);
+            $payStmt->execute();
+            $payRes = $payStmt->get_result();
+            if ($payRow = $payRes->fetch_assoc()) {
+                // Auto-create enrollment
+                $insStmt = $conn->prepare("INSERT INTO enrollments (candidate_id, assessment_id, payment_id, eligibility_status) VALUES (?, ?, ?, 'eligible') ON DUPLICATE KEY UPDATE eligibility_status = 'eligible'");
+                if ($insStmt) {
+                    $insStmt->bind_param("iii", $candidateId, $assessmentId, $payRow['id']);
+                    $insStmt->execute();
+                    $insStmt->close();
+                    // Re-fetch enrollment
+                    $enrollment = get_candidate_enrollment($candidateId, $assessmentId, $conn);
+                }
+            }
+            $payStmt->close();
+        }
+        
+        if (!$enrollment) {
+            send_json_response('error', 'Candidate is not enrolled in the specified assessment', null, 403);
+        }
     }
 
     // 2. Check if candidate has recent batch_not_formed notification

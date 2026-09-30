@@ -20,52 +20,52 @@ async function initExamStatusModule() {
 
         const payload = await response.json();
 
-                if (!response.ok || payload.status !== "success" || !payload.data) {
+        if (!response.ok || payload.status !== "success" || !payload.data) {
             if (payload.message === "No attempt found for this candidate") {
                 container.innerHTML = `
-                    <div class="notice notice-info" style="background:#edf4ff; border:1px solid #d4e4ff; color:#1c52b8; padding:24px; border-radius:10px; text-align:center;">
-                        <h2 style="margin:0 0 10px; color:#17243a; font-size:20px;">No Slot Booked Yet</h2>
-                        <p style="margin:0 0 16px; color:#4b5563;">You haven't booked an exam slot yet. Please select an available slot from your assigned batch.</p>
-                        <a href="batches-slots.html" class="btn btn-ib-primary" style="background:#2563eb; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; display:inline-block; font-weight:700;">Go to Batches &amp; Slots →</a>
+                    <div class="rounded-xl border border-blue-100 bg-blue-50 p-4 text-center">
+                        <h2 class="text-base font-semibold text-slate-700 mb-1">No Slot Booked Yet</h2>
+                        <p class="text-[13px] text-slate-500 mb-3">You haven't booked an exam slot yet. Please select an available slot from your assigned batch.</p>
+                        <a href="batches-slots.html" class="inline-block bg-blue-600 text-white text-[13px] font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">Go to Batches &amp; Slots →</a>
                     </div>`;
                 return;
             }
             if (payload.message === "Preference saved, awaiting batch formation") {
                 container.innerHTML = `
-                    <div class="notice notice-success" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:24px; border-radius:10px; text-align:center;">
-                        <h2 style="margin:0 0 10px; color:#17243a; font-size:20px;">Preference Saved</h2>
-                        <p style="margin:0 0 16px; color:#4b5563;">Your choice for <strong>${escapeHtml(payload.data?.preferred_date || 'your preferred date')}</strong> has been recorded. Once 100 candidates choose this slot, the batch will be created automatically.</p>
-                        <a href="batches-slots.html" class="btn btn-ib-primary" style="background:#18a56a; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; display:inline-block; font-weight:700;">View Batch Details →</a>
+                    <div class="rounded-xl border border-green-100 bg-green-50 p-4 text-center">
+                        <h2 class="text-base font-semibold text-slate-700 mb-1">Preference Saved</h2>
+                        <p class="text-[13px] text-slate-500 mb-3">Your choice for <strong>${escapeHtml(payload.data?.preferred_date || 'your preferred date')}</strong> has been recorded. Once 100 candidates choose this slot, the batch will be created automatically.</p>
+                        <a href="batches-slots.html" class="inline-block bg-emerald-600 text-white text-[13px] font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition">View Batch Details →</a>
                     </div>`;
                 return;
             }
             if (payload.message === "Batch assigned, no attempt yet") {
                 const dateRaw = payload.data?.exam_date;
                 const dateStr = dateRaw ? new Date(dateRaw).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "your scheduled date";
-                
+
                 const formatTime = (timeRaw) => {
                     if (!timeRaw) return "";
                     const dt = new Date(`1970-01-01T${timeRaw}Z`);
                     return dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' });
                 };
-                
+
                 const timeStart = formatTime(payload.data?.start_time);
                 const timeEnd = formatTime(payload.data?.end_time);
                 const timeStr = timeStart && timeEnd ? ` from <strong>${timeStart} - ${timeEnd}</strong>` : "";
 
                 container.innerHTML = `
-                    <div class="notice notice-success" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:24px; border-radius:10px; text-align:center;">
-                        <h2 style="margin:0 0 10px; color:#17243a; font-size:20px;">Batch Scheduled</h2>
-                        <p style="margin:0 0 16px; color:#4b5563;">Your batch is scheduled on <strong>${escapeHtml(dateStr)}</strong>${timeStr}. Your exam slot is confirmed and you will be able to start the exam from this page when it begins.</p>
-                        <a href="batches-slots.html" class="btn btn-ib-primary" style="background:#18a56a; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; display:inline-block; font-weight:700;">View Batch Details →</a>
+                    <div class="rounded-xl border border-green-100 bg-green-50 p-4 text-center">
+                        <h2 class="text-base font-semibold text-slate-700 mb-1">Batch Scheduled</h2>
+                        <p class="text-[13px] text-slate-500 mb-3">Your batch is scheduled on <strong>${escapeHtml(dateStr)}</strong>${timeStr}. Your exam slot is confirmed and you will be able to start the exam from this page when it begins.</p>
+                        <a href="batches-slots.html" class="inline-block bg-emerald-600 text-white text-[13px] font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition">View Batch Details →</a>
                     </div>`;
                 return;
             }
             container.innerHTML = `
-                <div class="notice notice-error" style="background:#fdf2f2; border:1px solid #f8cdcd; color:#b91c1c; padding:20px; border-radius:10px; text-align:center;">
-                    <h3 style="margin:0 0 10px; font-size:18px;">Attempt Access Error</h3>
-                    <p style="margin:0 0 16px;">${escapeHtml(payload.message || "Attempt not found or access denied.")}</p>
-                    <a href="batches-slots.html" class="btn btn-ib-primary" style="background:#2563eb; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; display:inline-block; font-weight:700;">Book a New Slot →</a>
+                <div class="rounded-xl border border-red-100 bg-red-50 p-4 text-center">
+                    <h3 class="text-base font-semibold text-red-700 mb-1">Attempt Access Error</h3>
+                    <p class="text-[13px] text-red-600 mb-3">${escapeHtml(payload.message || "Attempt not found or access denied.")}</p>
+                    <a href="batches-slots.html" class="inline-block bg-blue-600 text-white text-[13px] font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">Book a New Slot →</a>
                 </div>`;
             return;
         }
@@ -81,17 +81,29 @@ async function initExamStatusModule() {
             const formattedTimer = `${minutes}m ${seconds}s`;
 
             container.innerHTML = `
-                <div class="grid4" style="margin-bottom:20px;">
-                    <div class="card stat"><label>Attempt ID</label><strong>#${data.attempt_id}</strong></div>
-                    <div class="card stat"><label>Status</label><strong class="blue">In Progress</strong></div>
-                    <div class="card stat"><label>Time Remaining</label><strong style="color:#2563eb;">${formattedTimer}</strong></div>
-                    <div class="card stat"><label>Answered</label><strong>${data.answered_count} / ${data.total_questions}</strong></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Attempt ID</p>
+                        <p class="text-sm font-bold text-slate-700">#${data.attempt_id}</p>
+                    </div>
+                    <div class="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Status</p>
+                        <p class="text-sm font-bold text-blue-600">In Progress</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Time Remaining</p>
+                        <p class="text-sm font-bold text-blue-600">${formattedTimer}</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Answered</p>
+                        <p class="text-sm font-bold text-slate-700">${data.answered_count} / ${data.total_questions}</p>
+                    </div>
                 </div>
-                <section class="card card-pad" style="text-align:center; padding:35px 20px;">
-                    <h2 class="section-title" style="font-size:22px; margin-bottom:10px;">Exam Session Active</h2>
-                    <p style="color:#4b5563; margin-bottom:24px;">Your exam timer is currently running. You can resume your assessment anytime before the timer expires.</p>
-                    <a href="take-exam.php?attempt_id=${data.attempt_id}" class="btn btn-ib-primary" style="background:#2563eb; color:#fff; padding:12px 28px; border-radius:8px; font-size:16px; font-weight:700; text-decoration:none; display:inline-block;">Resume Exam →</a>
-                </section>`;
+                <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 text-center">
+                    <p class="text-sm font-semibold text-slate-700 mb-1">Exam Session Active</p>
+                    <p class="text-[13px] text-slate-500 mb-3">Your exam timer is currently running. Resume your assessment before the timer expires.</p>
+                    <a href="take-exam.php?attempt_id=${data.attempt_id}" class="inline-block bg-blue-600 text-white text-[13px] font-semibold px-5 py-2 rounded-lg hover:bg-blue-700 transition">Resume Exam →</a>
+                </div>`;
             return;
         }
 
@@ -99,61 +111,93 @@ async function initExamStatusModule() {
         if (status === "submitted" || status === "expired") {
             const isSubmitted = status === "submitted";
             container.innerHTML = `
-                <div class="grid4" style="margin-bottom:20px;">
-                    <div class="card stat"><label>Attempt ID</label><strong>#${data.attempt_id}</strong></div>
-                    <div class="card stat"><label>Final Status</label><strong class="${isSubmitted ? 'green' : 'gray'}">${isSubmitted ? 'Submitted' : 'Expired'}</strong></div>
-                    <div class="card stat"><label>Questions Answered</label><strong>${data.answered_count} / ${data.total_questions}</strong></div>
-                    <div class="card stat"><label>Completed At</label><strong style="font-size:16px;">${escapeHtml(data.submitted_at || "Completed")}</strong></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Attempt ID</p>
+                        <p class="text-sm font-bold text-slate-700">#${data.attempt_id}</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Final Status</p>
+                        <p class="text-sm font-bold ${isSubmitted ? 'text-emerald-600' : 'text-slate-400'}">${isSubmitted ? 'Submitted' : 'Expired'}</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Questions Answered</p>
+                        <p class="text-sm font-bold text-slate-700">${data.answered_count} / ${data.total_questions}</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Completed At</p>
+                        <p class="text-sm font-bold text-slate-700" style="font-size:12px;">${escapeHtml(data.submitted_at || "Completed")}</p>
+                    </div>
                 </div>
-                <section class="card card-pad" style="text-align:center; padding:35px 20px;">
-                    <h2 class="section-title" style="font-size:22px; margin-bottom:10px;">${isSubmitted ? 'Assessment Completed' : 'Assessment Expired'}</h2>
-                    <p style="color:#4b5563; margin-bottom:24px;">${isSubmitted ? 'Your answers have been submitted for evaluation.' : 'Your exam session ended.'} You can view your evaluated score and certificate level on the Results page.</p>
-                    <a href="results.html" class="btn btn-ib-primary" style="background:#18a56a; color:#fff; padding:12px 28px; border-radius:8px; font-size:16px; font-weight:700; text-decoration:none; display:inline-block;">View Results →</a>
-                </section>`;
+                <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 text-center">
+                    <p class="text-sm font-semibold text-slate-700 mb-1">${isSubmitted ? 'Assessment Completed' : 'Assessment Expired'}</p>
+                    <p class="text-[13px] text-slate-500 mb-3">${isSubmitted ? 'Your answers have been submitted for evaluation.' : 'Your exam session ended.'} View your evaluated score and certificate level on the Results page.</p>
+                    <a href="results.html" class="inline-block bg-emerald-600 text-white text-[13px] font-semibold px-5 py-2 rounded-lg hover:bg-emerald-700 transition">View Results →</a>
+                </div>`;
             return;
         }
 
-        // 3. Attempt exists but not started -> Decide between "Ready to Start" and "Exam Window Locked" from can_start and gate_message
+        // 3. Attempt exists but not started -> Decide between "Ready to Start" and "Exam Window Locked"
         if (data.can_start) {
             container.innerHTML = `
-                <div class="grid4" style="margin-bottom:20px;">
-                    <div class="card stat"><label>Attempt ID</label><strong>#${data.attempt_id}</strong></div>
-                    <div class="card stat"><label>Status</label><strong class="blue">Ready to Start</strong></div>
-                    <div class="card stat"><label>Questions</label><strong>${data.total_questions}</strong></div>
-                    <div class="card stat"><label>Access</label><strong class="green">Slot Active</strong></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Attempt ID</p>
+                        <p class="text-sm font-bold text-slate-700">#${data.attempt_id}</p>
+                    </div>
+                    <div class="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Status</p>
+                        <p class="text-sm font-bold text-blue-600">Ready to Start</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Questions</p>
+                        <p class="text-sm font-bold text-slate-700">${data.total_questions}</p>
+                    </div>
+                    <div class="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Access</p>
+                        <p class="text-sm font-bold text-emerald-600">Slot Active</p>
+                    </div>
                 </div>
-                <section class="card card-pad" style="text-align:center; padding:35px 20px;">
-                    <div style="font-size:48px; margin-bottom:10px;">📝</div>
-                    <h2 class="section-title" style="font-size:22px; margin-bottom:10px;">Your Exam Slot is Now Open</h2>
-                    <p style="color:#4b5563; margin-bottom:24px;">Click below to launch the assessment engine. Once started, your assessment timer will run continuously.</p>
-                    <a href="take-exam.php?attempt_id=${data.attempt_id}" class="btn btn-ib-primary" style="background:#2563eb; color:#fff; padding:12px 32px; border-radius:8px; font-size:16px; font-weight:700; text-decoration:none; display:inline-block;">Start Exam →</a>
-                </section>`;
+                <div class="rounded-xl border border-blue-100 bg-blue-50 p-4 text-center">
+                    <div class="text-3xl mb-2">📝</div>
+                    <p class="text-sm font-semibold text-slate-700 mb-1">Your Exam Slot is Now Open</p>
+                    <p class="text-[13px] text-slate-500 mb-3">Click below to launch the assessment engine. Once started, your assessment timer will run continuously.</p>
+                    <a href="take-exam.php?attempt_id=${data.attempt_id}" class="inline-block bg-blue-600 text-white text-[13px] font-semibold px-6 py-2.5 rounded-lg hover:bg-blue-700 transition">Start Exam →</a>
+                </div>`;
         } else {
             const gateMessage = data.gate_message || "Your exam slot is not open yet.";
             container.innerHTML = `
-                <div class="grid4" style="margin-bottom:20px;">
-                    <div class="card stat"><label>Attempt ID</label><strong>#${data.attempt_id}</strong></div>
-                    <div class="card stat"><label>Status</label><strong style="color:#b77900;">Scheduled</strong></div>
-                    <div class="card stat"><label>Questions</label><strong>${data.total_questions}</strong></div>
-                    <div class="card stat"><label>Access</label><strong style="color:#66768a;">Locked</strong></div>
-                </div>
-                <section class="card card-pad" style="text-align:center; padding:35px 20px;">
-                    <div style="font-size:42px; margin-bottom:10px;">🔒</div>
-                    <h2 class="section-title" style="font-size:22px; margin-bottom:10px;">Exam Window Locked</h2>
-                    <div class="notice" style="background:#fff7df; border:1px solid #fce8ad; color:#b77900; padding:14px 18px; border-radius:8px; margin:0 auto 24px; max-width:550px;">
-                        <strong>${escapeHtml(gateMessage)}</strong>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Attempt ID</p>
+                        <p class="text-sm font-bold text-slate-700">#${data.attempt_id}</p>
                     </div>
-                    <button class="btn btn-secondary" disabled style="background:#e5e7eb; color:#9ca3af; padding:12px 28px; border-radius:8px; font-size:16px; font-weight:700; border:none; cursor:not-allowed;">
-                        Exam Not Open Yet
-                    </button>
-                </section>`;
+                    <div class="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Status</p>
+                        <p class="text-sm font-bold text-amber-600">Scheduled</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Questions</p>
+                        <p class="text-sm font-bold text-slate-700">${data.total_questions}</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-400 font-medium mb-0.5">Access</p>
+                        <p class="text-sm font-bold text-slate-400">Locked 🔒</p>
+                    </div>
+                </div>
+                <div class="rounded-xl border border-amber-100 bg-amber-50 p-4 text-center">
+                    <div class="text-3xl mb-2">🔒</div>
+                    <p class="text-sm font-semibold text-slate-700 mb-1">Exam Window Locked</p>
+                    <p class="text-[13px] text-amber-700 mb-3">${escapeHtml(gateMessage)}</p>
+                    <button disabled class="bg-slate-200 text-slate-400 text-[13px] font-semibold px-5 py-2 rounded-lg cursor-not-allowed">Exam Not Open Yet</button>
+                </div>`;
         }
 
     } catch (err) {
         console.error("Exam status error:", err);
         container.innerHTML = `
-            <div class="notice notice-error" style="background:#fdf2f2; border:1px solid #f8cdcd; color:#b91c1c; padding:20px; border-radius:10px; text-align:center;">
-                <p style="margin:0;">${escapeHtml(err.message || "Failed to load exam status.")}</p>
+            <div class="rounded-xl border border-red-100 bg-red-50 p-4 text-center">
+                <p class="text-[13px] text-red-600">${escapeHtml(err.message || "Failed to load exam status.")}</p>
             </div>`;
     }
 }

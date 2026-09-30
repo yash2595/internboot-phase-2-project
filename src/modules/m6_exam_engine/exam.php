@@ -1729,14 +1729,22 @@ function updateQuestionNavigator() {
 
 function updateNavigatorInfo() {
 
-    const answeredCount =
-        Object.keys(answerMap).length;
+    const answeredCount = Object.keys(answerMap).length;
+    const visitedCount = currentQuestionIndex + 1;
+    const notVisited = questions.length - visitedCount;
+    const skipped = visitedCount - answeredCount;
 
+    let infoText = `Answered: ${answeredCount} / ${questions.length}`;
+    if (notVisited > 0) {
+        infoText += ` | Not yet reached: ${notVisited}`;
+    }
+    if (skipped > 0) {
+        infoText += ` | Skipped: ${skipped}`;
+    }
 
     document.getElementById(
         "navigatorInfo"
-    ).textContent =
-        `Answered: ${answeredCount} / ${questions.length}`;
+    ).textContent = infoText;
 
 }
 
@@ -2133,20 +2141,24 @@ async function submitExam(
      */
     if (!autoSubmit) {
 
-        const unanswered =
-            questions.length -
-            Object.keys(answerMap).length;
-
+        const answeredCount = Object.keys(answerMap).length;
+        const totalQuestions = questions.length;
+        const unanswered = totalQuestions - answeredCount;
+        const visitedCount = currentQuestionIndex + 1;
+        const notVisited = totalQuestions - visitedCount;
+        const skipped = visitedCount - answeredCount;
 
         let message =
             "Are you sure you want to submit the exam?";
 
-
         if (unanswered > 0) {
-
-            message +=
-                `\n\nYou have ${unanswered} unanswered question(s).`;
-
+            message += `\n\nYou have answered ${answeredCount} of ${totalQuestions} questions.`;
+            if (skipped > 0) {
+                message += `\n• ${skipped} question(s) visited but not answered (skipped).`;
+            }
+            if (notVisited > 0) {
+                message += `\n• ${notVisited} question(s) not yet reached.`;
+            }
         }
 
 

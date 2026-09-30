@@ -44,7 +44,7 @@ $pageTitle = 'Log In — InternBoot';
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= htmlspecialchars($pageTitle) ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-<link rel="stylesheet" href="assets/css/auth.css?v=23">
+<link rel="stylesheet" href="assets/css/auth.css?v=24">
 </head>
 <body>
 
@@ -53,19 +53,41 @@ $pageTitle = 'Log In — InternBoot';
 
     <section class="ib-brand-panel">
       <img src="assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-brand-logo">
-      <p class="ib-brand-kicker">Your Gateway to Professional Growth</p>
-      <div class="ib-login-welcome">
-        <h2>Welcome Back!</h2>
-        <p>Log in to continue your assessment journey, discover your skill level, and unlock verified certification opportunities.</p>
-      </div>
+      <h2 class="ib-brand-title">Your Gateway to Professional Growth</h2>
       <ul class="ib-brand-features">
-        <li><strong>Download certificates anytime</strong></li>
-        <li><strong>Connect with mentors &amp; peers</strong></li>
+        <li>
+          <span class="feature-icon"><i class="bi bi-bar-chart-steps"></i></span>
+          <div class="feature-text">
+            <strong>Level 1-5 Assessment</strong>
+            <span>Structured skill evaluation</span>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon"><i class="bi bi-stopwatch"></i></span>
+          <div class="feature-text">
+            <strong>Instant Evaluation</strong>
+            <span>Get your results within minutes</span>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon"><i class="bi bi-patch-check"></i></span>
+          <div class="feature-text">
+            <strong>Verified Certificate</strong>
+            <span>Strengthen your resume instantly</span>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon"><i class="bi bi-briefcase"></i></span>
+          <div class="feature-text">
+            <strong>Direct Placement</strong>
+            <span>Connect with 650+ hiring partners</span>
+          </div>
+        </li>
       </ul>
-      <div class="ib-login-illustration" aria-hidden="true">
-        <span class="ib-illustration-lines"></span>
-        <span class="ib-illustration-card"><i></i><i></i><i></i></span>
-        <span class="ib-illustration-check">✓</span>
+      <div class="ib-brand-stats">
+        <span><i class="bi bi-mortarboard" style="font-size:1.2rem; margin-right:4px;"></i> <strong>10,000+</strong><br><small style="font-size:0.7em; letter-spacing:1px; opacity:0.8;">STUDENTS</small></span>
+        <span><i class="bi bi-briefcase" style="font-size:1.2rem; margin-right:4px;"></i> <strong>500+</strong><br><small style="font-size:0.7em; letter-spacing:1px; opacity:0.8;">COMPANIES</small></span>
+        <span><i class="bi bi-star" style="font-size:1.2rem; margin-right:4px;"></i> <strong>4.9/5</strong><br><small style="font-size:0.7em; letter-spacing:1px; opacity:0.8;">RATING</small></span>
       </div>
     </section>
 

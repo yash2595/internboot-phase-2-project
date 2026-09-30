@@ -1107,10 +1107,10 @@
 /* LOGIN PAGE BRAND PANEL REPLICA */
 .ib-login-brand {
   min-height: unset;
-  padding: 20px 24px;
+  padding: 24px 30px;
   justify-content: flex-start;
   background: linear-gradient(165deg, #172f69 0%, #2052b7 55%, #2862e5 100%);
-  position: relative;
+  position: relative; margin: 20px 0 20px 20px; border-radius: 20px;
   overflow: hidden;
 }
 
@@ -1134,7 +1134,7 @@
 }
 
 .ib-login-welcome h2 {
-  margin: 0 0 4px; color: #fff; font-size: 1.3rem;
+  margin: 0 0 4px; color: #fff; font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -1172,8 +1172,7 @@
   border: 1px solid rgba(255,255,255,0.08);
 }
 
-.ib-login-features .text {
-  font-size: 0.85rem;
+.ib-login-features .text { font-size: 0.95rem;
   font-weight: 500;
   color: #fff;
   line-height: 1.4;
@@ -1253,6 +1252,8 @@
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
   z-index: 15;
 }
+
+
 
 
 

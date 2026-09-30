@@ -820,11 +820,32 @@
         syncSidebarProfile();
       });
 
-      function saveProfile() {
+      async function saveProfile() {
         const newName = document.getElementById('edit-name').value;
         const newPhone = document.getElementById('edit-phone').value;
         const newLinkedin = document.getElementById('edit-linkedin').value;
         const newGithub = document.getElementById('edit-github').value;
+
+        try {
+          const response = await fetch('api/update_profile.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: newName,
+              phone: newPhone,
+              linkedin: newLinkedin,
+              github: newGithub
+            })
+          });
+          const result = await response.json();
+          if (result.status !== 'success') {
+            alert(result.message || 'Error updating profile');
+            return;
+          }
+        } catch (e) {
+          alert('Network error while updating profile');
+          return;
+        }
 
         if (newName) {
           const nameElems = document.querySelectorAll('[data-candidate="name"]');
@@ -865,6 +886,30 @@
 
         document.getElementById('editProfileModal').classList.add('hidden');
       }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          const response = await fetch("api/dashboard.php");
+          const payload = await response.json();
+          if (payload.status === "success" && payload.data && payload.data.candidate) {
+            const pd = payload.data.candidate.profile_details || {};
+            if (pd.linkedin) {
+              const el = document.querySelector('[data-candidate="linkedin"]');
+              if (el) { el.textContent = 'View Profile'; el.href = pd.linkedin; }
+              const input = document.getElementById('edit-linkedin');
+              if (input) input.value = pd.linkedin;
+            }
+            if (pd.github) {
+              const el = document.querySelector('[data-candidate="github"]');
+              if (el) { el.textContent = 'View Profile'; el.href = pd.github; }
+              const input = document.getElementById('edit-github');
+              if (input) input.value = pd.github;
+            }
+          }
+        } catch(e) {
+          console.error("Failed to load profile details", e);
+        }
+      });
     </script>
 
     <!-- Edit Profile Modal -->

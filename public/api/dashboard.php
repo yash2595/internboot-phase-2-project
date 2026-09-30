@@ -396,7 +396,7 @@ try {
             'registrationDate' => !empty($candidate['created_at']) ? date('d M Y', strtotime($candidate['created_at'])) : '—',
             'level' => $resultRow && $resultRow['level_assigned'] !== null ? 'Level ' . $resultRow['level_assigned'] : '—',
             'level_assigned' => $resultRow && $resultRow['level_assigned'] !== null ? 'Level ' . $resultRow['level_assigned'] : null,
-            'accountStatus' => 'Active', 'registrationStatus' => 'Registered', 'profileStatus' => $profileStatus
+            'accountStatus' => 'Active', 'registrationStatus' => 'Registered', 'profileStatus' => $profileStatus, 'profile_details' => parse_profile_details($candidate['profile_details'])
         ],
         'payment' => $payment,
         'enrollment' => $enrollment,

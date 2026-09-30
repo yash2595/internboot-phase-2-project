@@ -699,7 +699,7 @@
 
 .ib-login-page .ib-brand-panel {
   min-height: unset;
-  padding: 44px 30px;
+  padding: 24px 30px; /* Squeezed */
   justify-content: flex-start;
   background: linear-gradient(165deg, #172f69 0%, #2052b7 55%, #2862e5 100%);
 }
@@ -708,26 +708,26 @@
   width: 170px;
   padding: 8px 12px;
   border-radius: 9px;
-  margin-bottom: 22px;
+  margin-bottom: 12px; /* Squeezed */
   box-shadow: none;
 }
 
 .ib-login-page .ib-brand-title {
   font-size: 2rem;
   line-height: 1.25;
-  margin-bottom: 8px;
+  margin-bottom: 4px; /* Squeezed */
 }
 
 .ib-login-page .ib-brand-sub {
   font-size: 0.98rem;
   line-height: 1.5;
-  margin-bottom: 20px;
+  margin-bottom: 12px; /* Squeezed */
   max-width: 260px;
 }
 
 .ib-login-page .ib-brand-features li {
   display: block;
-  margin: 0 0 17px;
+  margin: 0 0 10px; /* Squeezed */
   padding-left: 36px;
   position: relative;
   font-size: 0.92rem;
@@ -891,7 +891,7 @@
 
 .ib-login-page .ib-brand-features li {
   min-height: 32px;
-  margin-bottom: 14px;
+  margin-bottom: 8px; /* Squeezed */
   padding: 7px 0 7px 42px;
   font-size: 0.8rem;
 }
@@ -926,8 +926,8 @@
 
 .ib-login-page .ib-login-illustration {
   position: relative;
-  height: 160px;
-  margin: 24px 10px 0;
+  height: 120px; /* Squeezed */
+  margin: 16px 10px 0; /* Squeezed */
 }
 
 .ib-illustration-lines,

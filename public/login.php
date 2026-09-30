@@ -45,7 +45,7 @@ $pageTitle = 'Log In — InternBoot';
 <title><?= htmlspecialchars($pageTitle) ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
-<link rel="stylesheet" href="assets/css/auth.css?v=26">
+<link rel="stylesheet" href="assets/css/auth.css?v=27">
 </head>
 <body>
 
@@ -54,7 +54,7 @@ $pageTitle = 'Log In — InternBoot';
 
     <section class="ib-brand-panel">
       <img src="assets/css/internboot-official-logo.webp" alt="InternBoot" class="ib-brand-logo">
-      <h2 class="ib-brand-title" style="font-size: 1.45rem; text-transform: uppercase; letter-spacing: 0.5px;">Program Progression Flow</h2>
+      <h2 class="ib-brand-title">Program Progression Flow</h2>
       <ul class="ib-brand-features">
         <li>
           <span class="feature-icon"><i class="bi bi-check-circle"></i></span>

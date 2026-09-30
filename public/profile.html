@@ -59,7 +59,7 @@
       ====================================================== -->
 
       <aside
-        class="fixed inset-y-0 left-0 z-50 hidden lg:flex w-[293px] bg-gradient-to-b from-[#294fae] to-[#347de9] text-white flex-col overflow-hidden"
+        class="fixed inset-y-0 left-0 z-50 hidden lg:flex w-[250px] bg-gradient-to-b from-[#294fae] to-[#347de9] text-white flex-col overflow-hidden"
       >
         <!-- Logo -->
         <div
@@ -246,14 +246,14 @@
       ====================================================== -->
 
       <main
-        class="lg:ml-[293px] lg:w-[calc(100%-293px)] w-full min-h-screen min-w-0"
+        class="lg:ml-[250px] lg:w-[calc(100%-250px)] w-full min-h-screen min-w-0"
       >
         <!-- =================================================
              FIXED HEADER
         ================================================== -->
 
         <header
-          class="fixed top-0 right-0 left-0 lg:left-[293px] z-40 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-5 lg:px-6"
+          class="fixed top-0 right-0 left-0 lg:left-[250px] z-40 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-5 lg:px-6"
         >
           <!-- Header Left -->
           <div class="flex items-center gap-3 min-w-0">
@@ -361,8 +361,15 @@
                   </p>
                 </div>
 
-                <!-- Active Account -->
-                <div class="shrink-0">
+                <!-- Active Account & Edit Profile -->
+                <div class="shrink-0 flex flex-wrap justify-end gap-3">
+                  <button
+                    onclick="document.getElementById('editProfileModal').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-medium text-xs transition-colors duration-200 shadow-sm"
+                  >
+                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                    Edit Profile
+                  </button>
                   <span
                     class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-blue-700 font-semibold text-sm shadow-sm"
                   >
@@ -474,6 +481,48 @@
                       class="text-sm font-semibold text-slate-800 text-right"
                     >
                       <span data-candidate="phone"></span>
+                    </span>
+                  </div>
+
+                  <!-- LinkedIn -->
+                  <div
+                    class="px-5 py-3.5 flex items-center justify-between gap-5"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 text-slate-400 shrink-0">
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                      </svg>
+
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
+                        LinkedIn Profile
+                      </span>
+                    </div>
+
+                    <span
+                      class="text-[13px] font-medium text-slate-800 text-right truncate"
+                    >
+                      <a href="#" target="_blank" class="text-intern-blue hover:underline" data-candidate="linkedin">Not Provided</a>
+                    </span>
+                  </div>
+
+                  <!-- GitHub -->
+                  <div
+                    class="px-5 py-3.5 flex items-center justify-between gap-5"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 text-slate-400 shrink-0">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                      </svg>
+
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
+                        GitHub Profile
+                      </span>
+                    </div>
+
+                    <span
+                      class="text-[13px] font-medium text-slate-800 text-right truncate"
+                    >
+                      <a href="#" target="_blank" class="text-intern-blue hover:underline" data-candidate="github">Not Provided</a>
                     </span>
                   </div>
                 </div>
@@ -771,5 +820,52 @@
     
   });
 </script>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="fixed inset-0 z-[60] hidden">
+      <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="document.getElementById('editProfileModal').classList.add('hidden')"></div>
+      <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0 pointer-events-none">
+        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg w-full pointer-events-auto">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-50 sm:mx-0 sm:h-10 sm:w-10">
+                <i data-lucide="pencil" class="h-5 w-5 text-intern-blue"></i>
+              </div>
+              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                <h3 class="text-lg leading-6 font-semibold text-slate-900" id="modal-title">
+                  Edit Profile
+                </h3>
+                <div class="mt-4 space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700">Full Name</label>
+                    <input type="text" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-sm px-4 py-2.5 border outline-none transition-all" placeholder="John Doe">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700">Phone</label>
+                    <input type="text" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-sm px-4 py-2.5 border outline-none transition-all" placeholder="1234567890">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700">LinkedIn Profile URL</label>
+                    <input type="url" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-sm px-4 py-2.5 border outline-none transition-all" placeholder="https://linkedin.com/in/username">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700">GitHub Profile URL</label>
+                    <input type="url" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-sm px-4 py-2.5 border outline-none transition-all" placeholder="https://github.com/username">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-slate-50 px-4 py-4 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button type="button" onclick="document.getElementById('editProfileModal').classList.add('hidden')" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-5 py-2 bg-intern-blue text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-intern-blue sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+              Save Changes
+            </button>
+            <button type="button" onclick="document.getElementById('editProfileModal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center rounded-xl border border-slate-300 shadow-sm px-5 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-intern-blue sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

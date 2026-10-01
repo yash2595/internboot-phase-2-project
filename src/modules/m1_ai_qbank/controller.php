@@ -54,34 +54,12 @@ function handle_add_question_request(array $input, mysqli $conn): void {
 }
 
 /**
- * Controller handler for listing approved questions of a qbank.
- */
-function handle_list_questions_request(array $input, mysqli $conn): void {
-    require_admin_access($conn);
-    $qbankId = (int)($input['question_bank_id'] ?? ($_GET['question_bank_id'] ?? 0));
-
-    if ($qbankId <= 0) {
-        send_json_response('error', 'Valid question_bank_id parameter is required', null, 400);
-    }
-
-    $role = resolve_admin_role($conn);
-    $isAdmin = $role === 'admin';
-
-    try {
-        $data = fetch_approved_qbank_questions($qbankId, $conn, $isAdmin);
-        send_json_response('success', 'Approved questions retrieved successfully', $data, 200);
-    } catch (Throwable $e) {
-        error_log('InternBoot M1 list questions error: ' . $e->getMessage());
-        send_json_response('error', is_dev_env() ? $e->getMessage() : 'Failed to retrieve questions.', null, 500);
-    }
-}
-
-/**
  * Controller handler for AI-backed question generation.
  */
 function handle_generate_questions_request(array $input, mysqli $conn): void {
     require_admin_access($conn);
     require_csrf();
+
     $qbankId = (int)($input['question_bank_id'] ?? 0);
     $topic = trim((string)($input['topic'] ?? ''));
     $count = (int)($input['count'] ?? 0);
@@ -155,55 +133,3 @@ function handle_ai_status_request(mysqli $conn): void {
     send_json_response('success', 'AI status retrieved', ['provider' => $provider, 'configured' => $configured], 200);
 }
 
-
-
-function handle_edit_question_request(array $input, mysqli $conn): void {
-    require_admin_access($conn);
-    require_csrf();
-    $questionId = (int)($input['question_id'] ?? 0);
-    $questionText = trim($input['question_text'] ?? '');
-    $difficulty = strtolower(trim($input['difficulty'] ?? 'medium'));
-    $options = $input['options'] ?? [];
-    if ($questionId <= 0 || empty($questionText)) {
-        send_json_response('error', 'Valid question_id and text required', null, 400);
-    }
-    if (!in_array($difficulty, ['easy', 'medium', 'hard'], true)) {
-        send_json_response('error', 'Invalid difficulty', null, 400);
-    }
-    if (count($options) !== 4) {
-        send_json_response('error', 'Exactly 4 options must be provided', null, 400);
-    }
-    $role = resolve_admin_role($conn);
-    $forcePending = ($role !== 'admin');
-
-    try {
-        edit_manual_question($questionId, $questionText, $difficulty, $options, $conn, $forcePending);
-        send_json_response('success', 'Question edited', null, 200);
-    } catch (Throwable $e) {
-        send_json_response('error', $e->getMessage(), null, 400);
-    }
-}
-
-function handle_delete_question_request(array $input, mysqli $conn): void {
-    require_admin_access($conn);
-    require_csrf();
-    $questionId = (int)($input['question_id'] ?? 0);
-    if ($questionId <= 0) {
-        send_json_response('error', 'Valid question_id required', null, 400);
-    }
-
-    $role = resolve_admin_role($conn);
-    if ($role !== 'admin') {
-        send_json_response('error', 'Only administrators can delete questions', null, 403);
-    }
-
-    try {
-        $stmt = $conn->prepare("DELETE FROM questions WHERE id = ?");
-        $stmt->bind_param('i', $questionId);
-        $stmt->execute();
-        $stmt->close();
-        send_json_response('success', 'Question deleted completely', null, 200);
-    } catch (Throwable $e) {
-        send_json_response('error', $e->getMessage(), null, 400);
-    }
-}

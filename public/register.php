@@ -149,6 +149,14 @@ $pageTitle = 'Register — InternBoot';
     @media screen and (max-width: 1024px) { .left-panel { width: 380px; min-width: 340px; padding: 36px 30px; } .right-panel { padding: 36px 32px 30px; } }
     @media screen and (max-width: 860px) { .inner-container { flex-direction: column; } .left-panel { width: 100%; min-width: unset; padding: 36px 30px 28px; } .teacher-section { display: none; } .right-panel { border-radius: 0 0 24px 24px; padding: 32px 30px 28px; } }
     @media screen and (max-width: 640px) { body { padding: 10px; } .outer-container { padding: 10px; border-radius: 22px; } .inner-container { border-radius: 18px; } .left-panel { display: none; } .mobile-logo { display: flex; } .right-panel { border-radius: 18px; padding: 28px 20px 24px; } .form-header h2 { font-size: 22px; } .form-row { grid-template-columns: 1fr; gap: 4px; } }
+    /* Password toggle */
+    .pw-wrap { position: relative; }
+    .pw-toggle { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8; padding: 4px; display: flex; align-items: center; transition: color 0.2s; }
+    .pw-toggle:hover { color: #3b82f6; }
+    .pw-toggle svg { width: 18px; height: 18px; }
+    .eye-closed { display: none; }
+    .show-pass .eye-open { display: none; }
+    .show-pass .eye-closed { display: block; }
   </style>
 </head>
 <body>
@@ -452,16 +460,22 @@ $pageTitle = 'Register — InternBoot';
         </div>
         <div class="form-group full">
           <label>PASSWORD</label>
-          <div style="position: relative;">
-            <input type="password" name="password" required>
-            <span class="icon" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); color:#94a3b8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+          <div class="pw-wrap">
+            <input type="password" name="password" id="password" required>
+            <button type="button" class="pw-toggle" aria-label="Toggle password">
+              <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
           </div>
         </div>
         <div class="form-group full">
           <label>CONFIRM PASSWORD</label>
-          <div style="position: relative;">
-            <input type="password" name="confirm_password" required>
-            <span class="icon" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); color:#94a3b8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+          <div class="pw-wrap">
+            <input type="password" name="confirm_password" id="confirm_password" required>
+            <button type="button" class="pw-toggle" aria-label="Toggle confirm password">
+              <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
           </div>
         </div>
         <div id="formAlert" class="form-error"></div>
@@ -491,6 +505,17 @@ $pageTitle = 'Register — InternBoot';
   const mobileFull = document.getElementById('mobile_full');
   function updatePhone() { const d = mobileNum.value.replace(/[^0-9]/g,''); mobileFull.value = d ? mobileCode.value+' '+d : ''; }
   [mobileCode,mobileNum].forEach(f => f.addEventListener('input', updatePhone));
+
+  // Password toggle
+  document.querySelectorAll('.pw-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const input = this.previousElementSibling;
+      const isPass = input.type === 'password';
+      input.type = isPass ? 'text' : 'password';
+      this.classList.toggle('show-pass', isPass);
+    });
+  });
+
   document.getElementById('ibRegisterForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     updatePhone();

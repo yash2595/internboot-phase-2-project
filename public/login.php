@@ -272,7 +272,7 @@ $pageTitle = 'Log In — InternBoot';
   label:hover { color: #1e40af; transform: translateX(4px); }
   label:hover .icon { color: #1e40af; transform: scale(1.2) rotate(-8deg); }
 
-  input[type="email"], input[type="password"] {
+  input[type="text"], input[type="email"], input[type="password"] {
     display: block; width: 100%;
     padding: 16px 20px; font-size: 15px;
     font-family: 'Poppins','Segoe UI',Arial,sans-serif;
@@ -282,8 +282,8 @@ $pageTitle = 'Log In — InternBoot';
     transition: all 0.4s cubic-bezier(0.25,0.8,0.25,1);
   }
   input::placeholder { color: #cbd5e1; font-weight: 300; }
-  input[type="email"]:hover, input[type="password"]:hover { border-color: #93c5fd; background: #f8faff; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(59,130,246,0.1), 0 0 0 3px rgba(59,130,246,0.05); }
-  input[type="email"]:focus, input[type="password"]:focus { border-color: #3b82f6; background: #ffffff; transform: translateY(-2px); box-shadow: 0 0 0 4px rgba(59,130,246,0.12), 0 8px 28px rgba(59,130,246,0.1); }
+  input[type="text"]:hover, input[type="email"]:hover, input[type="password"]:hover { border-color: #93c5fd; background: #f8faff; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(59,130,246,0.1), 0 0 0 3px rgba(59,130,246,0.05); }
+  input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus { border-color: #3b82f6; background: #ffffff; transform: translateY(-2px); box-shadow: 0 0 0 4px rgba(59,130,246,0.12), 0 8px 28px rgba(59,130,246,0.1); }
 
   .forgot-row { display: flex; justify-content: flex-end; margin-top: -2px; margin-bottom: 6px; animation: fieldUp 0.5s 0.75s cubic-bezier(0.16,1,0.3,1) backwards; }
   .forgot-link { font-size: 12.5px; color: #3b82f6; text-decoration: none; font-weight: 500; transition: all 0.3s ease; position: relative; }

@@ -8,6 +8,24 @@ scratch/
 vendor/
 composer.phar
 
-
 public/uploads/*
 !public/uploads/.gitkeep
+*.log
+bin/
+gh.zip
+*.exe
+
+# Dev artifact / generated file listings — never commit these
+all_files.txt
+tracked.txt
+*_files.txt
+
+# Debug/fix scripts — must never be in public web root
+public/api/fix_*.php
+public/api/check_*.php
+public/api/debug_*.php
+public/api/test_*.php
+
+# Sensitive certs — use secrets manager instead
+aiven-ca.pem
+*.pem

@@ -15,7 +15,7 @@ function load_local_env(string $file): void
         if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) continue;
         [$key, $value] = array_map('trim', explode('=', $line, 2));
         $value = trim($value, " \t\n\r\0\x0B\"'");
-        if ($key !== '' && getenv($key) === false) {
+        if ($key !== '') {
             putenv($key . '=' . $value);
             $_ENV[$key] = $value;
         }
@@ -93,14 +93,11 @@ if ($isRailway && str_contains((string)$host, '.proxy.rlwy.net')) {
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-$__db_connect_start = microtime(true);
 try {
     $conn = new mysqli($host, $user, $password, $dbname, $port);
     $conn->set_charset('utf8mb4');
     // Synchronize MySQL DB session time zone with PHP timezone offset (e.g. +05:30)
     $conn->query("SET time_zone = '" . date('P') . "'");
-    // TEMP DIAGNOSTIC — remove after confirming fix
-    error_log('DB connected to ' . $host . ':' . $port . ' in ' . round((microtime(true) - $__db_connect_start) * 1000, 1) . 'ms');
 } catch (mysqli_sql_exception $e) {
     $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
     $prefersHtml = str_contains($accept, 'text/html') || str_contains($accept, 'application/pdf');

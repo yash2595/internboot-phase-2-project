@@ -11,21 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 require_once __DIR__ . '/../../src/core/candidate_resolver.php';
+require_once __DIR__ . '/../../src/modules/m5_batch_slots/service.php';
 
-function get_candidate(int $candidateId): ?array {
-    global $conn;
-    $stmt = $conn->prepare(
-        'SELECT c.id, c.user_id, c.full_name, c.phone, c.profile_details, c.created_at, u.email
-         FROM candidates c
-         LEFT JOIN users u ON u.id = c.user_id
-         WHERE c.id = ? LIMIT 1'
-    );
-    $stmt->bind_param('i', $candidateId);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    return $row ?: null;
-}
+
 
 function get_assessment(int $assessmentId): ?array {
     global $conn;
@@ -47,6 +35,9 @@ function parse_profile_details(?string $raw): array {
 }
 
 try {
+    // Dynamically check and cancel any underfilled slots (< 100 candidates) within 30 minutes
+    check_and_notify_underfilled_slots($conn);
+
     $candidateId = resolve_candidate_id($_GET);
 
     /* 1. Merged Candidate + Latest Payment + Latest Enrollment + Assessment query */
@@ -57,7 +48,7 @@ try {
             p.id AS payment_id, p.assessment_id AS payment_assessment_id, p.amount AS payment_amount,
             p.status AS payment_status, p.reference_number, p.payment_date, p.created_at AS payment_created_at,
             e.id AS enrollment_id, e.assessment_id AS enrollment_assessment_id, e.payment_id AS enrollment_payment_id,
-            e.batch_id, e.eligibility_status, e.created_at AS enrollment_created_at,
+            e.batch_id, e.eligibility_status, e.created_at AS enrollment_created_at, e.preferred_date, e.preferred_time_slot,
             ass.id AS assessment_id, ass.title AS assessment_title, ass.description AS assessment_description,
             ass.duration_minutes, ass.total_questions, ass.status AS assessment_status
         FROM candidates c
@@ -70,7 +61,7 @@ try {
             LIMIT 1
         ) p ON 1=1
         LEFT JOIN (
-            SELECT id, assessment_id, payment_id, batch_id, eligibility_status, created_at
+            SELECT id, assessment_id, payment_id, batch_id, eligibility_status, created_at, preferred_date, preferred_time_slot
             FROM enrollments
             WHERE candidate_id = ?
             ORDER BY id DESC
@@ -119,6 +110,8 @@ try {
         'eligibility_status' => $row['eligibility_status'],
         'created_at' => $row['enrollment_created_at'],
         'assessment_title' => $row['assessment_title'],
+        'preferred_date' => $row['preferred_date'],
+        'preferred_time_slot' => $row['preferred_time_slot'],
     ] : null;
 
     $assessment = ($row['assessment_id'] !== null) ? [
@@ -149,7 +142,19 @@ try {
         $stmt->close();
     }
 
-    /* 3. Combined Result + Certificate query */
+    /* 3. Placement record (LEFT JOIN — only Level 1-2 candidates have a row) */
+    $stmt = $conn->prepare(
+        'SELECT placement_status, company_name, notes, updated_at
+         FROM placement_records
+         WHERE candidate_id = ?
+         ORDER BY updated_at DESC LIMIT 1'
+    );
+    $stmt->bind_param('i', $candidateId);
+    $stmt->execute();
+    $placementRow = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    /* 4. Combined Result + Certificate query */
     $stmt = $conn->prepare(
         'SELECT 
             r.id AS result_id, r.total_score, r.percentage, r.level_assigned, r.attempt_id,
@@ -191,7 +196,7 @@ try {
     ] : null;
 
     $payment = [
-        'totalFee' => '—', 'paidAmount' => '—', 'status' => 'Pending',
+        'totalFee' => '₹3,538.82', 'paidAmount' => '₹0.00', 'status' => 'Unpaid',
         'paymentId' => '—', 'transactionId' => '—', 'paymentDate' => '—',
         'method' => 'Sandbox / Database', 'verification' => 'Not Verified'
     ];
@@ -221,6 +226,7 @@ try {
         };
         $enrollment = [
             'id' => 'ENR-' . $enrollmentRow['id'],
+            'assessment_id' => $enrollmentRow['assessment_id'],
             'date' => !empty($enrollmentRow['created_at']) ? date('d M Y', strtotime($enrollmentRow['created_at'])) : '—',
             'status' => $enrollmentStatus
         ];
@@ -235,8 +241,13 @@ try {
             'id' => 'BATCH-' . $batchRow['id'],
             'mentor' => '—',
             'status' => $batchStatus,
+            'date' => !empty($batchRow['exam_date']) ? date('d M Y', strtotime($batchRow['exam_date'])) : '—',
+            'time' => !empty($batchRow['start_time']) && !empty($batchRow['end_time']) ? date('h:i A', strtotime($batchRow['start_time'])) . ' - ' . date('h:i A', strtotime($batchRow['end_time'])) : '—',
             'candidates' => (string)($batchRow['candidate_count'] ?? 0) . ' registered'
         ];
+    } elseif ($enrollmentRow && !empty($enrollmentRow['preferred_date'])) {
+        $batch['name'] = 'Awaiting Formation';
+        $batch['status'] = 'Preference Saved';
     }
 
     /* 3. Candidate's own attempt for the assessment */
@@ -298,22 +309,41 @@ try {
             $exam['status'] = ucwords(str_replace('_', ' ', $attStatus));
         }
     } elseif ($batchRow) {
-        $exam['status'] = 'Slot Not Booked';
+        $exam['status'] = 'Slot Selected';
+        if (!empty($batchRow['exam_date'])) {
+            $exam['exam_date'] = date('Y-m-d', strtotime($batchRow['exam_date']));
+            $exam['date'] = date('d M Y', strtotime($batchRow['exam_date']));
+        }
+        if (!empty($batchRow['start_time']) && !empty($batchRow['end_time'])) {
+            $timeFormatted = date('h:i A', strtotime($batchRow['start_time'])) . ' – ' . date('h:i A', strtotime($batchRow['end_time']));
+            $exam['time'] = $timeFormatted;
+            $exam['slot_time'] = $timeFormatted;
+        }
+    } elseif ($enrollmentRow && !empty($enrollmentRow['preferred_date'])) {
+        $exam['status'] = 'Preference Saved';
+        $exam['exam_date'] = date('Y-m-d', strtotime($enrollmentRow['preferred_date']));
+        $exam['date'] = date('d M Y', strtotime($enrollmentRow['preferred_date']));
+        if (!empty($enrollmentRow['preferred_time_slot'])) {
+            $exam['time'] = $enrollmentRow['preferred_time_slot'];
+            $exam['slot_time'] = $enrollmentRow['preferred_time_slot'];
+        }
     }
 
-    $result = ['score' => '— / 100', 'level' => '—', 'status' => 'Pending', 'evaluation' => 'Pending'];
+    $result = ['score' => '— / 100', 'level' => '—', 'level_assigned' => null, 'status' => '—', 'evaluation' => '—'];
     if ($resultRow) {
         $percentage = (float)$resultRow['percentage'];
         $level = $resultRow['level_assigned'];
         $result = [
+            'id' => $resultRow['id'],
             'score' => number_format($percentage, 2) . ' / 100',
             'level' => $level !== null && $level !== '' ? 'Level ' . $level : '—',
+            'level_assigned' => $level !== null && $level !== '' ? 'Level ' . $level : null,
             'status' => 'Available',
             'evaluation' => 'Evaluated'
         ];
     }
 
-    $certificate = ['number' => 'Not issued', 'level' => 'Not assigned', 'issueDate' => '—', 'status' => 'Pending'];
+    $certificate = ['number' => 'Not issued', 'level' => 'Not assigned', 'issueDate' => '—', 'status' => '—'];
     if ($certificateRow) {
         $certificate = [
             'number' => $certificateRow['certificate_number'],
@@ -323,28 +353,75 @@ try {
         ];
     }
 
+    $placementStatusLabels = [
+        'eligible'     => 'Eligible',
+        'shortlisted'  => 'Shortlisted',
+        'interviewing' => 'Interviewing',
+        'placed'       => 'Placed',
+        'not_placed'   => 'Not Placed',
+    ];
+    $placement = [
+        'applicable' => false,
+        'status'     => null,
+        'statusLabel'=> null,
+        'company'    => null,
+        'notes'      => null,
+        'updated_at' => null,
+    ];
+
+    // If candidate has completed exam and has a level, placement is applicable
+    if ($resultRow && $resultRow['level_assigned']) {
+        $placement['applicable'] = true;
+        $placement['status'] = 'eligible';
+        $placement['statusLabel'] = 'Eligible';
+
+        if ($placementRow) {
+            $rawStatus = $placementRow['placement_status'] ?? '';
+            $placement['status']      = $rawStatus;
+            $placement['statusLabel'] = $placementStatusLabels[$rawStatus] ?? ucfirst(str_replace('_', ' ', $rawStatus));
+            $placement['company']     = $placementRow['company_name'] ?: null;
+            $placement['notes']       = $placementRow['notes'] ?: null;
+            $placement['updated_at']  = !empty($placementRow['updated_at']) ? date('d M Y', strtotime($placementRow['updated_at'])) : null;
+        }
+    }
+
     $profileStatus = !empty($candidate['profile_details']) ? 'Verified' : 'Basic Profile';
+
+    // Check for any unread batch_not_formed notification
+    $bNotif = null;
+    $notifStmt = $conn->prepare("SELECT id, message, created_at, is_read FROM notifications WHERE candidate_id = ? AND type = 'batch_not_formed' ORDER BY id DESC LIMIT 1");
+    if ($notifStmt) {
+        $notifStmt->bind_param("i", $candidateId);
+        $notifStmt->execute();
+        $bNotif = $notifStmt->get_result()->fetch_assoc();
+        $notifStmt->close();
+    }
 
     send_json_response('success', 'Dashboard data retrieved successfully', [
         'candidate' => [
             'name' => $candidate['full_name'],
             'email' => $candidate['email'] ?? '—',
             'phone' => $candidate['phone'] ?: '—',
-            'dateOfBirth' => $profile['dateOfBirth'] ?? $profile['date_of_birth'] ?? '—',
-            'gender' => $profile['gender'] ?? '—',
-            'address' => $profile['address'] ?? '—',
+
             'candidateId' => 'IB-CAN-' . $candidate['id'],
             'registrationDate' => !empty($candidate['created_at']) ? date('d M Y', strtotime($candidate['created_at'])) : '—',
             'level' => $resultRow && $resultRow['level_assigned'] !== null ? 'Level ' . $resultRow['level_assigned'] : '—',
-            'accountStatus' => 'Active', 'profileStatus' => $profileStatus
+            'level_assigned' => $resultRow && $resultRow['level_assigned'] !== null ? 'Level ' . $resultRow['level_assigned'] : null,
+            'accountStatus' => 'Active', 'registrationStatus' => 'Registered', 'profileStatus' => $profileStatus, 'profile_details' => parse_profile_details($candidate['profile_details'])
         ],
         'payment' => $payment,
         'enrollment' => $enrollment,
+        'assessment' => $assessment,
         'batch' => $batch,
         'exam' => $exam,
         'result' => $result,
-        'certificate' => $certificate
+        'certificate' => $certificate,
+        'placement' => $placement,
+        'batch_not_formed_alert' => $bNotif,
+        'demo_mode' => demo_mode()
     ]);
 } catch (Throwable $e) {
-    send_json_response('error', 'Unable to fetch dashboard data: ' . $e->getMessage(), null, 500);
+    error_log('InternBoot dashboard error: ' . $e->getMessage());
+    send_json_response('error', 'Unable to fetch dashboard data. Please try again or contact support.', null, 500);
 }
+

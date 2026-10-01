@@ -9,45 +9,33 @@ if (file_exists(dirname(__DIR__, 3) . '/src/core/bootstrap.php')) {
     require_once __DIR__ . '/../src/core/bootstrap.php';
 }
 
+require_once __DIR__ . '/../../../src/modules/m5_batch_slots/queries.php';
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    send_json_response('error', 'Method not allowed. Use POST.', null, 405);
+}
+
+require_csrf();
+
 try {
 
     /*
      * 1. Candidate authentication
-     * M5 shares candidate_id through the PHP session.
      */
-    if (
-        (!isset($_SESSION['candidate_id']) || !is_numeric($_SESSION['candidate_id'])) &&
-        isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id']) &&
-        isset($conn)
-    ) {
-        $userStmt = $conn->prepare("SELECT id FROM candidates WHERE user_id = ? LIMIT 1");
-        if ($userStmt) {
-            $uId = (int)$_SESSION['user_id'];
-            $userStmt->bind_param("i", $uId);
-            $userStmt->execute();
-            $userRes = $userStmt->get_result()->fetch_assoc();
-            $userStmt->close();
-            if ($userRes) {
-                $_SESSION['candidate_id'] = (int)$userRes['id'];
-            }
-        }
-    }
-
-    if (
-        !isset($_SESSION['candidate_id']) ||
-        !is_numeric($_SESSION['candidate_id'])
-    ) {
-        send_json_response('error', 'Candidate authentication required', null, 401);
-    }
-
-    $candidateId = (int) $_SESSION['candidate_id'];
+    $candidateId = require_candidate_auth($conn);
 
     /*
      * 2. Attempt ID supplied by M5
      */
-    $attemptId = isset($_GET['attempt_id'])
-        ? (int) $_GET['attempt_id']
-        : 0;
+    $rawInput = file_get_contents('php://input');
+    $body = json_decode($rawInput, true);
+    if (!is_array($body)) {
+        $body = [];
+    }
+
+    $attemptId = (int)($_POST['attempt_id'] ?? $body['attempt_id'] ?? $_GET['attempt_id'] ?? 0);
 
     if ($attemptId <= 0) {
         send_json_response('error', 'Invalid attempt ID', null, 400);
@@ -139,6 +127,19 @@ try {
     }
 
     /*
+     * 5a. Schedule Status Gate: Only active schedules (scheduled/in_progress) can be started or resumed.
+     */
+    $validScheduleStatuses = ['scheduled', 'in_progress'];
+    if (!empty($attempt['schedule_status']) && !in_array($attempt['schedule_status'], $validScheduleStatuses, true)) {
+        $msg = ($attempt['schedule_status'] === 'cancelled')
+            ? 'This exam schedule has been cancelled'
+            : 'This exam schedule is no longer active';
+        send_json_response('error', $msg, [
+            'schedule_status' => $attempt['schedule_status']
+        ], 409);
+    }
+
+    /*
      * 5b. Scheduled Date and Time-Window Gate (First Start Only)
      * Restrict exam access to the assigned candidate, date, and slot window.
      */
@@ -160,7 +161,15 @@ try {
 
             if ($slotStartTime !== null && $slotEndTime !== null) {
                 $slotStart = new DateTime($examDate . ' ' . $slotStartTime);
-                $slotEnd = new DateTime($examDate . ' ' . $slotEndTime);
+                $grace = (int) get_setting_value('slot_grace_minutes', $conn);
+                if ($grace <= 0) $grace = 30;
+                
+                $endTimestamp = strtotime($examDate . ' ' . $slotEndTime);
+                if ($slotEndTime < $slotStartTime) { $endTimestamp += 86400; }
+                
+                $slotEnd = (new DateTime())->setTimestamp(
+                    $endTimestamp + ($grace * 60)
+                );
 
                 if ($now < $slotStart) {
                     send_json_response('error', "Your exam slot opens at {$slotStartTime}.", null, 403);
@@ -193,12 +202,25 @@ try {
             $durationMinutes = 60;
         }
 
-        $endTime = date(
-            'Y-m-d H:i:s',
-            strtotime(
-                $startTime . " +{$durationMinutes} minutes"
-            )
+        $calculatedEnd = strtotime(
+            $startTime . " +{$durationMinutes} minutes"
         );
+
+        // Cap actual end_time at slot's scheduled end_time if a slot boundary exists
+        if (!empty($attempt['exam_date']) && !empty($attempt['slot_end_time'])) {
+            $grace = (int) get_setting_value('slot_grace_minutes', $conn);
+            if ($grace <= 0) $grace = 30;
+            $slotEndTimestamp = strtotime($attempt['exam_date'] . ' ' . $attempt['slot_end_time']);
+            if ($attempt['slot_end_time'] < $attempt['slot_start_time']) {
+                $slotEndTimestamp += 86400; // Add 1 day
+            }
+            $slotEndTimestamp += ($grace * 60);
+            if ($slotEndTimestamp !== false && $slotEndTimestamp < $calculatedEnd) {
+                $calculatedEnd = $slotEndTimestamp;
+            }
+        }
+
+        $endTime = date('Y-m-d H:i:s', $calculatedEnd);
 
         /*
          * Atomically initialize the attempt.
@@ -296,7 +318,7 @@ try {
 
         require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
         try {
-            evaluate_attempt($conn, $attemptId, false);
+            evaluate_attempt($conn, $attemptId, true);
         } catch (Throwable $evalError) {
             error_log('Auto-evaluation failed for attempt ' . $attemptId . ': ' . $evalError->getMessage());
         }
@@ -308,7 +330,15 @@ try {
 
     /*
      * 9. Successful response using standard helper.
+     * Report the actual number of questions served for this attempt, falling back to assessment configuration if unassigned.
      */
+    $servedQuestions = function_exists('get_attempt_served_question_count')
+        ? get_attempt_served_question_count($conn, $attemptId)
+        : 0;
+    $totalQuestions = ($servedQuestions > 0)
+        ? $servedQuestions
+        : (isset($attempt['total_questions']) ? (int) $attempt['total_questions'] : 0);
+
     send_json_response('success', 'Exam started successfully', [
         'success' => true,
         'attempt_id' => (int) $attempt['attempt_id'],
@@ -326,7 +356,7 @@ try {
         'exam_date' => $attempt['exam_date'],
 
         'duration_minutes' => (int) $attempt['duration_minutes'],
-        'total_questions' => (int) $attempt['total_questions'],
+        'total_questions' => $totalQuestions,
 
         'remaining_seconds' => $remainingSeconds
     ], 200);
@@ -335,3 +365,4 @@ try {
     error_log('start_exam error: ' . $e->getMessage());
     send_json_response('error', 'Internal server error', null, 500);
 }
+

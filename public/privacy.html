@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy | InternBoot</title>
+  <meta name="description"
+    content="Reach out to the InternBoot Candidate Support team for inquiries regarding level assessments, exam slots, certificate verification, and placement assistance.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/internboot-logo.png">
+  <link rel="shortcut icon" href="assets/internboot-logo.png">
+  <link rel="apple-touch-icon" href="assets/internboot-logo.png">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"
+    integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <!-- Custom Base Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    :root {
+      --contact-canvas: #fbf9f5;
+      --contact-card: #ffffff;
+      --contact-ink: #0f1f3d;
+      --contact-muted: #5e6d87;
+      --contact-border: #e6ebf4;
+      --contact-border-focus: #1652d6;
+      --contact-blue: #1652d6;
+      --contact-blue-hover: #0f40ad;
+      --contact-light-blue: #eff5ff;
+      --contact-accent: #ff8a1e;
+    }
+
+    body.contact-body {
+      background-color: var(--contact-canvas);
+      color: var(--contact-ink);
+      font-family: var(--font, "Plus Jakarta Sans", system-ui, sans-serif);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Ambient background mesh glow */
+    .contact-ambient-glow {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 1400px;
+      height: 600px;
+      background: radial-gradient(circle 500px at 85% 150px, rgba(22, 82, 214, 0.06), transparent 70%),
+        radial-gradient(circle 450px at 15% 200px, rgba(255, 138, 30, 0.05), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Navigation Active state */
+    .ib-nav .nav-link.active-contact {
+      color: var(--contact-blue) !important;
+      font-weight: 700;
+      position: relative;
+    }
+
+    .ib-nav .nav-link.active-contact::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 18px;
+      height: 2.5px;
+      background: var(--contact-blue);
+      border-radius: 99px;
+    }
+
+    /* Main Contact Section */
+    .contact-hero-section {
+      position: relative;
+      z-index: 1;
+      padding-top: 130px;
+      padding-bottom: 80px;
+    }
+
+    /* Header & Subtitle */
+    .contact-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--contact-blue);
+      margin-bottom: 0.75rem;
+    }
+
+    .contact-kicker-bar {
+      width: 24px;
+      height: 3px;
+      background: var(--contact-blue);
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .contact-main-title {
+      font-size: clamp(2.4rem, 4vw, 3.25rem);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      color: #0b192e;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+    }
+
+    .contact-lead-text {
+      font-size: 1.08rem;
+      line-height: 1.65;
+      color: #4a5972;
+      max-width: 520px;
+      margin-bottom: 2.5rem;
+    }
+
+    /* Contact Detail Blocks */
+    .contact-details-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.6rem;
+      margin-bottom: 2.75rem;
+    }
+
+    .contact-info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.1rem;
+    }
+
+    .contact-info-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #eff4fc;
+      color: var(--contact-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+      transition: all 0.25s ease;
+      border: 1px solid rgba(22, 82, 214, 0.12);
+    }
+
+    .contact-info-item:hover .contact-info-icon {
+      background: var(--contact-blue);
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px -4px rgba(22, 82, 214, 0.35);
+    }
+
+    .contact-info-content h4 {
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: #0d1e38;
+      margin-bottom: 0.25rem;
+    }
+
+    .contact-info-content p {
+      font-size: 0.94rem;
+      color: #55657f;
+      margin: 0;
+      line-height: 1.45;
+    }
+
+    .contact-info-content a {
+      color: var(--contact-blue);
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .contact-info-content a:hover {
+      color: var(--contact-blue-hover);
+      text-decoration: underline;
+    }
+
+    /* Social Links */
+    .social-links-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      margin-top: 0.4rem;
+    }
+
+    .social-link-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #3b4c68;
+      transition: all 0.2s ease;
+      padding: 0.2rem 0;
+    }
+
+    .social-link-row i {
+      font-size: 1.1rem;
+      color: #1a2a46;
+      transition: transform 0.2s;
+    }
+
+    .social-link-row:hover {
+      color: var(--contact-blue);
+      transform: translateX(3px);
+    }
+
+    .social-link-row:hover i {
+      color: var(--contact-blue);
+    }
+
+    /* "What you get from us" section */
+    .what-you-get-box {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid var(--contact-border);
+      border-radius: 18px;
+      padding: 1.8rem;
+      margin-top: 1rem;
+      max-width: 520px;
+      backdrop-filter: blur(10px);
+    }
+
+    .what-you-get-box h3 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0b1a2f;
+      margin-bottom: 1.1rem;
+    }
+
+    .what-you-get-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .what-you-get-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      font-size: 0.95rem;
+      color: #3f506b;
+      line-height: 1.45;
+    }
+
+    .what-you-get-list li i {
+      color: var(--contact-blue);
+      font-size: 1.15rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* RIGHT COLUMN: Contact Form Card */
+    .contact-form-card {
+      background: var(--contact-card);
+      border: 1px solid rgba(220, 227, 239, 0.95);
+      border-radius: 24px;
+      padding: 2.75rem 2.6rem;
+      box-shadow: 0 18px 45px -12px rgba(15, 31, 61, 0.08), 0 4px 14px rgba(15, 31, 61, 0.03);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .form-group-label {
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #4a5972;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .form-custom-input,
+    .form-custom-select,
+    .form-custom-textarea {
+      width: 100%;
+      background: #ffffff;
+      border: 1.5px solid #dce4f0;
+      border-radius: 12px;
+      padding: 0.85rem 1.15rem;
+      font-size: 0.98rem;
+      color: #0e1e38;
+      font-family: inherit;
+      transition: all 0.22s ease;
+      outline: none;
+    }
+
+    .form-custom-input::placeholder,
+    .form-custom-textarea::placeholder {
+      color: #9aa9bf;
+      font-size: 0.93rem;
+    }
+
+    .form-custom-input:focus,
+    .form-custom-select:focus,
+    .form-custom-textarea:focus {
+      border-color: var(--contact-blue);
+      box-shadow: 0 0 0 4px rgba(22, 82, 214, 0.12);
+      background-color: #ffffff;
+    }
+
+    .form-custom-textarea {
+      resize: vertical;
+      min-height: 130px;
+    }
+
+    /* Quick category pill chips */
+    .inquiry-chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.55rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .inquiry-chip {
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #f1f5fb;
+      color: #3b4d6a;
+      border: 1px solid #d8e3f2;
+      padding: 0.32rem 0.75rem;
+      border-radius: 99px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+    }
+
+    .inquiry-chip:hover {
+      background: #e3edfa;
+      color: var(--contact-blue);
+      border-color: #bcd2f3;
+    }
+
+    .inquiry-chip.active {
+      background: var(--contact-blue);
+      color: #ffffff;
+      border-color: var(--contact-blue);
+      box-shadow: 0 4px 12px rgba(22, 82, 214, 0.25);
+    }
+
+    /* Phone input wrapper */
+    .phone-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .phone-country-code {
+      position: absolute;
+      left: 14px;
+      width: 132px;
+      height: 38px;
+      padding: 0.35rem 1.8rem 0.35rem 0.55rem;
+      border: 0;
+      border-right: 1px solid #dce4f0;
+      border-radius: 0;
+      background-color: #fff;
+      font-size: 0.88rem;
+      color: #4a5c78;
+      z-index: 1;
+      box-shadow: none;
+    }
+
+    .phone-country-code:focus {
+      border-color: transparent;
+      box-shadow: none;
+    }
+
+    .phone-input-wrap .form-custom-input {
+      padding-left: 158px;
+    }
+
+    /* Consent disclaimer */
+    .form-disclaimer {
+      font-size: 0.81rem;
+      color: #697891;
+      line-height: 1.55;
+      margin-top: 1.35rem;
+      margin-bottom: 1.6rem;
+    }
+
+    .form-disclaimer a {
+      color: var(--contact-blue);
+      text-decoration: underline;
+    }
+
+    /* Submit Button */
+    .btn-submit-message {
+      width: 100%;
+      background: #1677ff;
+      background: linear-gradient(135deg, #1672f7, #1355db);
+      color: #ffffff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 0.98rem 2rem;
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 10px 24px -5px rgba(19, 85, 219, 0.42);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      cursor: pointer;
+      transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-submit-message:hover {
+      background: linear-gradient(135deg, #1062dc, #0b43b3);
+      box-shadow: 0 14px 28px -4px rgba(19, 85, 219, 0.55);
+      transform: translateY(-2px);
+      color: #ffffff;
+    }
+
+    .btn-submit-message:active {
+      transform: scale(0.98) translateY(0);
+    }
+
+    .btn-submit-message:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* SUCCESS CONFIRMATION STATE */
+    .contact-success-state {
+      display: none;
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      animation: fadeInScale 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .success-icon-badge {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      background: #eef8f2;
+      color: #10b981;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      margin-bottom: 1.35rem;
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.28);
+    }
+
+    .ticket-pill-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #eff5ff;
+      border: 1px dashed #bcd5fd;
+      padding: 0.45rem 1.15rem;
+      border-radius: 99px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--contact-blue);
+      margin: 1rem 0 1.5rem;
+    }
+
+    .btn-copy-ticket {
+      background: none;
+      border: none;
+      color: var(--contact-blue);
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+
+    .btn-copy-ticket:hover {
+      background: #d8e7ff;
+    }
+
+    /* FAQ Quick Strip */
+    .contact-faq-section {
+      background: #ffffff;
+      border-top: 1px solid var(--contact-border);
+      border-bottom: 1px solid var(--contact-border);
+      padding: 4.5rem 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .faq-pill-badge {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      background: var(--contact-light-blue);
+      color: var(--contact-blue);
+      padding: 0.35rem 0.85rem;
+      border-radius: 99px;
+      margin-bottom: 0.65rem;
+    }
+
+    .accordion-contact .accordion-item {
+      border: 1px solid var(--contact-border);
+      border-radius: 14px !important;
+      margin-bottom: 0.85rem;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(15, 31, 61, 0.02);
+    }
+
+    .accordion-contact .accordion-button {
+      font-weight: 700;
+      font-size: 1.02rem;
+      color: #0f203e;
+      padding: 1.15rem 1.4rem;
+      background: #ffffff;
+      box-shadow: none;
+    }
+
+    .accordion-contact .accordion-button:not(.collapsed) {
+      color: var(--contact-blue);
+      background: #f7faff;
+    }
+
+    .accordion-contact .accordion-body {
+      padding: 1.15rem 1.4rem;
+      color: #556681;
+      font-size: 0.95rem;
+      line-height: 1.65;
+    }
+
+    /* Live status badge */
+    .online-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+      padding: 0.28rem 0.75rem;
+      border-radius: 99px;
+      margin-bottom: 1.1rem;
+    }
+
+    .online-dot {
+      width: 7px;
+      height: 7px;
+      background-color: #10b981;
+      border-radius: 50%;
+      animation: pulseGreen 1.8s infinite;
+    }
+
+    @keyframes pulseGreen {
+      0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+      }
+
+      70% {
+        box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 991.98px) {
+      .contact-hero-section {
+        padding-top: 100px;
+        padding-bottom: 50px;
+      }
+
+      .contact-form-card {
+        padding: 2rem 1.6rem;
+        margin-top: 2rem;
+      }
+
+      .what-you-get-box {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 575.98px) {
+      .contact-form-card {
+        padding: 1.6rem 1.25rem;
+        border-radius: 18px;
+      }
+
+      .contact-main-title {
+        font-size: 2.15rem;
+      }
+    }
+  </style>
+</head>
+
+<body class="contact-body">
+
+  <!-- Ambient mesh lights -->
+  <div class="contact-ambient-glow"></div>
+
+  <!-- ============ NAVBAR ============ -->
+  <nav class="navbar navbar-expand-lg fixed-top ib-nav" id="ibNav">
+    <div class="container">
+      <a class="navbar-brand" href="index.html" aria-label="InternBoot Home">
+        <img src="assets/internboot-logo.png" alt="InternBoot" class="brand-logo-img">
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ibMenu"
+        aria-controls="ibMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="ibMenu">
+        <ul class="navbar-nav ms-auto align-items-lg-center">
+          <li class="nav-item"><a class="nav-link ib-nav-link" href="index.html#how">How it works</a></li>
+          <li class="nav-item"><a class="nav-link ib-nav-link" href="index.html#levels">Levels</a></li>
+          <li class="nav-item"><a class="nav-link ib-nav-link" href="index.html#pattern">Pattern</a></li>
+          <li class="nav-item"><a class="nav-link ib-nav-link" href="index.html#fee">Fee</a></li>
+          <li class="nav-item"><a class="nav-link ib-nav-link" href="index.html#contact">Contact Us</a></li>
+          <li class="nav-item"><a class="nav-link ib-nav-link" href="index.html#faq">FAQs</a></li>
+          <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
+            <a class="btn btn-ib-primary w-100" href="register.php">
+              <span>Register now</span>
+              <i class="bi bi-arrow-right-short fs-5"></i>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============ PRIVACY POLICY ============ -->
+  <main class="page-content-section"
+    style="background-color: #f8f9fa; padding-top: 130px; padding-bottom: 80px; min-height: 60vh;">
+    <div class="text-center mb-5">
+      <div class="container">
+        <h1 class="fw-bold mb-3" style="font-size: 3rem; color: #333;">Privacy Policy</h1>
+        <p class="fs-5" style="color: #6c757d;">How we collect, use, share and protect your information</p>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-10">
+          <div class="policy-content bg-white p-4 p-md-5 shadow-sm border border-light"
+            style="border-radius: 12px; font-size: 0.92rem; line-height: 1.6;">
+            <p class="text-muted mb-4" style="font-size: 0.85rem;">Last Updated: September, 2026</p>
+
+            <h3 class="fw-bold mb-3">Introduction</h3>
+            <p>This Privacy Policy describes how Employment Express Verband LLP and its affiliates (collectively
+              "Employment Express Verband LLP, we, our, us") collect, use, share, protect or otherwise process your
+              information/personal data through our website <strong>https://INTERNBOOT.COM</strong> (hereinafter
+              referred to as "Platform"). Please note that you may be able to browse certain sections of the Platform
+              without registering with us.</p>
+
+            <p>This privacy policy applies to all information collected through our website (internboot.com), and/or any
+              related services, sales, marketing or events (we refer to them collectively in this privacy policy as the
+              "Services").</p>
+
+            <h3 class="fw-bold mt-4 mb-3">1. Information We Collect</h3>
+            <p>We collect personal information that you voluntarily provide to us when you register on the Services,
+              express an interest in obtaining information about us or our products and Services, when you participate
+              in activities on the Services (such as taking assessments), or otherwise when you contact us.</p>
+            <ul>
+              <li><strong>Personal Information:</strong> Name, email address, phone number, academic records, resume/CV,
+                government-issued IDs (for verification), and payment information.</li>
+              <li><strong>Assessment Data:</strong> Responses to exam questions, code submissions, webcam/audio feeds
+                (during proctored exams), and overall assessment scores (Levels 1 and 2).</li>
+              <li><strong>Usage Data:</strong> IP address, browser and device characteristics, operating system,
+                referring URLs, device name, country, location, and information about how and when you use our Services.
+              </li>
+            </ul>
+
+            <h3 class="fw-bold mt-4 mb-3">2. How We Use Your Information</h3>
+            <p>We use personal information collected via our Services for a variety of business purposes described
+              below:</p>
+            <ul>
+              <li><strong>To facilitate account creation and logon process.</strong></li>
+              <li><strong>To provide and manage assessments:</strong> Ensuring the integrity of our exams through
+                proctoring and verifying candidate identity.</li>
+              <li><strong>To facilitate placement opportunities:</strong> Sharing your profile, assessment scores, and
+                resume with our verified hiring partners to connect you with internship and full-time opportunities.
+              </li>
+              <li><strong>To process payments:</strong> Managing fee transactions, refunds, and generating invoices.
+              </li>
+              <li><strong>To send administrative information:</strong> Sending you details about your exam slots,
+                results, and changes to our terms, conditions, and policies.</li>
+              <li><strong>To protect our Services:</strong> Keeping our platform safe and secure (for example, for fraud
+                monitoring and prevention).</li>
+            </ul>
+
+            <h3 class="fw-bold mt-4 mb-3">3. Information Sharing and Disclosure</h3>
+            <p>We may share your data with third parties in the following situations:</p>
+            <ul>
+              <li><strong>Hiring Partners:</strong> With your consent, we share your assessment results, profile
+                details, and contact information with verified hiring partners to assist in your job placement.</li>
+              <li><strong>Service Providers:</strong> We may share your data with third-party vendors, service
+                providers, contractors, or agents who perform services for us or on our behalf and require access to
+                such information to do that work (e.g., payment processing, data analysis, email delivery, hosting
+                services, and proctoring services).</li>
+              <li><strong>Legal Obligations:</strong> We may disclose your information where we are legally required to
+                do so in order to comply with applicable law, governmental requests, a judicial proceeding, court order,
+                or legal process.</li>
+            </ul>
+
+            <h3 class="fw-bold mt-4 mb-3">4. Cookies and Similar Technologies</h3>
+            <p>We may use cookies and similar tracking technologies (like web beacons and pixels) to access or store
+              information. Specific information about how we use such technologies and how you can refuse certain
+              cookies is set out in our Cookie Notice.</p>
+
+            <h3 class="fw-bold mt-4 mb-3">5. Data Retention and Security</h3>
+            <p>We will only keep your personal information for as long as it is necessary for the purposes set out in
+              this privacy notice, unless a longer retention period is required or permitted by law. We have implemented
+              appropriate technical and organizational security measures designed to protect the security of any
+              personal information we process. However, despite our safeguards and efforts to secure your information,
+              no electronic transmission over the Internet or information storage technology can be guaranteed to be
+              100% secure.</p>
+
+            <h3 class="fw-bold mt-4 mb-3">6. Your Privacy Rights</h3>
+            <p>In some regions, you have certain rights under applicable data protection laws. These may include the
+              right (i) to request access and obtain a copy of your personal information, (ii) to request rectification
+              or erasure; (iii) to restrict the processing of your personal information; and (iv) if applicable, to data
+              portability. You can manage your preferences by logging into your candidate dashboard or contacting our
+              support team.</p>
+
+            <h3 class="fw-bold mt-4 mb-3">7. Changes to This Policy</h3>
+            <p>We may update this privacy notice from time to time. The updated version will be indicated by an updated
+              "Last updated" date and the updated version will be effective as soon as it is accessible. We encourage
+              you to review this privacy notice frequently to be informed of how we are protecting your information.</p>
+
+            <h3 class="fw-bold mt-4 mb-3">8. Contact Us</h3>
+            <p>If you have questions or comments about this notice, you may email us at <a
+                href="mailto:support@internboot.com">support@internboot.com</a> or by post to:</p>
+            <p>
+              <strong>Employment Express Verband LLP</strong><br>
+              C56A/25, C Block, Phase 2, Industrial Area, Sector 62, Noida, Uttar Pradesh 201309<br>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- ============ FOOTER ============ -->
+  <footer class="ib-footer text-white" style="background-color: #000; padding: 60px 0 25px; font-size: 0.95rem;">
+    <div class="container position-relative">
+      <div class="row g-4">
+        <!-- Column 1 -->
+        <div class="col-lg-4 pe-lg-5">
+          <a class="navbar-brand d-inline-block mb-4" href="index.html#home" aria-label="InternBoot Home">
+            <img src="assets/internboot-logo.png" alt="InternBoot" class="footer-logo-img" style="height: 45px; background: white; padding: 6px; border-radius: 4px;">
+          </a>
+          <p class="text-white-50 mb-4 pe-lg-4" style="line-height: 1.6;">
+            InternBoot connects ambitious graduates with verified internships and top hiring partners across India.
+          </p>
+          <div class="d-flex gap-3 mt-3">
+            <a href="https://www.linkedin.com/showcase/internboot/" class="text-white d-flex align-items-center justify-content-center rounded-circle" style="width: 38px; height: 38px; background: #1e40af; text-decoration: none; transition: 0.3s;" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+            <a href="https://www.instagram.com/internboot_official?stkn=bTV0bXh0aGV0aG8w" class="text-white d-flex align-items-center justify-content-center rounded-circle" style="width: 38px; height: 38px; background: #1e40af; text-decoration: none; transition: 0.3s;" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+            <a href="https://www.facebook.com/profile.php?id=61595012547804" class="text-white d-flex align-items-center justify-content-center rounded-circle" style="width: 38px; height: 38px; background: #1e40af; text-decoration: none; transition: 0.3s;" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+            <a href="https://www.youtube.com/@Internboot-k7m" class="text-white d-flex align-items-center justify-content-center rounded-circle" style="width: 38px; height: 38px; background: #1e40af; text-decoration: none; transition: 0.3s;" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+          </div>
+        </div>
+
+        <!-- Column 2: Platform -->
+        <div class="col-6 col-lg-3 ps-lg-4">
+          <h5 class="fw-bold mb-2 text-white fs-5">Platform</h5>
+          <div style="height: 2px; width: 35px; background-color: rgba(255,255,255,0.4); margin-bottom: 24px;"></div>
+          <ul class="list-unstyled d-flex flex-column gap-3 mb-0">
+            <li><a href="index.html#how" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>How it works</a></li>
+            <li><a href="index.html#levels" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Levels</a></li>
+            <li><a href="index.html#pattern" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Pattern</a></li>
+            <li><a href="index.html#fee" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Fee</a></li>
+            <li><a href="index.html#contact" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Contact Us</a></li>
+            <li><a href="index.html#faq" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>FAQs</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 3: Candidate -->
+        <div class="col-6 col-lg-2">
+          <h5 class="fw-bold mb-2 text-white fs-5">Candidate</h5>
+          <div style="height: 2px; width: 35px; background-color: rgba(255,255,255,0.4); margin-bottom: 24px;"></div>
+          <ul class="list-unstyled d-flex flex-column gap-3 mb-0">
+            <li><a href="register.php" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Register</a></li>
+            <li><a href="login.php" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Login</a></li>
+            <li><a href="index.html#contact" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Contact Us</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 4: Reach us -->
+        <div class="col-lg-3 position-relative d-flex flex-column">
+          <h5 class="fw-bold mb-2 text-white fs-5">Reach us</h5>
+          <div style="height: 2px; width: 35px; background-color: rgba(255,255,255,0.4); margin-bottom: 24px;"></div>
+          <ul class="list-unstyled d-flex flex-column gap-3 mb-5">
+            <li><a href="mailto:support@internboot.com" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>support@internboot.com</a></li>
+            <li><a href="index.html#contact" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>Candidate Support Desk</a></li>
+            <li><a href="https://internboot.com" class="text-white text-decoration-none"><i class="bi bi-chevron-right text-white-50 me-2" style="font-size: 0.75rem;"></i>internboot.com</a></li>
+            <li class="d-flex align-items-start"><i class="bi bi-chevron-right text-white-50 me-2 mt-1" style="font-size: 0.75rem;"></i><span class="text-white">C56A/25, C Block, Phase 2, Industrial Area, Sector 62, Noida, Uttar Pradesh 201309</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <hr class="mt-4 mb-4 border-white opacity-25">
+
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center text-white-50" style="font-size: 0.85rem;">
+        <div class="mb-3 mb-md-0">
+          &copy; <span id="year">2026</span> <span class="text-white fw-bold">InternBoot</span>. All rights reserved.
+        </div>
+        <div>
+          <a href="terms.html" class="text-white text-decoration-none">Terms of Services</a> <span class="mx-2 text-white-50">|</span> 
+          <a href="privacy.html" class="text-white text-decoration-none">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="actionToast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive"
+      aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body" id="toastMessage">
+          Copied to clipboard!
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+
+  <!-- Interactive JavaScript Logic -->
+  <script>
+    // Set dynamic copyright year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Clipboard copy helper
+    function copyToClipboard(text, btnElement) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast('Copied: ' + text));
+      } else {
+        const input = document.createElement('textarea');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        showToast('Copied: ' + text);
+      }
+    }
+
+    function showToast(message) {
+      const toastEl = document.getElementById('actionToast');
+      const toastBody = document.getElementById('toastMessage');
+      if (toastEl && toastBody) {
+        toastBody.textContent = message;
+        const bsToast = new bootstrap.Toast(toastEl, { delay: 2400 });
+        bsToast.show();
+      }
+    }
+
+    // Category chips click handler
+    const inquirySelect = document.getElementById('inquiryType');
+    const chips = document.querySelectorAll('.inquiry-chip');
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        const val = chip.getAttribute('data-val');
+        if (inquirySelect) {
+          inquirySelect.value = val;
+        }
+      });
+    });
+
+    if (inquirySelect) {
+      inquirySelect.addEventListener('change', () => {
+        const selectedVal = inquirySelect.value;
+        let matched = false;
+        chips.forEach(c => {
+          if (c.getAttribute('data-val') === selectedVal) {
+            c.classList.add('active');
+            matched = true;
+          } else {
+            c.classList.remove('active');
+          }
+        });
+      });
+    }
+
+    // Form Submission Handling with AJAX
+    const contactForm = document.getElementById('candidateContactForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnIcon = document.getElementById('btnIcon');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const errorAlert = document.getElementById('formErrorAlert');
+    const errorMessage = document.getElementById('formErrorMessage');
+    const successState = document.getElementById('contactSuccessState');
+    const ticketIdDisplay = document.getElementById('ticketIdDisplay');
+    const successGreeting = document.getElementById('successGreeting');
+    const copyTicketBtn = document.getElementById('copyTicketBtn');
+    const btnSendAnother = document.getElementById('btnSendAnother');
+
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.classList.add('d-none');
+
+      // HTML5 Validation Check
+      if (!contactForm.checkValidity()) {
+        e.stopPropagation();
+        contactForm.classList.add('was-validated');
+        return;
+      }
+
+      // Collect data
+      const formData = new FormData(contactForm);
+      const payload = {
+        first_name: formData.get('first_name')?.trim(),
+        last_name: formData.get('last_name')?.trim(),
+        email: formData.get('email')?.trim(),
+        phone: formData.get('phone')?.trim()
+          ? formData.get('phone_country_code') + ' ' + formData.get('phone').trim()
+          : '',
+        inquiry_type: formData.get('inquiry_type'),
+        message: formData.get('message')?.trim()
+      };
+
+      // Loading state
+      submitBtn.disabled = true;
+      btnText.textContent = 'Submitting...';
+      btnIcon.classList.add('d-none');
+      btnSpinner.classList.remove('d-none');
+
+      try {
+        const response = await fetch('api/contact.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.status === 'success') {
+          // Success Transition
+          contactForm.classList.add('d-none');
+          successState.style.display = 'block';
+
+          const ticketId = result.data?.ticket_id || 'IB-TKT-' + Math.floor(1000 + Math.random() * 9000);
+          ticketIdDisplay.textContent = ticketId;
+
+          const userName = payload.first_name || 'Candidate';
+          successGreeting.textContent = `Thank you, ${userName}! Your message regarding "${payload.inquiry_type}" has been received.`;
+
+          copyTicketBtn.onclick = () => copyToClipboard(ticketId, copyTicketBtn);
+        } else {
+          // Error Handling
+          const errMsg = result.message || 'Unable to submit your inquiry right now. Please try again.';
+          errorMessage.textContent = errMsg;
+          errorAlert.classList.remove('d-none');
+        }
+      } catch (err) {
+        // Fallback for network issues
+        errorMessage.textContent = 'Connection error. Please check your network or email us directly at support@internboot.com.';
+        errorAlert.classList.remove('d-none');
+      } finally {
+        submitBtn.disabled = false;
+        btnText.textContent = 'Send Message';
+        btnIcon.classList.remove('d-none');
+        btnSpinner.classList.add('d-none');
+      }
+    });
+
+    // Reset for another message
+    if (btnSendAnother) {
+      btnSendAnother.addEventListener('click', () => {
+        contactForm.reset();
+        contactForm.classList.remove('was-validated');
+        contactForm.classList.remove('d-none');
+        successState.style.display = 'none';
+        errorAlert.classList.add('d-none');
+        chips.forEach(c => c.classList.remove('active'));
+        if (chips[0]) chips[0].classList.add('active');
+      });
+    }
+
+    // Navbar scroll effect
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('ibNav');
+      if (window.scrollY > 30) {
+        nav.classList.add('scrolled');
+      } else {
+        nav.classList.remove('scrolled');
+      }
+    });
+
+    // â”€â”€ FAQ Hover-to-Open / Hover-away-to-Close â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    (function () {
+      const faqItems = document.querySelectorAll('#contactFaqAccordion .accordion-item');
+      let hoverTimer = null;
+      let currentOpen = null;
+
+      faqItems.forEach(item => {
+        const collapseEl = item.querySelector('.accordion-collapse');
+        const btnEl = item.querySelector('.accordion-button');
+        if (!collapseEl || !btnEl) return;
+
+        item.addEventListener('mouseenter', () => {
+          clearTimeout(hoverTimer);
+          hoverTimer = setTimeout(() => {
+            if (currentOpen && currentOpen !== collapseEl) {
+              // Close the previously opened item
+              const prevInstance = bootstrap.Collapse.getInstance(currentOpen);
+              if (prevInstance) prevInstance.hide();
+            }
+            // Open this item if not already open
+            if (!collapseEl.classList.contains('show')) {
+              let instance = bootstrap.Collapse.getInstance(collapseEl);
+              if (!instance) instance = new bootstrap.Collapse(collapseEl, { toggle: false });
+              instance.show();
+            }
+            currentOpen = collapseEl;
+          }, 120); // 120ms hover intent delay
+        });
+
+        item.addEventListener('mouseleave', () => {
+          clearTimeout(hoverTimer);
+        });
+      });
+
+      // When the whole accordion is left with no item hovered, close current
+      const accordion = document.getElementById('contactFaqAccordion');
+      if (accordion) {
+        accordion.addEventListener('mouseleave', () => {
+          clearTimeout(hoverTimer);
+          hoverTimer = setTimeout(() => {
+            if (currentOpen) {
+              const instance = bootstrap.Collapse.getInstance(currentOpen);
+              if (instance) instance.hide();
+              currentOpen = null;
+            }
+          }, 200);
+        });
+      }
+    })();
+  </script>
+</body>
+
+</html>

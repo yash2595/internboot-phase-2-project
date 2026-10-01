@@ -72,23 +72,15 @@ try {
 
     $role = resolve_admin_role($conn);
     if ($role !== 'admin') {
-        $candidateId = $_SESSION['candidate_id'] ?? 0;
-        if (!$candidateId && isset($_SESSION['user_id'])) {
-            $stmt = $conn->prepare('SELECT id FROM candidates WHERE user_id = ? LIMIT 1');
-            $userId = (int)$_SESSION['user_id'];
-            $stmt->bind_param('i', $userId);
-            $stmt->execute();
-            $cRow = $stmt->get_result()->fetch_assoc();
-            $stmt->close();
-            if ($cRow) $candidateId = (int)$cRow['id'];
-        }
-        
-        if ($candidateId <= 0 || $candidateId !== (int)$data['candidate_id']) {
+        require_once __DIR__ . '/../../../src/core/candidate_resolver.php';
+        $candidateId = validate_candidate_session($conn);
+        if ($candidateId === null || $candidateId !== (int)$data['candidate_id']) {
             throw new AdminAccessDeniedException('Access denied. You can only view your own certificate.');
         }
     }
 
-    output_certificate_pdf($data);
+    $inline = !empty($_GET['view']);
+    output_certificate_pdf($data, $inline);
 } catch (AdminAccessDeniedException $e) {
     render_certificate_error_page($e->getMessage(), 403);
 
@@ -96,8 +88,8 @@ try {
     render_certificate_error_page($e->getMessage(), 422);
 } catch (Throwable $e) {
     error_log('InternBoot M7 certificate PDF error: ' . $e->getMessage());
-    $dev = ($_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production') === 'development';
-    render_certificate_error_page($dev ? $e->getMessage() : 'Certificate could not be generated. Please try again or contact support.', 500);
+    render_certificate_error_page(is_dev_env() ? $e->getMessage() : 'Certificate could not be generated. Please try again or contact support.', 500);
 }
+
 
 

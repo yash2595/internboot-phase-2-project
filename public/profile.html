@@ -1,39 +1,868 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>InternBoot | My Profile</title><link rel="stylesheet" href="css/style.css"></head>
-<body>
-<div class="app">
-<aside class="sidebar">
-<div class="brand"><a href="dashboard.html"><img src="assets/internboot-logo.png" alt="InternBoot logo"></a></div>
-<nav class='side-nav'><a class='nav-item' href='dashboard.html'><span>Dashboard</span></a><a class='nav-item active' href='profile.html'><span>My Profile</span></a><a class='nav-item' href='payment.html'><span>Payments</span></a><a class='nav-item' href='enrollment.html'><span>Enrollment</span></a><a class='nav-item' href='batches-slots.html'><span>Batches & Slots</span></a><a class='nav-item' href='exam.html'><span>Exam</span></a><a class='nav-item' href='results.html'><span>Results</span></a><a class='nav-item' href='certificates.html'><span>Certificates</span></a></nav>
-<div class="nav-bottom"><a class="nav-item" href="settings.html">Settings</a><a class="nav-item logout" href="api/auth/logout.php">Logout</a></div>
-</aside>
-<main class="main">
-<header class="topbar">
-<div class="title"><h1>My Profile</h1><p>Personal and registration details</p></div>
-<a class="profile-trigger" href="profile.html" title="My Profile"><div class="avatar">JD</div><div class="user"><strong><span data-candidate="name"></span></strong><small>Candidate</small></div></a>
-</header>
-<section class="content">
-<div class="hero"><h2><span data-candidate="name"></span></h2><p>Candidate ID: <span data-candidate="candidateId"></span> · <span class="badge green">Active Account</span></p></div>
-<div class="grid">
-<section class="card card-pad"><h2 class="section-title">Personal Information</h2>
-<div class="row"><span class="label">Full Name</span><span class="value"><span data-candidate="name"></span></span></div>
-<div class="row"><span class="label">Email</span><span class="value"><span data-candidate="email"></span></span></div>
-<div class="row"><span class="label">Phone</span><span class="value"><span data-candidate="phone"></span></span></div>
-<div class="row"><span class="label">Date of Birth</span><span class="value"><span data-candidate="dateOfBirth"></span></span></div>
-<div class="row"><span class="label">Gender</span><span class="value"><span data-candidate="gender"></span></span></div>
-<div class="row"><span class="label">Address</span><span class="value"><span data-candidate="address"></span></span></div>
-</section>
-<section class="card card-pad"><h2 class="section-title">Candidate Details</h2>
-<div class="row"><span class="label">Candidate ID</span><span class="value"><span data-candidate="candidateId"></span></span></div>
-<div class="row"><span class="label">Registration Date</span><span class="value"><span data-candidate="registrationDate"></span></span></div>
-<div class="row"><span class="label">Current Level</span><span class="value"><span class="badge blue">Level 1</span></span></div>
-<div class="row"><span class="label">Registration Status</span><span class="value"><span class="badge green">Registered</span></span></div>
-<div class="row"><span class="label">Profile Status</span><span class="value"><span class="badge green">Verified</span></span></div>
-</section>
-</div>
-</section>
-<footer class="footer"><span>© 2026 InternBoot. All rights reserved.</span><span>Privacy Policy　 |　 Terms of Service　 |　 Support</span></footer>
-</main></div>
-<script src="js/app.js"></script>
-</body></html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <title>InternBoot | My Profile</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+      window.tailwind = window.tailwind || {};
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "intern-blue": "#2563eb",
+              "intern-dark": "#17243a",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+      html {
+        overflow-x: hidden;
+      }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        background: #eef3ff;
+      }
+
+      aside,
+      nav {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      aside::-webkit-scrollbar,
+      nav::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+      }
+    </style>
+  </head>
+
+  <body class="bg-[#eef3ff] text-slate-600 antialiased">
+    <div class="min-h-screen">
+      <!-- =====================================================
+           SIDEBAR
+      ====================================================== -->
+
+      <aside
+        class="fixed inset-y-0 left-0 z-50 hidden lg:flex w-[250px] bg-gradient-to-b from-[#294fae] to-[#347de9] text-white flex-col overflow-hidden"
+      >
+        <!-- Logo -->
+        <div
+          class="h-16 px-5 flex items-center border-b border-white/10 shrink-0"
+        >
+          <a href="dashboard.html" class="flex items-center gap-3 min-w-0 ">
+            <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+              <img src="assets/internboot-logo.png" alt="InternBoot logo" class="w-9 h-9 object-contain" />
+            </div>
+            <div class="min-w-0">
+              <div class="text-lg font-bold leading-tight">Internboot</div>
+              <div class="text-xs text-blue-100 mt-0.5">Student Dashboard</div>
+            </div>
+          </a>
+        </div>
+
+        <!-- Main Navigation -->
+        <nav class="flex-1 min-h-0 p-4 space-y-1 overflow-hidden">
+          <!-- Dashboard -->
+          <a
+            href="dashboard.html"
+            data-page="dashboard.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <i data-lucide="layout-dashboard" class="w-5 h-5 shrink-0"></i>
+
+            <span>Dashboard</span>
+          </a>
+
+          <!-- My Profile -->
+          <a
+            href="profile.html"
+            data-page="profile.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/20 text-white font-medium shadow-sm"
+          >
+            <i data-lucide="user-round" class="w-5 h-5 shrink-0"></i>
+
+            <span>My Profile</span>
+
+            <span class="ml-auto w-2 h-2 rounded-full bg-blue-200"></span>
+          </a>
+
+          <!-- Payments -->
+          <a
+            href="payment.html"
+            data-page="payment.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <i data-lucide="credit-card" class="w-5 h-5 shrink-0"></i>
+
+            <span>Payments</span>
+          </a>
+
+          <!-- Enrollment -->
+          <a
+            href="enrollment.html"
+            data-page="enrollment.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <i data-lucide="clipboard-check" class="w-5 h-5 shrink-0"></i>
+
+            <span>Enrollment</span>
+          </a>
+
+          <!-- Batches & Slots -->
+          <a
+            href="batches-slots.html"
+            data-page="batches-slots.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <i data-lucide="calendar-days" class="w-5 h-5 shrink-0"></i>
+
+            <span>Batches &amp; Slots</span>
+          </a>
+
+          <!-- Exam -->
+          <a
+            href="exam.html"
+            data-page="exam.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <i data-lucide="file-pen-line" class="w-5 h-5 shrink-0"></i>
+
+            <span>Exam</span>
+          </a>
+
+          <!-- Results -->
+          <a
+            href="results.html"
+            data-page="results.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <i
+              data-lucide="chart-no-axes-combined"
+              class="w-5 h-5 shrink-0"
+            ></i>
+
+            <span>Results</span>
+          </a>
+
+          <!-- Certificates -->
+          <a
+            href="certificates.html"
+            data-page="certificates.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <i data-lucide="award" class="w-5 h-5 shrink-0"></i>
+
+            <span>Certificates</span>
+          </a>
+
+          <!-- Placement -->
+          <a
+            href="placement.html"
+            data-page="placement.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <i data-lucide="briefcase-business" class="w-5 h-5 shrink-0"></i>
+
+            <span>Placement</span>
+          </a>
+        </nav>
+
+                <!-- Bottom Section -->
+        <div class="shrink-0 border-t border-white/10 p-4 space-y-2">
+
+          <!-- Live Student Profile -->
+          <a
+            href="profile.html"
+            class="flex items-center gap-3 rounded-xl bg-white/10 border border-white/10 px-3 py-2.5 hover:bg-white/15 transition-all duration-200"
+          >
+            <!-- Avatar -->
+            <div
+              id="sidebar-student-avatar"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-300 to-purple-400 text-white font-bold text-sm"
+            >
+              <span data-candidate="initials">KB</span>
+            </div>
+
+            <!-- Student Details -->
+            <div class="min-w-0 flex-1">
+              <p
+                id="sidebar-student-name"
+                data-candidate="name"
+                class="truncate text-[13px] font-bold leading-tight text-white"
+              >
+                Student
+              </p>
+
+              <p class="mt-0.5 text-[11px] leading-tight text-blue-100/80">
+                Student
+              </p>
+            </div>
+
+            <!-- Online Status -->
+            <span
+              class="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400"
+              title="Active"
+            ></span>
+          </a>
+
+          <!-- Logout -->
+          <a
+            href="api/auth/logout.php"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <i data-lucide="log-out" class="w-5 h-5 shrink-0"></i>
+
+            <span>Logout</span>
+          </a>
+        </div>
+      </aside>
+
+      <!-- =====================================================
+           MAIN
+      ====================================================== -->
+
+      <main
+        class="lg:ml-[250px] lg:w-[calc(100%-250px)] w-full min-h-screen min-w-0"
+      >
+        <!-- =================================================
+             FIXED HEADER
+        ================================================== -->
+
+        <header
+          class="fixed top-0 right-0 left-0 lg:left-[250px] z-40 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-4 lg:px-5"
+        >
+          <!-- Header Left -->
+          <div class="flex items-center gap-3 min-w-0">
+            <div
+              class="w-9 h-9 shrink-0 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"
+            >
+              <i data-lucide="user-round" class="w-5 h-5"></i>
+            </div>
+
+            <strong
+              class="text-base font-semibold text-slate-600 whitespace-nowrap"
+            >
+              My Profile
+            </strong>
+
+            <span
+              class="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-semibold"
+            >
+              Account
+            </span>
+          </div>
+
+          <!-- Header Candidate -->
+          <a
+            href="profile.html"
+            title="Open My Profile"
+            class="flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-slate-50 transition shrink-0"
+          >
+            <div
+              class="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-semibold"
+              data-candidate="initials"
+            >
+              --
+            </div>
+
+            <div class="hidden sm:flex flex-col min-w-0">
+              <strong
+                class="text-[13px] font-semibold text-slate-600 truncate max-w-40"
+              >
+                <span data-candidate="name"></span>
+              </strong>
+
+              <small class="text-[11px] text-slate-500 truncate max-w-48">
+                <span data-candidate="email"></span>
+              </small>
+            </div>
+          </a>
+        </header>
+
+        <!-- =================================================
+             PAGE CONTENT
+        ================================================== -->
+
+        <section class="w-full p-4 sm:p-4 lg:p-5 pt-[84px] lg:pt-[88px]">
+          <div class="max-w-[1400px] mx-auto w-full">
+            <!-- =================================================
+                 PROFILE HERO
+            ================================================== -->
+
+            <section
+              class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#21489f] via-[#2f63c8] to-[#4388f2] p-5 sm:p-7 lg:p-6 mb-5 text-white shadow-sm"
+            >
+              <!-- Background Decoration -->
+              <div
+                class="absolute -right-16 -top-24 w-80 h-80 rounded-full bg-white/10 pointer-events-none"
+              ></div>
+
+              <div
+                class="absolute right-36 -bottom-40 w-80 h-80 rounded-full bg-white/10 pointer-events-none"
+              ></div>
+
+              <!-- Rocket -->
+              <div
+                class="absolute right-8 top-5 opacity-15 pointer-events-none"
+              >
+                <i data-lucide="rocket" class="w-32 h-32 sm:w-40 sm:h-40"></i>
+              </div>
+
+              <div
+                class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5"
+              >
+                <!-- Hero Content -->
+                <div class="min-w-0">
+                  <div
+                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 text-white/90 text-[11px] font-medium mb-3"
+                  >
+                    <i data-lucide="user-check" class="w-4 h-4"></i>
+
+                    Profile Summary
+                  </div>
+
+                  <h1
+                    class="text-3xl sm:text-4xl lg:text-[42px] leading-tight font-bold tracking-tight break-words"
+                  >
+                    <span data-candidate="name"></span>
+                  </h1>
+
+                  <p class="mt-2 text-sm text-blue-50">
+                    Candidate ID:
+
+                    <span
+                      data-candidate="candidateId"
+                      class="font-semibold text-white"
+                    ></span>
+                  </p>
+                </div>
+
+                <!-- Active Account & Edit Profile -->
+                <div class="shrink-0 flex flex-wrap justify-end gap-3">
+                  <button
+                    onclick="document.getElementById('editProfileModal').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-medium text-[11px] transition-colors duration-200 shadow-sm"
+                  >
+                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                    Edit Profile
+                  </button>
+                  <span
+                    class="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-white text-blue-700 font-semibold text-[13px] shadow-sm"
+                  >
+                    <span
+                      class="w-2.5 h-2.5 rounded-full bg-emerald-500"
+                    ></span>
+
+                    Active Account
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <!-- =================================================
+                 INFORMATION CARDS
+            ================================================== -->
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+              <!-- =================================================
+                   PERSONAL INFORMATION
+              ================================================== -->
+
+              <section
+                class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+              >
+                <!-- Card Header -->
+                <div
+                  class="px-4 py-3 border-b border-slate-100 flex items-center gap-3"
+                >
+                  <div
+                    class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0"
+                  >
+                    <i data-lucide="contact" class="w-5 h-5"></i>
+                  </div>
+
+                  <div class="min-w-0">
+                    <h2 class="text-sm font-semibold text-slate-600">
+                      Personal Information
+                    </h2>
+
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                      Your registered contact details
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Information Rows -->
+                <div class="divide-y divide-slate-100">
+                  <!-- Full Name -->
+                  <div
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <i
+                        data-lucide="user"
+                        class="w-4 h-4 text-slate-400 shrink-0"
+                      ></i>
+
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
+                        Full Name
+                      </span>
+                    </div>
+
+                    <span
+                      class="text-[13px] font-semibold text-slate-600 text-right break-words"
+                    >
+                      <span data-candidate="name"></span>
+                    </span>
+                  </div>
+
+                  <!-- Email -->
+                  <div
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <i
+                        data-lucide="mail"
+                        class="w-4 h-4 text-slate-400 shrink-0"
+                      ></i>
+
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
+                        Email
+                      </span>
+                    </div>
+
+                    <span
+                      class="text-[13px] font-semibold text-slate-600 text-right break-all"
+                    >
+                      <span data-candidate="email"></span>
+                    </span>
+                  </div>
+
+                  <!-- Phone -->
+                  <div
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <i
+                        data-lucide="phone"
+                        class="w-4 h-4 text-slate-400 shrink-0"
+                      ></i>
+
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
+                        Phone
+                      </span>
+                    </div>
+
+                    <span
+                      class="text-[13px] font-semibold text-slate-600 text-right"
+                    >
+                      <span data-candidate="phone"></span>
+                    </span>
+                  </div>
+
+                  <!-- LinkedIn -->
+                  <div
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 text-slate-400 shrink-0">
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                      </svg>
+
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
+                        LinkedIn Profile
+                      </span>
+                    </div>
+
+                    <span
+                      class="text-[13px] font-medium text-slate-600 text-right truncate"
+                    >
+                      <a href="#" target="_blank" class="text-intern-blue hover:underline" data-candidate="linkedin">Not Provided</a>
+                    </span>
+                  </div>
+
+                  <!-- GitHub -->
+                  <div
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 text-slate-400 shrink-0">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                      </svg>
+
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
+                        GitHub Profile
+                      </span>
+                    </div>
+
+                    <span
+                      class="text-[13px] font-medium text-slate-600 text-right truncate"
+                    >
+                      <a href="#" target="_blank" class="text-intern-blue hover:underline" data-candidate="github">Not Provided</a>
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              <!-- =================================================
+                   CANDIDATE DETAILS
+              ================================================== -->
+
+              <section
+                class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+              >
+                <!-- Card Header -->
+                <div
+                  class="px-4 py-3 border-b border-slate-100 flex items-center gap-3"
+                >
+                  <div
+                    class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0"
+                  >
+                    <i data-lucide="badge-check" class="w-5 h-5"></i>
+                  </div>
+
+                  <div class="min-w-0">
+                    <h2 class="text-sm font-semibold text-slate-600">
+                      Candidate Details
+                    </h2>
+
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                      Registration and account information
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Detail Rows -->
+                <div class="divide-y divide-slate-100">
+                  <!-- Candidate ID -->
+                  <div
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <i
+                        data-lucide="hash"
+                        class="w-4 h-4 text-slate-400 shrink-0"
+                      ></i>
+
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
+                        Candidate ID
+                      </span>
+                    </div>
+
+                    <span
+                      class="text-[13px] font-semibold text-slate-600 text-right"
+                    >
+                      <span data-candidate="candidateId"></span>
+                    </span>
+                  </div>
+
+                  <!-- Registration Date -->
+                  <div
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <i
+                        data-lucide="calendar-days"
+                        class="w-4 h-4 text-slate-400 shrink-0"
+                      ></i>
+
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
+                        Registration Date
+                      </span>
+                    </div>
+
+                    <span
+                      class="text-[13px] font-semibold text-slate-600 text-right"
+                    >
+                      <span data-candidate="registrationDate"></span>
+                    </span>
+                  </div>
+
+                  <!-- Registration Status -->
+                  <div
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <i
+                        data-lucide="circle-check"
+                        class="w-4 h-4 text-slate-400 shrink-0"
+                      ></i>
+
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
+                        Registration Status
+                      </span>
+                    </div>
+
+                    <span class="shrink-0">
+                      <span
+                        data-candidate="registrationStatus"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold"
+                      >
+                        Registered
+                      </span>
+                    </span>
+                  </div>
+
+<!-- Profile Status -->
+                  <div
+                    class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <i
+                        data-lucide="shield-check"
+                        class="w-4 h-4 text-slate-400 shrink-0"
+                      ></i>
+
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">
+                        Profile Status
+                      </span>
+                    </div>
+
+                    <span class="shrink-0">
+                      <span
+                        id="profile-status-badge"
+                        data-candidate="profileStatus"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold"
+                      >
+                        Verified
+                      </span>
+                    </span>
+                  </div>
+                  <!-- Current Level -->
+                  <div class="px-4 py-3 flex items-center justify-between gap-4 min-h-[52px]">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <i data-lucide="layers-3" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                      <span class="text-[13px] text-slate-500 whitespace-nowrap">Current Level</span>
+                    </div>
+                    <span class="shrink-0">
+                      <span id="profile-level-badge" data-result="level_assigned" class="inline-flex items-center px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold">Not assigned yet</span>
+                    </span>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- =====================================================
+         EXISTING APPLICATION LOGIC
+         DO NOT CHANGE
+    ====================================================== -->
+
+    <script src="js/app.js?v=4"></script>
+
+    <!-- Lucide Icons -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        if (window.lucide) {
+          lucide.createIcons();
+        }
+      });
+    </script>
+    <script>
+      let syncSidebarProfile; // Make globally accessible
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const avatar = document.getElementById("sidebar-student-avatar");
+        const name = document.getElementById("sidebar-student-name");
+
+        syncSidebarProfile = function() {
+          const sourceName = document.querySelector(
+            '[data-candidate="name"]'
+          );
+
+          const sourceInitials = document.querySelector(
+            '[data-candidate="initials"]'
+          );
+
+          if (sourceName && name) {
+            const value = sourceName.textContent.trim();
+
+            if (value && name.textContent !== value) {
+              name.textContent = value;
+            }
+          }
+
+          if (sourceInitials && avatar) {
+            const value = sourceInitials.textContent.trim();
+
+            if (value && avatar.querySelector("span").textContent !== value) {
+              avatar.querySelector("span").textContent = value;
+            }
+          }
+        }
+
+        // Initial sync
+        syncSidebarProfile();
+      });
+
+      async function saveProfile() {
+        const newName = document.getElementById('edit-name').value;
+        const newPhone = document.getElementById('edit-phone').value;
+        const newLinkedin = document.getElementById('edit-linkedin').value;
+        const newGithub = document.getElementById('edit-github').value;
+
+        try {
+          const response = await fetch('api/update_profile.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: newName,
+              phone: newPhone,
+              linkedin: newLinkedin,
+              github: newGithub
+            })
+          });
+          const result = await response.json();
+          if (result.status !== 'success') {
+            alert(result.message || 'Error updating profile');
+            return;
+          }
+        } catch (e) {
+          alert('Network error while updating profile');
+          return;
+        }
+
+        if (newName) {
+          const nameElems = document.querySelectorAll('[data-candidate="name"]');
+          nameElems.forEach(el => el.textContent = newName);
+          
+          const parts = newName.trim().split(' ');
+          let initials = '';
+          if (parts.length > 0) initials += parts[0][0];
+          if (parts.length > 1) initials += parts[parts.length - 1][0];
+          const initialsElems = document.querySelectorAll('[data-candidate="initials"]');
+          initialsElems.forEach(el => el.textContent = initials.toUpperCase());
+        }
+
+        if (newPhone) {
+          const phoneElem = document.querySelector('[data-candidate="phone"]');
+          if (phoneElem) phoneElem.textContent = newPhone;
+        }
+
+        if (newLinkedin) {
+          const liElem = document.querySelector('[data-candidate="linkedin"]');
+          if (liElem) {
+            liElem.textContent = 'View Profile';
+            liElem.href = newLinkedin;
+          }
+        }
+
+        if (newGithub) {
+          const ghElem = document.querySelector('[data-candidate="github"]');
+          if (ghElem) {
+            ghElem.textContent = 'View Profile';
+            ghElem.href = newGithub;
+          }
+        }
+
+        if (typeof syncSidebarProfile === 'function') {
+          syncSidebarProfile();
+        }
+
+        document.getElementById('editProfileModal').classList.add('hidden');
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          const response = await fetch("api/dashboard.php");
+          const payload = await response.json();
+          if (payload.status === "success" && payload.data && payload.data.candidate) {
+            const candidate = payload.data.candidate;
+            const pd = candidate.profile_details || {};
+            
+            const nameInput = document.getElementById('edit-name');
+            if (nameInput && candidate.name) nameInput.value = candidate.name;
+            
+            const phoneInput = document.getElementById('edit-phone');
+            if (phoneInput && candidate.phone && candidate.phone !== '—') phoneInput.value = candidate.phone;
+
+            const formatUrl = (url) => url.match(/^https?:\/\//) ? url : 'https://' + url;
+
+            if (pd.linkedin) {
+              const el = document.querySelector('[data-candidate="linkedin"]');
+              if (el) { el.textContent = 'View Profile'; el.href = formatUrl(pd.linkedin); }
+              const input = document.getElementById('edit-linkedin');
+              if (input) input.value = pd.linkedin;
+            }
+            if (pd.github) {
+              const el = document.querySelector('[data-candidate="github"]');
+              if (el) { el.textContent = 'View Profile'; el.href = formatUrl(pd.github); }
+              const input = document.getElementById('edit-github');
+              if (input) input.value = pd.github;
+            }
+          }
+        } catch(e) {
+          console.error("Failed to load profile details", e);
+        }
+      });
+    </script>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="fixed inset-0 z-[60] hidden">
+      <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="document.getElementById('editProfileModal').classList.add('hidden')"></div>
+      <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0 pointer-events-none">
+        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg w-full pointer-events-auto">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-5 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-50 sm:mx-0 sm:h-10 sm:w-10">
+                <i data-lucide="pencil" class="h-5 w-5 text-intern-blue"></i>
+              </div>
+              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                <h3 class="text-base leading-6 font-semibold text-slate-600" id="modal-title">
+                  Edit Profile
+                </h3>
+                <div class="mt-4 space-y-3">
+                  <div>
+                    <label class="block text-[13px] font-medium text-slate-600">Full Name</label>
+                    <input id="edit-name" type="text" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-[13px] px-4 py-2.5 border outline-none transition-all" placeholder="John Doe">
+                  </div>
+                  <div>
+                    <label class="block text-[13px] font-medium text-slate-600">Phone</label>
+                    <input id="edit-phone" type="text" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-[13px] px-4 py-2.5 border outline-none transition-all" placeholder="1234567890">
+                  </div>
+                  <div>
+                    <label class="block text-[13px] font-medium text-slate-600">LinkedIn Profile URL</label>
+                    <input id="edit-linkedin" type="url" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-[13px] px-4 py-2.5 border outline-none transition-all" placeholder="https://linkedin.com/in/username">
+                  </div>
+                  <div>
+                    <label class="block text-[13px] font-medium text-slate-600">GitHub Profile URL</label>
+                    <input id="edit-github" type="url" class="mt-1 block w-full rounded-xl border-slate-200 shadow-sm focus:border-intern-blue focus:ring focus:ring-intern-blue/20 sm:text-[13px] px-4 py-2.5 border outline-none transition-all" placeholder="https://github.com/username">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-slate-50 px-4 py-3 sm:px-5 sm:flex sm:flex-row-reverse">
+            <button type="button" onclick="saveProfile()" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-intern-blue text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-intern-blue sm:ml-3 sm:w-auto sm:text-[13px] transition-colors">
+              Save Changes
+            </button>
+            <button type="button" onclick="document.getElementById('editProfileModal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center rounded-xl border border-slate-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-intern-blue sm:mt-0 sm:ml-3 sm:w-auto sm:text-[13px] transition-colors">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

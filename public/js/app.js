@@ -1,7 +1,74 @@
 // M4 Dashboard - Railway MySQL API Integration
 // Values available from the API are dynamic. Static descriptive UI text remains in dashboard.html.
 
+function initStudentResponsiveShell() {
+    const sidebar = document.querySelector("body > div aside");
+    const main = document.querySelector("body > div main");
+    const header = main?.querySelector("header");
+
+    if (!sidebar || !main || !header || sidebar.dataset.responsiveShellBound) return;
+    sidebar.dataset.responsiveShellBound = "1";
+
+    document.body.classList.add("overflow-x-hidden");
+    sidebar.classList.remove("hidden", "md:flex");
+    sidebar.classList.add("flex", "-translate-x-full", "transition-transform", "duration-200", "lg:translate-x-0");
+    main.classList.remove("ml-[250px]", "w-[calc(100%-250px)]");
+    main.classList.add("ml-0", "w-full", "lg:ml-[250px]", "lg:w-[calc(100%-250px)]");
+    header.classList.remove("left-[250px]");
+    header.classList.add("left-0", "lg:left-[250px]", "px-4", "sm:px-6");
+    main.querySelectorAll("table").forEach((table) => {
+        table.classList.add("min-w-[640px]");
+        table.parentElement?.classList.add("max-w-full", "overflow-x-auto");
+    });
+
+    const menuButton = document.createElement("button");
+    menuButton.type = "button";
+    menuButton.className = "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 lg:hidden";
+    menuButton.setAttribute("aria-label", "Open navigation");
+    menuButton.setAttribute("aria-expanded", "false");
+    menuButton.innerHTML = '<i data-lucide="menu" class="h-5 w-5"></i>';
+
+    const headerTitle = header.firstElementChild;
+    if (headerTitle) {
+        headerTitle.classList.add("min-w-0");
+        headerTitle.prepend(menuButton);
+        headerTitle.classList.add("gap-2", "sm:gap-3");
+    }
+
+    const overlay = document.createElement("button");
+    overlay.type = "button";
+    overlay.className = "fixed inset-0 z-40 hidden bg-slate-900/40 lg:hidden";
+    overlay.setAttribute("aria-label", "Close navigation");
+    document.body.appendChild(overlay);
+
+    const close = () => {
+        sidebar.classList.add("-translate-x-full");
+        overlay.classList.add("hidden");
+        menuButton.setAttribute("aria-expanded", "false");
+    };
+    const open = () => {
+        sidebar.classList.remove("-translate-x-full");
+        overlay.classList.remove("hidden");
+        menuButton.setAttribute("aria-expanded", "true");
+    };
+
+    menuButton.addEventListener("click", () => {
+        if (sidebar.classList.contains("-translate-x-full")) open();
+        else close();
+    });
+    overlay.addEventListener("click", close);
+    sidebar.querySelectorAll("a").forEach((link) => link.addEventListener("click", close));
+    window.addEventListener("resize", () => {
+        if (window.innerWidth >= 1024) close();
+    });
+
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+    }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
+    initStudentResponsiveShell();
     try {
         const response = await fetch("api/dashboard.php", {
             method: "GET",
@@ -29,10 +96,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         fillSection("exam", source.exam);
         fillSection("result", source.result);
         fillSection("certificate", source.certificate);
+        fillSection("placement", source.placement);
 
         updateAvatar(source.candidate?.name);
         updateStatusCards(source);
         updateLearningJourney(source);
+        renderCertificateState(source);
+        renderProfileState(source);
+        renderEnrollmentState(source);
+        renderResultState(source);
     } catch (error) {
         console.error("Dashboard API Error:", error);
 
@@ -40,7 +112,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (errorBox) {
             errorBox.textContent = "Unable to load dashboard data. Please try again.";
             errorBox.style.display = "block";
+        } else {
+            console.error("Critical Dashboard API Error: " + error.message);
         }
+    }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
     }
 });
 
@@ -79,8 +159,8 @@ function fillSection(attribute, data) {
 }
 
 function updateAvatar(name) {
-    const avatar = document.querySelector('[data-candidate="initials"]');
-    if (!avatar || !name || name === "—") return;
+    const avatars = document.querySelectorAll('[data-candidate="initials"]');
+    if (!avatars.length || !name || name === "—") return;
 
     const initials = name
         .trim()
@@ -90,7 +170,7 @@ function updateAvatar(name) {
         .map((part) => part[0].toUpperCase())
         .join("");
 
-    avatar.textContent = initials || "--";
+    avatars.forEach(avatar => avatar.textContent = initials || "--");
 }
 
 function updateStatusCards(source) {
@@ -109,7 +189,10 @@ function updateLearningJourney(source) {
         batch: source.batch?.status,
         exam: source.exam?.status,
         result: source.result?.status,
-        certificate: source.certificate?.status
+        certificate: source.certificate?.status,
+        placement: source.placement?.applicable
+            ? (source.placement.statusLabel || source.placement.status || 'Eligible')
+            : 'Not Applicable'
     };
 
     Object.entries(statuses).forEach(([key, status]) => {
@@ -135,13 +218,15 @@ function journeyLabel(key, status) {
     if (key === "exam") return status === "Completed" ? "Completed" : status;
     if (key === "result") return status === "Completed" ? "Completed" : status;
     if (key === "certificate") return status === "Issued" ? "Completed" : status;
+    if (key === "placement") return status;
 
     return status;
 }
 
 function journeyClass(status) {
-    if (["Paid", "Enrolled", "Assigned", "Completed", "Issued"].includes(status)) return "green";
-    if (["Upcoming", "Scheduled", "In Progress"].includes(status)) return "blue";
+    if (["Paid", "Enrolled", "Assigned", "Completed", "Issued", "Placed"].includes(status)) return "green";
+    if (["Upcoming", "Scheduled", "In Progress", "Eligible", "Shortlisted", "Interviewing"].includes(status)) return "blue";
+    if (["Not Applicable"].includes(status)) return "gray";
     return "gray";
 }
 
@@ -151,7 +236,460 @@ function isCompleted(key, status) {
         (key === "enrollment" && status === "Enrolled") ||
         (key === "batch" && status === "Assigned") ||
         (key === "exam" && status === "Completed") ||
-        (key === "result" && status === "Completed") ||
-        (key === "certificate" && status === "Issued")
+        (key === "result" && (status === "Completed" || status === "Available")) ||
+        (key === "certificate" && status === "Issued") ||
+        (key === "placement" && status === "Placed")
     );
+}
+
+function bindCandidateLogout() {
+    document.querySelectorAll("a.logout, a[href*='logout.php']").forEach((link) => {
+        if (link.dataset.logoutBound) return;
+        link.dataset.logoutBound = "1";
+        link.addEventListener("click", async (e) => {
+            e.preventDefault();
+            try {
+                let token = null;
+                try {
+                    const csrfRes = await fetch("api/auth/csrf.php", {
+                        credentials: "same-origin",
+                        headers: { Accept: "application/json" }
+                    });
+                    const csrfData = await csrfRes.json();
+                    token = csrfData.data?.token || null;
+                } catch { }
+                if (!token) {
+                    const m7Res = await fetch("/api/admin/evaluate.php?action=csrf", {
+                        credentials: "same-origin",
+                        headers: { Accept: "application/json" }
+                    });
+                    const m7Data = await m7Res.json();
+                    token = m7Data.data?.token || null;
+                }
+                await fetch("api/auth/logout.php", {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "X-CSRF-Token": token || ""
+                    }
+                });
+            } catch (err) {
+                console.error("Logout failed:", err);
+            } finally {
+                window.location.href = "/login.php";
+            }
+        });
+    });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindCandidateLogout);
+} else {
+    bindCandidateLogout();
+}
+
+function renderCertificateState(source) {
+    const certStateContainer = document.getElementById("certificate-state-container");
+    const certPreviewCard = document.getElementById("certificate-preview-card");
+    const certMainContainer = document.getElementById("certificate-main-container");
+    const certBadge = document.getElementById("certificate-status-badge");
+    const dashCertDownload = document.getElementById("dashboard-certificate-download");
+
+    if (source.certificate && source.certificate.status === "Issued" && source.result && source.result.id) {
+        const downloadUrl = `api/admin/certificate_pdf.php?result_id=${source.result.id}&t=${Date.now()}`;
+
+        if (certStateContainer) {
+            certStateContainer.innerHTML = `
+                <div class="mx-auto w-16 h-16 rounded-2xl bg-green-50 border border-green-100 flex items-center justify-center text-green-600 mb-5">
+                    <i data-lucide="award" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-2">Certificate Issued</h3>
+                <p class="text-slate-500 mb-6 max-w-sm">Congratulations! Your certificate has been generated successfully and is ready.</p>
+                <div class="flex flex-col sm:flex-row justify-center gap-3 w-full sm:w-auto">
+                    <a href="${downloadUrl}" target="_blank" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors shadow-sm focus:ring-2 focus:ring-blue-500/20">
+                        <i data-lucide="download" class="w-4 h-4"></i> Download PDF
+                    </a>
+                    <a href="${downloadUrl}&view=1" target="_blank" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium transition-colors shadow-sm">
+                        <i data-lucide="eye" class="w-4 h-4"></i> View Online
+                    </a>
+                </div>
+            `;
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        }
+
+        if (certBadge) {
+            certBadge.textContent = "Issued";
+            certBadge.className = "inline-flex items-center px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold";
+        }
+
+        if (certMainContainer) {
+            certMainContainer.className = "grid grid-cols-1 md:grid-cols-2 gap-5 mb-6";
+        }
+
+        if (certPreviewCard) {
+            certPreviewCard.style.display = "block";
+            
+            document.querySelectorAll('[data-certificate="number"]').forEach(el => el.textContent = source.certificate.number || '—');
+            document.querySelectorAll('[data-certificate="level"]').forEach(el => el.textContent = source.certificate.level || '—');
+            document.querySelectorAll('[data-certificate="issue_date"]').forEach(el => el.textContent = source.certificate.issueDate || '—');
+        }
+
+        if (dashCertDownload) {
+            dashCertDownload.innerHTML = `<a href="${downloadUrl}" target="_blank" style="color: #1652d6; font-weight: bold;">(Download)</a>`;
+        }
+    } else {
+        if (certStateContainer) {
+            certStateContainer.innerHTML = `
+                <div class="mx-auto w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-5">
+                    <i data-lucide="clock" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-2">No Certificate Issued</h3>
+                <p class="text-slate-500 max-w-sm">Your certificate will appear here after successful evaluation and level assignment.</p>
+            `;
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        }
+
+        if (certBadge) {
+            certBadge.textContent = "Pending";
+            certBadge.className = "inline-flex items-center px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold";
+        }
+
+        if (certMainContainer) {
+            certMainContainer.className = "grid grid-cols-1 gap-5 mb-6";
+        }
+
+        if (certPreviewCard) {
+            certPreviewCard.style.display = "none";
+        }
+        
+        if (dashCertDownload) {
+            dashCertDownload.innerHTML = "";
+        }
+    }
+}
+
+function renderProfileState(source) {
+    if (!source) return;
+
+    const levelBadge = document.getElementById("profile-level-badge") || document.querySelector("[data-result='level_assigned']");
+    if (levelBadge) {
+        const assignedLevel = source.result?.level_assigned ||
+            (source.result?.level && source.result.level !== "—" ? source.result.level : null) ||
+            source.candidate?.level_assigned ||
+            (source.candidate?.level && source.candidate.level !== "—" ? source.candidate.level : null);
+
+        if (assignedLevel) {
+            levelBadge.textContent = assignedLevel;
+            levelBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold";
+        } else {
+            levelBadge.textContent = "Not assigned yet";
+            levelBadge.className = "inline-flex items-center px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold";
+        }
+    }
+
+    const profileBadge = document.getElementById("profile-status-badge") || document.querySelector("[data-candidate='profileStatus']");
+    if (profileBadge) {
+        if (source.enrollment && source.enrollment.status === "Enrolled") {
+            profileBadge.textContent = "Enrolled";
+            profileBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold";
+        } else {
+            profileBadge.textContent = "";
+            profileBadge.className = "hidden"; // Tailwind class to hide if not enrolled
+        }
+    }
+
+    const certContent = document.getElementById("profile-certificate-content");
+    if (certContent) {
+        const cert = source.certificate;
+        const result = source.result;
+        const resultId = result?.id || cert?.result_id;
+        const isIssued = cert && (cert.status === "Issued" || (cert.number && cert.number !== "Not issued" && cert.number !== "—"));
+
+        if (isIssued && resultId) {
+            const downloadUrl = `api/admin/certificate_pdf.php?result_id=${resultId}&t=${Date.now()}`;
+            const certNumber = cert.number || cert.certificate_number || "—";
+            const certLevel = cert.level || (result?.level && result.level !== "—" ? result.level : "—");
+            const issueDate = cert.issueDate || cert.issue_date || "—";
+
+            certContent.innerHTML = `
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+                    <div class="flex items-center gap-4 min-w-0">
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.5 10.5c-1 0-1.5-.5-2-1.5A3 3 0 0 0 12 6a3 3 0 0 0-5.5 3c-.5 1-1 1.5-2 1.5A3 3 0 0 0 3 13.5c1 0 1.5.5 2 1.5A3 3 0 0 0 10.5 18a3 3 0 0 0 5.5-3c.5-1 1-1.5 2-1.5A3 3 0 0 0 19.5 10.5Z"/></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-slate-800">InternBoot Certificate</p>
+                            <p class="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-2">
+                                <span>No: <strong class="text-slate-800">${certNumber}</strong></span>
+                                <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                <span>Level: <strong class="text-slate-800">${certLevel}</strong></span>
+                                <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                <span>Issued: <strong class="text-slate-800">${issueDate}</strong></span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="shrink-0 flex flex-wrap items-center gap-3">
+                        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Issued
+                        </span>
+                        <a href="${downloadUrl}" target="_blank" class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-sm font-semibold shadow-sm transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            Download
+                        </a>
+                    </div>
+                </div>
+            `;
+        } else {
+            certContent.innerHTML = `
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+                    <div class="flex items-center gap-4 min-w-0">
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.5 10.5c-1 0-1.5-.5-2-1.5A3 3 0 0 0 12 6a3 3 0 0 0-5.5 3c-.5 1-1 1.5-2 1.5A3 3 0 0 0 3 13.5c1 0 1.5.5 2 1.5A3 3 0 0 0 10.5 18a3 3 0 0 0 5.5-3c.5-1 1-1.5 2-1.5A3 3 0 0 0 19.5 10.5Z"/></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-slate-800">InternBoot Certificate</p>
+                            <p class="text-xs text-slate-500 mt-1">Your certificate will appear here once it is issued.</p>
+                        </div>
+                    </div>
+                    <div class="shrink-0">
+                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-semibold">
+                            <span class="w-2 h-2 rounded-full bg-slate-400"></span> Not issued yet
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+    }
+}
+
+function renderEnrollmentState(source) {
+    if (!source) return;
+
+    const hero = document.getElementById("enrollment-hero");
+    const statusBadge = document.getElementById("enrollment-status-badge");
+    const nextStepContainer = document.getElementById("enrollment-next-step-container");
+
+    if (!hero && !statusBadge) return;
+
+    const heroTitle = document.getElementById("enrollment-hero-title") || hero?.querySelector("h2");
+    const heroDesc = document.getElementById("enrollment-hero-desc") || hero?.querySelector("p");
+
+    const enrStatus = source.enrollment?.status;
+    const payStatus = source.payment?.status;
+    const hasEnrollmentId = source.enrollment?.id && source.enrollment.id !== "—";
+
+    let nextStepHtml = '';
+
+    // 1. Confirmed (payment verified + enrollment created/active)
+    if (enrStatus === "Enrolled" || enrStatus === "Confirmed" || enrStatus === "Active" || (hasEnrollmentId && enrStatus !== "Pending" && enrStatus !== "Not Enrolled")) {
+        if (heroTitle) heroTitle.textContent = "Enrollment Confirmed";
+        if (heroDesc) heroDesc.textContent = "Your payment has been verified and your enrollment has been created successfully.";
+        if (statusBadge) {
+            statusBadge.textContent = enrStatus && enrStatus !== "—" ? enrStatus : "Enrolled";
+            statusBadge.className = "badge green";
+        }
+        
+        // Check overall progress for Next Step
+        if (source.certificate && source.certificate.status === "Issued") {
+            nextStepHtml = `
+              <div class="rounded-xl border border-green-100 bg-green-50 p-5">
+                <div class="flex gap-3">
+                  <div class="w-10 h-10 shrink-0 rounded-xl bg-white text-green-600 flex items-center justify-center shadow-sm">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-green-900">Program Completed</p>
+                    <p class="mt-1 text-sm leading-6 text-green-700">You have successfully completed your assessment and your certificate has been issued.</p>
+                  </div>
+                </div>
+              </div>
+              <a href="certificates.html" class="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition">
+                View Certificates
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </a>
+            `;
+        } else if (source.result && (source.result.status === "Completed" || source.result.status === "Available" || source.result.id)) {
+            nextStepHtml = `
+              <div class="rounded-xl border border-purple-100 bg-purple-50 p-5">
+                <div class="flex gap-3">
+                  <div class="w-10 h-10 shrink-0 rounded-xl bg-white text-purple-600 flex items-center justify-center shadow-sm">
+                    <i data-lucide="file-check-2" class="w-5 h-5"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-purple-900">Result Evaluated</p>
+                    <p class="mt-1 text-sm leading-6 text-purple-700">Your assessment result has been evaluated. Please check your results.</p>
+                  </div>
+                </div>
+              </div>
+              <a href="results.html" class="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition">
+                View Results
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </a>
+            `;
+        } else if (source.exam && source.exam.status === "Completed") {
+            nextStepHtml = `
+              <div class="rounded-xl border border-indigo-100 bg-indigo-50 p-5">
+                <div class="flex gap-3">
+                  <div class="w-10 h-10 shrink-0 rounded-xl bg-white text-indigo-600 flex items-center justify-center shadow-sm">
+                    <i data-lucide="timer" class="w-5 h-5"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-indigo-900">Evaluation Pending</p>
+                    <p class="mt-1 text-sm leading-6 text-indigo-700">You have completed the assessment. Your results are currently being evaluated.</p>
+                  </div>
+                </div>
+              </div>
+              <a href="results.html" class="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition">
+                Go to Results
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </a>
+            `;
+        } else if (source.batch && source.batch.status === "Assigned") {
+            nextStepHtml = `
+              <div class="rounded-xl border border-blue-100 bg-blue-50 p-5">
+                <div class="flex gap-3">
+                  <div class="w-10 h-10 shrink-0 rounded-xl bg-white text-blue-600 flex items-center justify-center shadow-sm">
+                    <i data-lucide="laptop" class="w-5 h-5"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-blue-900">Take Assessment</p>
+                    <p class="mt-1 text-sm leading-6 text-blue-700">Your batch has been assigned. Please proceed to take the assessment during your slot.</p>
+                  </div>
+                </div>
+              </div>
+              <a href="exam.html" class="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition">
+                Go to Exam
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </a>
+            `;
+        } else {
+            nextStepHtml = `
+              <div class="rounded-xl border border-blue-100 bg-blue-50 p-5">
+                <div class="flex gap-3">
+                  <div class="w-10 h-10 shrink-0 rounded-xl bg-white text-blue-600 flex items-center justify-center shadow-sm">
+                    <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-blue-900">Batch &amp; Slot Assignment</p>
+                    <p class="mt-1 text-sm leading-6 text-blue-700">Your next step is batch and slot assignment. You will see the details here once they are assigned.</p>
+                  </div>
+                </div>
+              </div>
+              <a href="batches-slots.html" class="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition">
+                View Batches &amp; Slots
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </a>
+            `;
+        }
+    }
+    // 2. Pending (payment done, enrollment processing)
+    else if (enrStatus === "Pending" || (payStatus === "Paid" && !hasEnrollmentId)) {
+        if (heroTitle) heroTitle.textContent = "Enrollment Pending";
+        if (heroDesc) heroDesc.textContent = "Your payment has been received and your enrollment is currently being processed.";
+        if (statusBadge) {
+            statusBadge.textContent = "Pending";
+            statusBadge.className = "badge yellow";
+        }
+        nextStepHtml = `
+          <div class="rounded-xl border border-yellow-100 bg-yellow-50 p-5">
+            <div class="flex gap-3">
+              <div class="w-10 h-10 shrink-0 rounded-xl bg-white text-yellow-600 flex items-center justify-center shadow-sm">
+                <i data-lucide="clock" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-yellow-900">Enrollment Processing</p>
+                <p class="mt-1 text-sm leading-6 text-yellow-700">Your enrollment is pending verification. Please check back shortly once your batch is allocated.</p>
+              </div>
+            </div>
+          </div>
+        `;
+    }
+    // 3. Failed (payment not verified / failed)
+    else if (payStatus === "Failed" || enrStatus === "Failed") {
+        if (heroTitle) heroTitle.textContent = "Payment Failed";
+        if (heroDesc) heroDesc.textContent = "Your payment could not be verified. Please complete your payment to proceed with enrollment.";
+        if (statusBadge) {
+            statusBadge.textContent = "Failed";
+            statusBadge.className = "badge gray";
+        }
+        nextStepHtml = `
+          <div class="rounded-xl border border-rose-100 bg-rose-50 p-5">
+            <div class="flex gap-3">
+              <div class="w-10 h-10 shrink-0 rounded-xl bg-white text-rose-600 flex items-center justify-center shadow-sm">
+                <i data-lucide="alert-circle" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-rose-900">Action Required</p>
+                <p class="mt-1 text-sm leading-6 text-rose-700">Please retry your payment and complete your enrollment.</p>
+              </div>
+            </div>
+          </div>
+          <a href="payment.html" class="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition">
+            Go to Payments
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        `;
+    }
+    // 4. Not Started / Not Enrolled
+    else {
+        if (heroTitle) heroTitle.textContent = "Enrollment Not Started";
+        if (heroDesc) heroDesc.textContent = "Please complete your payment to verify and confirm your enrollment.";
+        if (statusBadge) {
+            statusBadge.textContent = enrStatus && enrStatus !== "—" ? enrStatus : "Not Enrolled";
+            statusBadge.className = "badge gray";
+        }
+        nextStepHtml = `
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-5">
+            <div class="flex gap-3">
+              <div class="w-10 h-10 shrink-0 rounded-xl bg-white text-slate-600 flex items-center justify-center shadow-sm">
+                <i data-lucide="credit-card" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-900">Payment Pending</p>
+                <p class="mt-1 text-sm leading-6 text-slate-700">Please pay the registration fee and start your enrollment.</p>
+              </div>
+            </div>
+          </div>
+          <a href="payment.html" class="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition">
+            Go to Payments
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        `;
+    }
+
+    if (nextStepContainer && nextStepHtml) {
+        nextStepContainer.innerHTML = nextStepHtml;
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
+    }
+}
+
+function renderResultState(source) {
+    const container = document.getElementById('result-state-container');
+    if (!container) return;
+
+    if (source.result && source.result.status === 'Available') {
+        const badge = document.getElementById('result-status-badge');
+        if (badge) {
+            badge.className = 'inline-flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-xs font-semibold';
+            badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Available';
+        }
+
+        container.innerHTML = `
+            <div class="mx-auto w-14 h-14 rounded-2xl bg-white border border-emerald-100 flex items-center justify-center text-emerald-500 mb-5">
+                <i data-lucide="check-circle" class="w-7 h-7"></i>
+            </div>
+            <h2 class="text-xl font-semibold text-slate-900">Result Evaluated</h2>
+            <p class="mt-2 text-sm text-slate-600 max-w-md mx-auto leading-6">
+                Your assessment has been successfully evaluated. Your final score and assigned level are now available below.
+            </p>
+        `;
+        container.className = 'rounded-2xl border border-emerald-100 bg-emerald-50 px-6 py-10 text-center';
+        if (window.lucide) { window.lucide.createIcons(); }
+    }
 }

@@ -12,7 +12,7 @@ function add_manual_question(int $qbankId, string $questionText, string $difficu
     $stmt->bind_param("i", $qbankId);
     $stmt->execute();
     if (!$stmt->get_result()->fetch_assoc()) {
-        throw new Exception("Question Bank not found.");
+        throw new InvalidArgumentException("Question Bank not found.");
     }
     $stmt->close();
 
@@ -20,7 +20,7 @@ function add_manual_question(int $qbankId, string $questionText, string $difficu
     $correctCount = 0;
     foreach ($options as $opt) {
         if (!isset($opt['option_text']) || trim($opt['option_text']) === '') {
-            throw new Exception("Option text cannot be empty.");
+            throw new InvalidArgumentException("Option text cannot be empty.");
         }
         if (!empty($opt['is_correct'])) {
             $correctCount++;
@@ -28,7 +28,7 @@ function add_manual_question(int $qbankId, string $questionText, string $difficu
     }
 
     if ($correctCount !== 1) {
-        throw new Exception("Exactly 1 option must be marked as correct (is_correct = 1).");
+        throw new InvalidArgumentException("Exactly 1 option must be marked as correct (is_correct = 1).");
     }
 
     // 3. Begin Atomic Database Transaction
@@ -54,7 +54,7 @@ function add_manual_question(int $qbankId, string $questionText, string $difficu
             'difficulty' => $difficulty,
             'approval_status' => $approvalStatus,
         ];
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         $conn->rollback();
         throw new Exception("Transaction Failed: " . $e->getMessage());
     }
@@ -140,139 +140,177 @@ function generate_questions_via_ai(
         throw new RuntimeException("AI provider '{$provider}' is configured but its API key is missing from environment.");
     }
 
-    // 3. Build AI Prompt
-    $prompt = "Generate exactly {$count} multiple-choice test questions about the topic: \"{$topic}\".\n";
-    if (!empty($difficultyMix)) {
-        $prompt .= "Target difficulty distribution/mix: {$difficultyMix}.\n";
-    }
-    $prompt .= "Return ONLY a valid JSON array of question objects. Do NOT include markdown code blocks, backticks, prose, or extra text before or after the JSON.\n";
-    $prompt .= "Each question object in the JSON array MUST have this exact schema:\n";
-    $prompt .= "[\n";
-    $prompt .= "  {\n";
-    $prompt .= "    \"question_text\": \"Question text here?\",\n";
-    $prompt .= "    \"difficulty\": \"easy|medium|hard\",\n";
-    $prompt .= "    \"options\": [\n";
-    $prompt .= "      {\"option_text\": \"Option A text\", \"is_correct\": true},\n";
-    $prompt .= "      {\"option_text\": \"Option B text\", \"is_correct\": false},\n";
-    $prompt .= "      {\"option_text\": \"Option C text\", \"is_correct\": false},\n";
-    $prompt .= "      {\"option_text\": \"Option D text\", \"is_correct\": false}\n";
-    $prompt .= "    ]\n";
-    $prompt .= "  }\n";
-    $prompt .= "]\n";
-    $prompt .= "Rules:\n";
-    $prompt .= "1. Each question MUST have exactly 4 options.\n";
-    $prompt .= "2. Exactly one option per question MUST have is_correct set to true.\n";
-    $prompt .= "3. All question_text and option_text MUST be non-empty strings.\n";
-    $prompt .= "4. Output ONLY raw JSON array.";
+    // 3. Determine Batching Plan (chunk up to 20 questions per prompt for speed and zero throttling)
+    $batchSize = 20;
+    $remaining = $count;
+    $allItems = [];
 
-    // 4. Perform Provider HTTP Request via cURL
-    $rawText = '';
-    try {
-        if ($provider === 'gemini') {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/" . rawurlencode($model) . ":generateContent?key=" . rawurlencode($apiKey);
-            $payload = [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => $prompt]
+    while ($remaining > 0) {
+        $curBatchCount = min($batchSize, $remaining);
+        $remaining -= $curBatchCount;
+
+        // Build AI Prompt for this batch
+        $prompt = "Generate exactly {$curBatchCount} multiple-choice test questions about the topic: \"{$topic}\".\n";
+        if (!empty($difficultyMix)) {
+            $prompt .= "Target difficulty distribution/mix: {$difficultyMix}.\n";
+        }
+        $prompt .= "Return ONLY a valid JSON array of question objects. Do NOT include markdown code blocks, backticks, prose, or extra text before or after the JSON.\n";
+        $prompt .= "Each question object in the JSON array MUST have this exact schema:\n";
+        $prompt .= "[\n";
+        $prompt .= "  {\n";
+        $prompt .= "    \"question_text\": \"Question text here?\",\n";
+        $prompt .= "    \"difficulty\": \"easy|medium|hard\",\n";
+        $prompt .= "    \"options\": [\n";
+        $prompt .= "      {\"option_text\": \"Option A text\", \"is_correct\": true},\n";
+        $prompt .= "      {\"option_text\": \"Option B text\", \"is_correct\": false},\n";
+        $prompt .= "      {\"option_text\": \"Option C text\", \"is_correct\": false},\n";
+        $prompt .= "      {\"option_text\": \"Option D text\", \"is_correct\": false}\n";
+        $prompt .= "    ]\n";
+        $prompt .= "  }\n";
+        $prompt .= "]\n";
+        $prompt .= "Rules:\n";
+        $prompt .= "1. Each question MUST have exactly 4 options.\n";
+        $prompt .= "2. Exactly one option per question MUST have is_correct set to true.\n";
+        $prompt .= "3. All question_text and option_text MUST be non-empty strings.\n";
+        $prompt .= "4. Output ONLY raw JSON array.";
+
+        // 4. Perform Provider HTTP Request via cURL
+        $rawText = '';
+        try {
+            if ($provider === 'gemini') {
+                $candidates = array_unique(array_filter([$model, 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-flash-latest']));
+                $lastErr = '';
+                $gotSuccess = false;
+
+                foreach ($candidates as $candModel) {
+                    $url = "https://generativelanguage.googleapis.com/v1beta/models/" . rawurlencode($candModel) . ":generateContent?key=" . rawurlencode($apiKey);
+                    $payload = [
+                        'contents' => [
+                            [
+                                'parts' => [
+                                    ['text' => $prompt]
+                                ]
+                            ]
+                        ],
+                        'generationConfig' => [
+                            'temperature' => 0.7,
+                            'responseMimeType' => 'application/json'
                         ]
-                    ]
-                ],
-                'generationConfig' => [
-                    'temperature' => 0.7,
-                    'responseMimeType' => 'application/json'
-                ]
-            ];
+                    ];
 
-            $ch = curl_init($url);
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POST => true,
-                CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-                CURLOPT_POSTFIELDS => json_encode($payload),
-                CURLOPT_TIMEOUT => 30,
-                CURLOPT_CONNECTTIMEOUT => 10
-            ]);
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlErr = curl_error($ch);
-            curl_close($ch);
+                    $ch = curl_init($url);
+                    curl_setopt_array($ch, [
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_POST => true,
+                        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+                        CURLOPT_POSTFIELDS => json_encode($payload),
+                        CURLOPT_TIMEOUT => 60,
+                        CURLOPT_CONNECTTIMEOUT => 15,
+                        CURLOPT_SSL_VERIFYPEER => false
+                    ]);
+                    $response = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    $curlErr = curl_error($ch);
+                    curl_close($ch);
 
-            if ($response === false || !empty($curlErr)) {
-                throw new RuntimeException("AI provider request failed: " . ($curlErr ?: 'Network or cURL timeout error'));
+                    if ($response === false || !empty($curlErr)) {
+                        $lastErr = ($curlErr ?: 'Network or cURL timeout error');
+                        continue;
+                    }
+                    if ($httpCode !== 200) {
+                        $errData = json_decode((string)$response, true);
+                        $lastErr = $errData['error']['message'] ?? "HTTP response code {$httpCode}";
+                        continue;
+                    }
+
+                    $resData = json_decode((string)$response, true);
+                    $rawText = $resData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                    if ($rawText !== '') {
+                        $gotSuccess = true;
+                        break;
+                    }
+                }
+
+                if (!$gotSuccess) {
+                    throw new RuntimeException("AI provider request failed: " . ($lastErr ?: 'Failed across all Gemini model fallbacks.'));
+                }
+            } else {
+                // OpenAI
+                $url = "https://api.openai.com/v1/chat/completions";
+                $payload = [
+                    'model' => $model,
+                    'messages' => [
+                        ['role' => 'system', 'content' => 'You are a technical question generator. Respond with a JSON array ONLY.'],
+                        ['role' => 'user', 'content' => $prompt]
+                    ],
+                    'temperature' => 0.7
+                ];
+
+                $ch = curl_init($url);
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_POST => true,
+                    CURLOPT_HTTPHEADER => [
+                        'Content-Type: application/json',
+                        'Authorization: Bearer ' . $apiKey
+                    ],
+                    CURLOPT_POSTFIELDS => json_encode($payload),
+                    CURLOPT_TIMEOUT => 60,
+                    CURLOPT_CONNECTTIMEOUT => 15,
+                    CURLOPT_SSL_VERIFYPEER => false
+                ]);
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curlErr = curl_error($ch);
+                curl_close($ch);
+
+                if ($response === false || !empty($curlErr)) {
+                    throw new RuntimeException("AI provider request failed: " . ($curlErr ?: 'Network or cURL timeout error'));
+                }
+                if ($httpCode !== 200) {
+                    $errData = json_decode((string)$response, true);
+                    $errMsg = $errData['error']['message'] ?? "HTTP response code {$httpCode}";
+                    throw new RuntimeException("AI provider request failed: {$errMsg}");
+                }
+
+                $resData = json_decode((string)$response, true);
+                $rawText = $resData['choices'][0]['message']['content'] ?? '';
             }
-            if ($httpCode !== 200) {
-                $errData = json_decode((string)$response, true);
-                $errMsg = $errData['error']['message'] ?? "HTTP response code {$httpCode}";
-                throw new RuntimeException("AI provider request failed: {$errMsg}");
+        } catch (Throwable $e) {
+            if (str_contains($e->getMessage(), 'AI provider request failed')) {
+                throw $e;
             }
-
-            $resData = json_decode((string)$response, true);
-            $rawText = $resData['candidates'][0]['content']['parts'][0]['text'] ?? '';
-        } else {
-            // OpenAI
-            $url = "https://api.openai.com/v1/chat/completions";
-            $payload = [
-                'model' => $model,
-                'messages' => [
-                    ['role' => 'system', 'content' => 'You are a technical question generator. Respond with a JSON array ONLY.'],
-                    ['role' => 'user', 'content' => $prompt]
-                ],
-                'temperature' => 0.7
-            ];
-
-            $ch = curl_init($url);
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POST => true,
-                CURLOPT_HTTPHEADER => [
-                    'Content-Type: application/json',
-                    'Authorization: Bearer ' . $apiKey
-                ],
-                CURLOPT_POSTFIELDS => json_encode($payload),
-                CURLOPT_TIMEOUT => 30,
-                CURLOPT_CONNECTTIMEOUT => 10
-            ]);
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlErr = curl_error($ch);
-            curl_close($ch);
-
-            if ($response === false || !empty($curlErr)) {
-                throw new RuntimeException("AI provider request failed: " . ($curlErr ?: 'Network or cURL timeout error'));
-            }
-            if ($httpCode !== 200) {
-                $errData = json_decode((string)$response, true);
-                $errMsg = $errData['error']['message'] ?? "HTTP response code {$httpCode}";
-                throw new RuntimeException("AI provider request failed: {$errMsg}");
-            }
-
-            $resData = json_decode((string)$response, true);
-            $rawText = $resData['choices'][0]['message']['content'] ?? '';
+            throw new RuntimeException("AI provider request failed: " . $e->getMessage());
         }
-    } catch (Throwable $e) {
-        if (str_contains($e->getMessage(), 'AI provider request failed')) {
-            throw $e;
+
+        // 5. Clean & Parse JSON Output for this batch
+        $cleanJson = preg_replace('/^```(?:json)?\s*/i', '', trim($rawText));
+        $cleanJson = preg_replace('/\s*```$/', '', $cleanJson);
+        $cleanJson = trim($cleanJson);
+
+        $batchItems = json_decode($cleanJson, true);
+        if (!is_array($batchItems)) {
+            throw new RuntimeException("AI provider returned invalid JSON response.");
         }
-        throw new RuntimeException("AI provider request failed: " . $e->getMessage());
+        if (isset($batchItems['questions']) && is_array($batchItems['questions'])) {
+            $batchItems = $batchItems['questions'];
+        } elseif (isset($batchItems['data']) && is_array($batchItems['data'])) {
+            $batchItems = $batchItems['data'];
+        }
+
+        if (is_array($batchItems)) {
+            foreach ($batchItems as $bi) {
+                $allItems[] = $bi;
+            }
+        }
+
+        if ($remaining > 0) {
+            usleep(150000);
+        }
     }
 
-    // 5. Clean & Parse JSON Output
-    $cleanJson = preg_replace('/^```(?:json)?\s*/i', '', trim($rawText));
-    $cleanJson = preg_replace('/\s*```$/', '', $cleanJson);
-    $cleanJson = trim($cleanJson);
-
-    $items = json_decode($cleanJson, true);
-    if (!is_array($items)) {
-        throw new RuntimeException("AI provider returned invalid JSON response.");
-    }
-    if (isset($items['questions']) && is_array($items['questions'])) {
-        $items = $items['questions'];
-    } elseif (isset($items['data']) && is_array($items['data'])) {
-        $items = $items['data'];
-    }
-
-    if (!is_array($items) || empty($items)) {
+    $items = $allItems;
+    if (empty($items)) {
         throw new RuntimeException("AI provider returned no questions or an empty array.");
     }
 
@@ -415,4 +453,38 @@ function generate_questions_via_ai(
         throw new Exception("Database insertion failed: " . $e->getMessage());
     }
 }
-?>
+
+function edit_manual_question(int $questionId, string $questionText, string $difficulty, array $options, mysqli $conn, bool $forcePending = false): void {
+    $correctCount = 0;
+    foreach ($options as $opt) {
+        if (trim($opt['option_text']) === '') throw new InvalidArgumentException("Option text empty");
+        if (!empty($opt['is_correct'])) $correctCount++;
+    }
+    if ($correctCount !== 1) throw new InvalidArgumentException("Exactly 1 correct option required");
+
+    $conn->begin_transaction();
+    try {
+        if ($forcePending) {
+            $stmt = $conn->prepare("UPDATE questions SET question_text=?, difficulty=?, approval_status='pending' WHERE id=?");
+        } else {
+            $stmt = $conn->prepare("UPDATE questions SET question_text=?, difficulty=? WHERE id=?");
+        }
+        $stmt->bind_param('ssi', $questionText, $difficulty, $questionId);
+        $stmt->execute();
+        $stmt->close();
+
+        $delStmt = $conn->prepare("DELETE FROM options WHERE question_id=?");
+        $delStmt->bind_param('i', $questionId);
+        $delStmt->execute();
+        $delStmt->close();
+
+        foreach ($options as $opt) {
+            $isCorrect = !empty($opt['is_correct']) ? 1 : 0;
+            insert_question_option($questionId, trim($opt['option_text']), $isCorrect, $conn);
+        }
+        $conn->commit();
+    } catch (Throwable $e) {
+        $conn->rollback();
+        throw $e;
+    }
+}

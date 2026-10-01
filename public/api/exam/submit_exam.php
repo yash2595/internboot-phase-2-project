@@ -11,32 +11,8 @@ if (file_exists(dirname(__DIR__, 3) . '/src/core/bootstrap.php')) {
 
 try {
 
-    if (
-        (!isset($_SESSION['candidate_id']) || !is_numeric($_SESSION['candidate_id'])) &&
-        isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id']) &&
-        isset($conn)
-    ) {
-        $userStmt = $conn->prepare("SELECT id FROM candidates WHERE user_id = ? LIMIT 1");
-        if ($userStmt) {
-            $uId = (int)$_SESSION['user_id'];
-            $userStmt->bind_param("i", $uId);
-            $userStmt->execute();
-            $userRes = $userStmt->get_result()->fetch_assoc();
-            $userStmt->close();
-            if ($userRes) {
-                $_SESSION['candidate_id'] = (int)$userRes['id'];
-            }
-        }
-    }
-
-    if (
-        !isset($_SESSION['candidate_id']) ||
-        !is_numeric($_SESSION['candidate_id'])
-    ) {
-        send_json_response('error', 'Candidate authentication required', null, 401);
-    }
-
-    $candidateId = (int) $_SESSION['candidate_id'];
+    $candidateId = require_candidate_auth($conn);
+    require_csrf();
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         send_json_response('error', 'POST request required', null, 405);
@@ -146,7 +122,7 @@ try {
     require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
     $evaluationDone = false;
     try {
-        evaluate_attempt($conn, $attemptId, false);
+        evaluate_attempt($conn, $attemptId, true);
         $evaluationDone = true;
     } catch (Throwable $evalError) {
         error_log('Auto-evaluation failed for attempt ' . $attemptId . ': ' . $evalError->getMessage());
@@ -176,6 +152,15 @@ try {
 
     $answeredCount = (int) $answerData['answered_count'];
 
+    $resultData = null;
+    if ($evaluationDone) {
+        $resStmt = $conn->prepare("SELECT total_score, percentage, level_assigned FROM results WHERE attempt_id = ? ORDER BY id DESC LIMIT 1");
+        $resStmt->bind_param("i", $attemptId);
+        $resStmt->execute();
+        $resultData = $resStmt->get_result()->fetch_assoc();
+        $resStmt->close();
+    }
+
     send_json_response('success', 'Exam submitted successfully', [
         'success' => true,
         'attempt_id' => $attemptId,
@@ -184,7 +169,9 @@ try {
         'status' => 'submitted',
         'submitted_at' => date('Y-m-d H:i:s'),
         'answered_count' => $answeredCount,
-        'evaluation_pending' => !$evaluationDone
+        'evaluation_pending' => !$evaluationDone,
+        'score' => $resultData ? number_format((float)$resultData['percentage'], 2) : null,
+        'level' => $resultData ? $resultData['level_assigned'] : null
     ], 200);
 
 } catch (Throwable $e) {

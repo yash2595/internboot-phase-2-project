@@ -4,35 +4,19 @@
 require_once __DIR__ . '/queries.php';
 
 /**
- * Registers a new candidate: creates the `users` row and the `candidates`
- * row together. Password is hashed here — never stored plain text.
- */
-function register_candidate(mysqli $conn, string $fullName, string $email, string $phone, string $password, string $role = 'candidate'): array {
-    if (find_user_by_email($conn, $email)) {
-        return ['success' => false, 'message' => 'An account with this email already exists.', 'code' => 409];
-    }
-    if (candidate_phone_exists($conn, $phone)) {
-        return ['success' => false, 'message' => 'This phone number is already registered.', 'code' => 409];
-    }
-
-    $passwordHash = password_hash($password, PASSWORD_BCRYPT);
-    $result = insert_user_and_candidate($conn, $email, $passwordHash, $fullName, $phone, $role);
-
-    if (!$result['success']) {
-        return $result;
-    }
-
-    return ['success' => true, 'user_id' => $result['user_id']];
-}
-
-/**
  * Verifies email + password against the stored hash, and checks the
+
  * account hasn't been deactivated (users.is_active).
  */
 function authenticate_candidate(mysqli $conn, string $email, string $password): array {
     $user = find_user_by_email($conn, $email);
 
-    if (!$user || !password_verify($password, $user['password'])) {
+    $dummyHash = '$2y$10$abcdefghijklmnopqrstuvabcdefghijklmnopqrstuvwxyza'; // valid-length dummy bcrypt hash
+
+    $hashToVerify = $user ? $user['password'] : $dummyHash;
+    $passwordMatched = password_verify($password, $hashToVerify);
+
+    if (!$user || !$passwordMatched) {
         // Same generic message either way — don't reveal whether the email exists.
         return ['success' => false, 'message' => 'Incorrect email or password.'];
     }
@@ -46,11 +30,10 @@ function authenticate_candidate(mysqli $conn, string $email, string $password): 
 }
 
 function initiate_registration(mysqli $conn, string $fullName, string $email, string $phone, string $password, string $role): array {
-    if (find_user_by_email($conn, $email)) {
-        return ['success' => false, 'message' => 'An account with this email already exists.', 'code' => 409];
-    }
-    if (candidate_phone_exists($conn, $phone)) {
-        return ['success' => false, 'message' => 'This phone number is already registered.', 'code' => 409];
+    $successResponse = ['success' => true, 'message' => "If this email or phone isn't already registered, we've sent a verification code.", 'code' => 200];
+
+    if (find_user_by_email($conn, $email) || candidate_phone_exists($conn, $phone)) {
+        return $successResponse;
     }
 
     $pending = find_latest_pending_verification($conn, $email);
@@ -91,7 +74,7 @@ function initiate_registration(mysqli $conn, string $fullName, string $email, st
         return ['success' => false, 'message' => 'Registration succeeded but verification email could not be sent. Contact support with your registration email.', 'code' => 500];
     }
 
-    return ['success' => true];
+    return $successResponse;
 }
 
 function complete_registration_with_otp(mysqli $conn, string $email, string $otp): array {
@@ -117,7 +100,7 @@ function complete_registration_with_otp(mysqli $conn, string $email, string $otp
         return ['success' => false, 'message' => 'Invalid or expired verification code.', 'code' => 400];
     }
 
-    if (!hash_equals((string)$pending['otp_code'], (string)$otp)) {
+    if (!hash_equals((string)$pending['otp_hash'], hash_otp($otp))) {
         return ['success' => false, 'message' => 'Invalid or expired verification code.', 'code' => 400];
     }
 
@@ -134,9 +117,9 @@ function complete_registration_with_otp(mysqli $conn, string $email, string $otp
         return $result;
     }
 
-    mark_pending_registration_used($conn, $id);
+    delete_pending_registration($conn, $id);
 
     return ['success' => true, 'user_id' => $result['user_id']];
 }
 
-?>
+

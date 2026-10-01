@@ -9,41 +9,18 @@ if (file_exists(dirname(__DIR__, 3) . '/src/core/bootstrap.php')) {
     require_once __DIR__ . '/../src/core/bootstrap.php';
 }
 
+require_once __DIR__ . '/../../../src/modules/m5_batch_slots/queries.php';
 try {
 
     /*
      * 1. Candidate authentication
      */
-    if (
-        (!isset($_SESSION['candidate_id']) || !is_numeric($_SESSION['candidate_id'])) &&
-        isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id']) &&
-        isset($conn)
-    ) {
-        $userStmt = $conn->prepare("SELECT id FROM candidates WHERE user_id = ? LIMIT 1");
-        if ($userStmt) {
-            $uId = (int)$_SESSION['user_id'];
-            $userStmt->bind_param("i", $uId);
-            $userStmt->execute();
-            $userRes = $userStmt->get_result()->fetch_assoc();
-            $userStmt->close();
-            if ($userRes) {
-                $_SESSION['candidate_id'] = (int)$userRes['id'];
-            }
-        }
-    }
-
-    if (
-        !isset($_SESSION['candidate_id']) ||
-        !is_numeric($_SESSION['candidate_id'])
-    ) {
-        send_json_response('error', 'Candidate authentication required', null, 401);
-    }
-
-    $candidateId = (int) $_SESSION['candidate_id'];
+    $candidateId = require_candidate_auth($conn);
 
     /*
      * 2. Attempt ID
      */
+    require_once __DIR__ . '/../../../src/core/helpers.php';
     $attemptId = isset($_GET['attempt_id'])
         ? (int) $_GET['attempt_id']
         : 0;
@@ -60,6 +37,7 @@ try {
             id,
             candidate_id,
             assessment_id,
+            exam_slot_id,
             status,
             start_time,
             end_time
@@ -142,10 +120,18 @@ try {
 
         $expireStmt->close();
 
+        require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
+        try {
+            evaluate_attempt($conn, $attemptId, true);
+        } catch (Throwable $evalError) {
+            error_log('Auto-evaluation failed for attempt ' . $attemptId . ': ' . $evalError->getMessage());
+        }
+
         send_json_response('error', 'Exam time has expired', [
             'status' => 'expired'
         ], 403);
     }
+
 
     /*
      * 6. Get assessment configuration
@@ -180,10 +166,10 @@ try {
 
     $totalQuestions = ($assessment && !empty($assessment['total_questions']))
         ? (int) $assessment['total_questions']
-        : 50;
+        : 100;
 
     if ($totalQuestions <= 0) {
-        $totalQuestions = 50;
+        $totalQuestions = 100;
     }
 
     /*
@@ -210,22 +196,55 @@ try {
         $snapStmt->close();
 
         if (empty($fetchedQuestions)) {
-            // First call for this attempt — build the snapshot once from the live pool.
-            $poolSql = "
+            $slotId = (int)$attempt['exam_slot_id'];
+            
+            // Check if THIS batch already has questions assigned to SOME attempt.
+            $slotSql = "
                 SELECT q.id AS question_id, q.question_text, q.type, q.difficulty
-                FROM questions q
-                INNER JOIN question_banks qb ON qb.id = q.question_bank_id
-                WHERE qb.assessment_id = ?
-                  AND q.type = 'MCQ'
-                  AND q.approval_status = 'approved'
-                ORDER BY MD5(CONCAT(?, ':', q.id))
-                LIMIT ?
+                FROM attempt_questions aq
+                JOIN attempts a ON a.id = aq.attempt_id
+                JOIN questions q ON q.id = aq.question_id
+                WHERE a.exam_slot_id = ?
+                GROUP BY q.id, q.question_text, q.type, q.difficulty
+                ORDER BY MIN(aq.position) ASC
             ";
-            $poolStmt = $conn->prepare($poolSql);
-            $poolStmt->bind_param("iii", $attempt['assessment_id'], $attemptId, $totalQuestions);
-            $poolStmt->execute();
-            $fetchedQuestions = $poolStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-            $poolStmt->close();
+            $slotStmt = $conn->prepare($slotSql);
+            $slotStmt->bind_param("i", $slotId);
+            $slotStmt->execute();
+            $fetchedQuestions = $slotStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $slotStmt->close();
+
+            if (empty($fetchedQuestions)) {
+                // FIRST candidate in the batch! Assign new questions from 'approved' pool.
+                $poolSql = "
+                    SELECT q.id AS question_id, q.question_text, q.type, q.difficulty
+                    FROM questions q INNER JOIN question_banks qb ON qb.id = q.question_bank_id
+                    WHERE qb.assessment_id = ? AND q.type = 'MCQ' AND q.approval_status = 'approved'
+                    ORDER BY MD5(CONCAT(?, ':', q.id)) LIMIT ?
+                ";
+                $poolStmt = $conn->prepare($poolSql);
+                $poolStmt->bind_param("iii", $attempt['assessment_id'], $slotId, $totalQuestions);
+                $poolStmt->execute();
+                $fetchedQuestions = $poolStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                $poolStmt->close();
+                
+                // Shuffle deterministically using slotId
+                srand($slotId);
+                shuffle($fetchedQuestions);
+                srand();
+                
+                // ARCHIVE these questions so future batches cannot use them!
+                if (!empty($fetchedQuestions)) {
+                    $qIdsToArchive = array_column($fetchedQuestions, 'question_id');
+                    $inClauseArchive = implode(',', array_fill(0, count($qIdsToArchive), '?'));
+                    $archiveSql = "UPDATE questions SET approval_status = 'archived' WHERE id IN ($inClauseArchive)";
+                    $archiveStmt = $conn->prepare($archiveSql);
+                    $typesArchive = str_repeat('i', count($qIdsToArchive));
+                    $archiveStmt->bind_param($typesArchive, ...$qIdsToArchive);
+                    $archiveStmt->execute();
+                    $archiveStmt->close();
+                }
+            }
 
             $insertSql = "INSERT INTO attempt_questions (attempt_id, question_id, position) VALUES (?, ?, ?)";
             $insertStmt = $conn->prepare($insertSql);
@@ -246,12 +265,14 @@ try {
 
     $questions = [];
 
-    foreach ($fetchedQuestions as $question) {
+    $questions = [];
+    $questionIds = array_column($fetchedQuestions, 'question_id');
 
-        $questionId = (int) $question['question_id'];
-
+    if (!empty($questionIds)) {
+        $inClause = implode(',', array_fill(0, count($questionIds), '?'));
+        
         /*
-         * 8. Get options.
+         * 8. Batch get options.
          *
          * IMPORTANT:
          * is_correct is NEVER returned.
@@ -259,95 +280,87 @@ try {
         $optionSql = "
             SELECT
                 id AS option_id,
-                option_text
+                option_text,
+                question_id
             FROM options
-            WHERE question_id = ?
-            ORDER BY MD5(CONCAT(?, ':', id))
+            WHERE question_id IN ($inClause)
         ";
 
         $optionStmt = $conn->prepare($optionSql);
-
         if (!$optionStmt) {
             throw new Exception('Failed to prepare option query');
         }
-
-        $optionStmt->bind_param(
-            "ii",
-            $questionId,
-            $attemptId
-        );
-
+        
+        $types = str_repeat('i', count($questionIds));
+        $optionStmt->bind_param($types, ...$questionIds);
         $optionStmt->execute();
-
         $optionResult = $optionStmt->get_result();
 
-        $options = [];
-
-        while ($option = $optionResult->fetch_assoc()) {
-
-            $options[] = [
-                'option_id' => (int) $option['option_id'],
-                'option_text' => $option['option_text']
+        $allOptions = [];
+        while ($opt = $optionResult->fetch_assoc()) {
+            $allOptions[$opt['question_id']][] = [
+                'option_id' => (int)$opt['option_id'],
+                'option_text' => $opt['option_text']
             ];
         }
-
         $optionStmt->close();
 
+        // Sort options per question using the same logic as ORDER BY MD5(CONCAT(?, ':', id))
+        foreach ($allOptions as $qid => &$opts) {
+            usort($opts, function($a, $b) use ($attemptId) {
+                $hashA = md5($attemptId . ':' . $a['option_id']);
+                $hashB = md5($attemptId . ':' . $b['option_id']);
+                return strcmp($hashA, $hashB);
+            });
+        }
+        unset($opts);
+
         /*
-         * 9. Load previously saved answer.
+         * 9. Batch load previously saved answers.
          *
          * Only selected_option_id is returned.
          * is_correct remains server-side for M7.
          */
         $answerSql = "
             SELECT
+                question_id,
                 selected_option_id
             FROM answers
             WHERE attempt_id = ?
-              AND question_id = ?
-            LIMIT 1
+              AND question_id IN ($inClause)
         ";
 
         $answerStmt = $conn->prepare($answerSql);
-
         if (!$answerStmt) {
             throw new Exception('Failed to prepare answer query');
         }
 
-        $answerStmt->bind_param(
-            "ii",
-            $attemptId,
-            $questionId
-        );
-
+        $answerTypes = 'i' . $types;
+        $answerParams = array_merge([$attemptId], $questionIds);
+        $answerStmt->bind_param($answerTypes, ...$answerParams);
         $answerStmt->execute();
-
         $answerResult = $answerStmt->get_result();
 
-        $savedAnswer = $answerResult->fetch_assoc();
-
-        $answerStmt->close();
-
-        $selectedOptionId = null;
-
-        if (
-            $savedAnswer &&
-            $savedAnswer['selected_option_id'] !== null
-        ) {
-            $selectedOptionId = (int) $savedAnswer['selected_option_id'];
+        $allAnswers = [];
+        while ($ans = $answerResult->fetch_assoc()) {
+            $allAnswers[$ans['question_id']] = $ans['selected_option_id'] !== null ? (int)$ans['selected_option_id'] : null;
         }
+        $answerStmt->close();
 
         /*
          * 10. Build question response.
          */
-        $questions[] = [
-            'question_id' => $questionId,
-            'question_text' => $question['question_text'],
-            'type' => $question['type'],
-            'difficulty' => $question['difficulty'],
-            'options' => $options,
-            'selected_option_id' => $selectedOptionId
-        ];
+        foreach ($fetchedQuestions as $question) {
+            $questionId = (int) $question['question_id'];
+            $questions[] = [
+                'question_id' => $questionId,
+                'question_text' => $question['question_text'],
+                'type' => $question['type'],
+                'difficulty' => $question['difficulty'],
+                'options' => $allOptions[$questionId] ?? [],
+                'selected_option_id' => $allAnswers[$questionId] ?? null
+            ];
+        }
     }
 
     /*

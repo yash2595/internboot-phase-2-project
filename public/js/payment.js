@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // In-memory state (scoped to page lifecycle, never persisted to localStorage)
 let currentAssessmentId = null;
 let currentCandidateId = null;
-let currentFeeAmount = 2999;
+let currentFeeAmount = 3538.82;
 let isPaymentCompleted = false;
 let isProcessing = false;
 let devCandidateParam = null;
@@ -96,20 +96,20 @@ function renderDetails(data) {
     // 2. Assessment Info
     if (assessment) {
         currentAssessmentId = assessment.id;
-        setText("#assessment-title", assessment.title || "Assessment");
-        setText('[data-assessment="title"]', assessment.title || "Assessment");
+        setText("#assessment-title", "Level Assessment Test");
+        setText('[data-assessment="title"]', "Level Assessment Test");
 
         const durationText = assessment.duration ? `${assessment.duration} mins` : "60 mins";
-        const questionsText = assessment.questions ? `${assessment.questions} Questions` : "50 Questions";
-        setText("#assessment-meta", `Duration: ${durationText} | Questions: ${questionsText}`);
+        setText("#assessment-meta", `Duration: ${durationText}`);
     }
 
     // 3. Fee
-    currentFeeAmount = (fee !== undefined && fee !== null) ? Number(fee) : 2999;
+    currentFeeAmount = 3538.82;
     const formattedFee = formatCurrency(currentFeeAmount);
+    const baseWithGstStr = "₹2,999 + 18% GST";
 
     setText('[data-payment="totalFee"]', formattedFee);
-    setText("#assessment-fee-display", formattedFee);
+    setText("#assessment-fee-display", baseWithGstStr);
 
     // 4. Payment & Enrollment Status
     if (payment && payment.status === "success") {
@@ -128,7 +128,7 @@ function renderDetails(data) {
  * Update UI when payment is successfully verified
  */
 function applyPaymentSuccessState(payment, enrollment) {
-    const paidAmount = payment.amount ? formatCurrency(payment.amount) : formatCurrency(currentFeeAmount);
+    const paidAmount = formatCurrency(currentFeeAmount);
 
     setText('[data-payment="paidAmount"]', paidAmount);
     setText('[data-payment="status"]', "Paid");
@@ -332,7 +332,10 @@ async function handlePaymentSubmit(event) {
         };
 
         applyPaymentSuccessState(verifiedPayment, verifiedEnrollment);
-        showAlert("success", "Payment verified server-side! Your assessment registration and enrollment are now confirmed.");
+        showAlert(
+            "success",
+            "Demo payment verified. Your assessment registration and enrollment are now confirmed (test mode — no real payment was processed)."
+        );
 
     } catch (error) {
         console.error("Payment flow error:", error);
@@ -427,8 +430,8 @@ function setText(selector, value) {
 }
 
 function updateAvatar(name) {
-    const avatarEl = document.querySelector('.avatar') || document.querySelector('[data-candidate="initials"]');
-    if (!avatarEl || !name || name === "—") return;
+    const avatarEls = document.querySelectorAll('.avatar, [data-candidate="initials"]');
+    if (!avatarEls.length || !name || name === "—") return;
 
     const initials = name
         .trim()
@@ -438,13 +441,24 @@ function updateAvatar(name) {
         .map(part => part[0].toUpperCase())
         .join("");
 
-    avatarEl.textContent = initials || "CA";
+    avatarEls.forEach(el => {
+        el.textContent = initials || "CA";
+    });
 }
 
 function setStatusBadge(text, colorClass) {
     const badge = document.getElementById("payment-status-badge");
     if (badge) {
-        badge.className = `badge ${colorClass}`;
+        let bg = "bg-emerald-50", textCol = "text-emerald-700", dot = "bg-emerald-500";
+        if (colorClass === "blue") { bg = "bg-blue-50"; textCol = "text-blue-700"; dot = "bg-blue-500"; }
+        else if (colorClass === "yellow") { bg = "bg-amber-50"; textCol = "text-amber-700"; dot = "bg-amber-500"; }
+        else if (colorClass === "gray") { bg = "bg-slate-100"; textCol = "text-slate-600"; dot = "bg-slate-400"; }
+        
+        badge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold ${bg} ${textCol}`;
+        
+        const dotSpan = badge.querySelector('span:not([data-payment="status"])');
+        if (dotSpan) dotSpan.className = `w-1.5 h-1.5 rounded-full ${dot}`;
+        
         const span = badge.querySelector('[data-payment="status"]') || badge;
         span.textContent = text;
     }
@@ -453,7 +467,13 @@ function setStatusBadge(text, colorClass) {
 function setStatCardStatus(text, colorClass) {
     const strong = document.getElementById("stat-payment-status");
     if (strong) {
-        strong.className = colorClass;
+        let textClass = "text-slate-900";
+        if (colorClass === "green") textClass = "text-emerald-600";
+        else if (colorClass === "blue") textClass = "text-blue-600";
+        else if (colorClass === "yellow") textClass = "text-amber-600";
+        else if (colorClass === "gray") textClass = "text-slate-500";
+        
+        strong.className = `block mt-2 text-xl font-bold ${textClass}`;
         const span = strong.querySelector('[data-payment="status"]') || strong;
         span.textContent = text;
     }
@@ -462,7 +482,12 @@ function setStatCardStatus(text, colorClass) {
 function setEnrollmentBadge(text, colorClass) {
     const badge = document.getElementById("enrollment-badge");
     if (badge) {
-        badge.className = `badge ${colorClass}`;
+        let bg = "bg-emerald-50", textCol = "text-emerald-700";
+        if (colorClass === "blue") { bg = "bg-blue-50"; textCol = "text-blue-700"; }
+        else if (colorClass === "yellow") { bg = "bg-amber-50"; textCol = "text-amber-700"; }
+        else if (colorClass === "gray") { bg = "bg-slate-100"; textCol = "text-slate-500"; }
+
+        badge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold ${bg} ${textCol}`;
         const span = badge.querySelector('[data-enrollment="status"]') || badge;
         span.textContent = text;
     }
@@ -470,7 +495,7 @@ function setEnrollmentBadge(text, colorClass) {
 
 function formatCurrency(amount) {
     const num = Number(amount) || 0;
-    return "₹" + num.toLocaleString("en-IN");
+    return "₹" + num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function formatDate(dateStr) {
@@ -491,3 +516,50 @@ function formatDate(dateStr) {
         return dateStr;
     }
 }
+
+function bindCandidateLogout() {
+    document.querySelectorAll("a.logout, a[href*='logout.php']").forEach((link) => {
+        if (link.dataset.logoutBound) return;
+        link.dataset.logoutBound = "1";
+        link.addEventListener("click", async (e) => {
+            e.preventDefault();
+            try {
+                let token = null;
+                try {
+                    const csrfRes = await fetch("api/auth/csrf.php", {
+                        credentials: "same-origin",
+                        headers: { Accept: "application/json" }
+                    });
+                    const csrfData = await csrfRes.json();
+                    token = csrfData.data?.token || null;
+                } catch {}
+                if (!token) {
+                    const m7Res = await fetch("/api/admin/evaluate.php?action=csrf", {
+                        credentials: "same-origin",
+                        headers: { Accept: "application/json" }
+                    });
+                    const m7Data = await m7Res.json();
+                    token = m7Data.data?.token || null;
+                }
+                await fetch("api/auth/logout.php", {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "X-CSRF-Token": token || ""
+                    }
+                });
+            } catch (err) {
+                console.error("Logout failed:", err);
+            } finally {
+                window.location.href = "/login.php";
+            }
+        });
+    });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindCandidateLogout);
+} else {
+    bindCandidateLogout();
+}
+

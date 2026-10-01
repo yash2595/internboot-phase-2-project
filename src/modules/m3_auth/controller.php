@@ -7,6 +7,16 @@ require_once __DIR__ . '/service.php';
  * Handles POST /api/auth/register.php
  */
 function handle_register_request(array $data, mysqli $conn): void {
+    $ipAddress = get_client_ip();
+    if (check_registration_rate_limit($conn, $ipAddress)) {
+        if (!headers_sent()) {
+            header('Retry-After: 900');
+        }
+        send_json_response('error', 'Too many registration attempts. Please try again later.', null, 429);
+    }
+
+    record_registration_attempt($conn, $ipAddress);
+
     $fullName = sanitize_string($data['full_name'] ?? '');
     $email    = sanitize_string($data['email'] ?? '');
     $phone    = sanitize_string($data['phone'] ?? '');
@@ -17,11 +27,14 @@ function handle_register_request(array $data, mysqli $conn): void {
     if ($fullName === '' || $email === '' || $phone === '' || $password === '') {
         send_json_response('error', 'All fields are required.', null, 422);
     }
+    if (!is_valid_full_name($fullName)) {
+        send_json_response('error', 'Full name must be under 100 characters, start with a letter, and contain only valid characters.', null, 422);
+    }
     if (!is_valid_email($email)) {
         send_json_response('error', 'Enter a valid email address.', null, 422);
     }
-    if (!preg_match('/^[6-9]\d{9}$/', $phone)) {
-        send_json_response('error', 'Enter a valid 10-digit phone number.', null, 422);
+    if (!preg_match('/^\+\d{1,3}\d{6,14}$/', $phone)) {
+        send_json_response('error', 'Enter a valid international phone number.', null, 422);
     }
     if (strlen($password) < 8) {
         send_json_response('error', 'Password must be at least 8 characters.', null, 422);
@@ -36,7 +49,7 @@ function handle_register_request(array $data, mysqli $conn): void {
         send_json_response('error', $result['message'], null, $result['code'] ?? 409);
     }
 
-    send_json_response('success', 'Verification code sent to your email.', ['email' => $email], 200);
+    send_json_response('success', $result['message'] ?? 'Verification code sent to your email.', ['email' => $email], 200);
 }
 
 function handle_verify_otp_request(array $data, mysqli $conn): void {
@@ -66,7 +79,7 @@ function handle_resend_otp_request(array $data, mysqli $conn): void {
     $pending = find_latest_pending_verification($conn, $email);
 
     if (!$pending) {
-        send_json_response('error', 'No pending registration found for this email.', null, 404);
+        send_json_response('success', 'A new verification code has been sent.', null, 200);
     }
 
     $age = isset($pending['age_seconds']) ? (int)$pending['age_seconds'] : 0;
@@ -87,21 +100,18 @@ function handle_resend_otp_request(array $data, mysqli $conn): void {
     $saved = save_pending_registration($conn, $email, $otp, $pending['full_name'], $pending['phone'], $pending['password_hash'], $pending['role'], $resendCount + 1);
 
     if (!$saved) {
-        send_json_response('error', 'Could not resend code. Please try again.', null, 500);
+        error_log('Failed to save resend OTP registration for ' . $email);
+        send_json_response('success', 'A new verification code has been sent.', null, 200);
     }
 
     try {
         require_once __DIR__ . '/../../core/Mailer.php';
         $sent = send_otp_email($email, $pending['full_name'], $otp);
         if (!$sent) {
-            send_json_response('error', 'Could not send verification email. Contact support with your registration email.', null, 500);
+            error_log('Could not send verification email to ' . $email);
         }
-    } catch (RuntimeException $e) {
-        error_log('Resend OTP mail error: ' . $e->getMessage());
-        send_json_response('error', 'Could not send verification email. Contact support with your registration email.', null, 500);
     } catch (Throwable $e) {
-        error_log('Resend OTP mail unexpected error: ' . $e->getMessage());
-        send_json_response('error', 'Could not send verification email. Contact support with your registration email.', null, 500);
+        error_log('Resend OTP mail error for ' . $email . ': ' . $e->getMessage());
     }
 
     send_json_response('success', 'A new verification code has been sent.', null, 200);
@@ -111,7 +121,7 @@ function handle_login_request(array $data, mysqli $conn): void {
     $email        = sanitize_string($data['email'] ?? '');
     $password     = (string) ($data['password'] ?? '');
     $expectedRole = sanitize_string($data['role'] ?? '');
-    $ipAddress    = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    $ipAddress    = get_client_ip();
 
     if ($email === '' || $password === '') {
         send_json_response('error', 'Email and password are required.', null, 422);
@@ -158,6 +168,8 @@ function handle_login_request(array $data, mysqli $conn): void {
         error_log("Data integrity issue: candidate-role user {$result['user']['id']} has no candidates row");
     }
     $_SESSION['candidate_id'] = $result['user']['candidate_id'] ?? null;
+    $_SESSION['candidate_checked_at'] = time();
+    $_SESSION['role_checked_at']      = time();
 
     $redirectUrl = in_array($result['user']['role'], ['admin', 'staff'], true) ? '/admin/index.html' : '/dashboard.html';
 
@@ -174,24 +186,10 @@ function handle_login_request(array $data, mysqli $conn): void {
  * Handles POST /api/auth/logout.php
  */
 function handle_logout_request(): void {
-    $_SESSION = [];
-
-    if (ini_get('session.use_cookies')) {
-        $params = session_get_cookie_params();
-        setcookie(
-            session_name(),
-            '',
-            time() - 42000,
-            $params['path'],
-            $params['domain'],
-            $params['secure'],
-            $params['httponly']
-        );
-    }
-
-    session_destroy();
-    send_json_response('success', 'Logged out.', null, 200);
+    destroy_session();
+    send_json_response('success', 'Logged out successfully.', ['redirect' => '/login.php'], 200);
 }
+
 
 /**
  * Handles POST /api/admin/create-staff.php
@@ -217,10 +215,15 @@ function handle_create_staff_request(array $data, mysqli $conn): void {
         send_json_response('error', 'All fields are required.', null, 422);
         return;
     }
+    if (!is_valid_full_name($fullName)) {
+        send_json_response('error', 'Full name must be under 100 characters, start with a letter, and contain only valid characters.', null, 422);
+        return;
+    }
     if (!is_valid_email($email)) {
         send_json_response('error', 'Enter a valid email address.', null, 422);
         return;
     }
+
     if ($phone !== '' && !preg_match('/^[6-9]\d{9}$/', $phone)) {
         send_json_response('error', 'Enter a valid 10-digit phone number.', null, 422);
         return;
@@ -269,36 +272,46 @@ function handle_forgot_password_request(array $data, mysqli $conn): void {
     $user = find_user_by_email($conn, $email);
     if ($user) {
         $userId = (int)$user['id'];
-        
-        // Check cooldown
+
+        // Check cooldown (< 60s since last reset request)
         $stmt = $conn->prepare('SELECT TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age FROM password_resets WHERE user_id = ? ORDER BY id DESC LIMIT 1');
         $stmt->bind_param('i', $userId);
         $stmt->execute();
         $resRow = $stmt->get_result()->fetch_assoc();
         $stmt->close();
 
-        if ($resRow && (int)$resRow['age'] < 60) {
-            $remaining = 60 - (int)$resRow['age'];
-            if (!headers_sent()) {
-                header('Retry-After: ' . $remaining);
+        $inCooldown = ($resRow && isset($resRow['age']) && (int)$resRow['age'] < 60);
+
+        // If cooldown is active, skip generating/sending a second email internally to prevent spam,
+        // but do NOT return 429 or Retry-After header, so attackers cannot distinguish registered emails.
+        if (!$inCooldown) {
+            try {
+                $token = bin2hex(random_bytes(32));
+                $tokenHash = hash('sha256', $token);
+
+                $stmt = $conn->prepare('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 MINUTE))');
+                $stmt->bind_param('is', $userId, $tokenHash);
+                $stmt->execute();
+                $stmt->close();
+
+                require_once __DIR__ . '/../../core/Mailer.php';
+                $rawAppUrl = env_value('APP_URL');
+                if (empty($rawAppUrl)) {
+                    if (!is_dev_env()) {
+                        error_log('CRITICAL CONFIG WARNING: APP_URL environment variable is not configured. Password reset links will default to http://localhost:8080 in production!');
+                    }
+                    $rawAppUrl = 'http://localhost:8080';
+                }
+                $appUrl = rtrim($rawAppUrl, '/');
+                $resetLink = "{$appUrl}/reset-password.php?token={$token}&email=" . urlencode($email);
+
+                $name = $user['full_name'] ?? 'User';
+                send_password_reset_email($email, $name, $resetLink);
+            } catch (Throwable $e) {
+                // Log failure internally but never return 500 to the client, preventing email enumeration via mail failure
+                error_log('Password reset processing failed for ' . $email . ': ' . $e->getMessage());
             }
-            send_json_response('error', "Please wait {$remaining} seconds before requesting a new link.", null, 429);
         }
-        
-        $token = bin2hex(random_bytes(32));
-        $tokenHash = hash('sha256', $token);
-        
-        $stmt = $conn->prepare('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 MINUTE))');
-        $stmt->bind_param('is', $userId, $tokenHash);
-        $stmt->execute();
-        $stmt->close();
-        
-        require_once __DIR__ . '/../../core/Mailer.php';
-        $appUrl = rtrim(env_value('APP_URL', 'http://localhost:8080'), '/');
-        $resetLink = "{$appUrl}/reset-password.php?token={$token}&email=" . urlencode($email);
-        
-        $name = $user['full_name'] ?? 'User';
-        send_password_reset_email($email, $name, $resetLink);
     }
 
     send_json_response('success', 'If an account exists for this email, a reset link has been sent.', null, 200);
@@ -364,9 +377,10 @@ function handle_reset_password_request(array $data, mysqli $conn): void {
         $conn->commit();
     } catch (Throwable $e) {
         $conn->rollback();
+        error_log('InternBoot password reset error: ' . $e->getMessage());
         send_json_response('error', 'Could not reset password. Please try again.', null, 500);
     }
 
     send_json_response('success', 'Password reset successfully. You can now log in.', null, 200);
 }
-?>
+

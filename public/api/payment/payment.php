@@ -20,7 +20,8 @@ function get_fee(mysqli $conn): float {
     $s->execute();
     $r = $s->get_result()->fetch_assoc();
     $s->close();
-    return $r ? (float)$r['setting_value'] : 2999.00;
+    $baseFee = $r ? (float)$r['setting_value'] : 3538.82;
+    return round($baseFee * 1.18, 2);
 }
 
 $action = $_GET['action'] ?? '';
@@ -36,8 +37,11 @@ if (!$action) {
 // It MUST be replaced with a real gateway (e.g., PayU, Easebuzz, Razorpay)
 // with server-to-server signature verification before real production launch.
 if ($action === 'create' || $action === 'verify') {
-    $demoMode = ($_ENV['M4_DEMO_MODE'] ?? getenv('M4_DEMO_MODE') ?? '0') === '1';
-    $demoSecret = trim($_ENV['M4_DEMO_SECRET'] ?? getenv('M4_DEMO_SECRET') ?? '');
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        send_json_response('error', 'Method not allowed. Use POST.', null, 405);
+    }
+    $demoMode = env_value('M4_DEMO_MODE', '0') === '1';
+    $demoSecret = trim((string)env_value('M4_DEMO_SECRET', ''));
     
     if (!$demoMode || empty($demoSecret)) {
         send_json_response('error', 'Payment gateway not configured. Mock payment is disabled.', null, 403);
@@ -89,10 +93,13 @@ try {
         $e = $s->get_result()->fetch_assoc();
         $s->close();
 
+        if ($p) {
+            $p['amount'] = get_fee($conn);
+        }
         send_json_response('success', 'Payment details retrieved', [
             'candidate' => ['id' => (int)$c['id'], 'name' => $c['full_name'], 'phone' => $c['phone']],
             'assessment' => ['id' => $aid, 'title' => $a['title'], 'description' => $a['description'], 'duration' => (int)$a['duration_minutes'], 'questions' => (int)$a['total_questions']],
-            'fee' => $p ? (float)$p['amount'] : get_fee($conn),
+            'fee' => get_fee($conn),
             'payment' => $p,
             'enrollment' => $e
         ]);
@@ -109,6 +116,14 @@ try {
             if ($row) $assessmentId = (int)$row['id'];
         }
         if ($assessmentId < 1) send_json_response('error', 'Assessment is required.', null, 400);
+$s = $conn->prepare("SELECT id FROM assessments WHERE id = ?");
+        $s->bind_param('i', $assessmentId);
+        $s->execute();
+        $exists = $s->get_result()->fetch_assoc();
+        $s->close();
+        if (!$exists) {
+            send_json_response('error', 'Assessment not found.', null, 404);
+        }
 
         $s = $conn->prepare("SELECT id, amount, status, reference_number, payment_date FROM payments WHERE candidate_id = ? AND assessment_id = ? AND status = 'success' ORDER BY id DESC LIMIT 1");
         $s->bind_param('ii', $candidateId, $assessmentId);

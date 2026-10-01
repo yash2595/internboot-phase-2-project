@@ -21,6 +21,7 @@ if (file_exists(dirname(__DIR__, 2) . '/core/bootstrap.php')) {
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
+    <meta name="csrf-token" content="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
 
     <title>InternBoot Level Assessment</title>
 
@@ -470,6 +471,136 @@ if (file_exists(dirname(__DIR__, 2) . '/core/bootstrap.php')) {
         }
 
         /* =========================
+           INSTRUCTIONS
+        ========================= */
+
+        .instructions {
+            max-width: 680px;
+            margin: 40px auto;
+            padding: 32px 36px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        .instructions h2 {
+            margin: 0 0 6px;
+            font-size: 22px;
+            color: #111827;
+        }
+
+        .instructions .subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 24px;
+        }
+
+        .instr-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 24px;
+        }
+
+        .instr-list li {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+            line-height: 1.55;
+            color: #374151;
+        }
+
+        .instr-list li:last-child {
+            border-bottom: none;
+        }
+
+        .instr-icon {
+            flex-shrink: 0;
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .instr-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .instr-meta-pill {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .instr-warn {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #92400e;
+            margin-bottom: 22px;
+        }
+
+        .instr-ack {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        .instr-ack input[type=checkbox] {
+            margin-top: 2px;
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        #instrStartBtn {
+            width: 100%;
+            padding: 13px;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+        }
+
+        #instrStartBtn:disabled {
+            background: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        #instrStartBtn:not(:disabled) {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        #instrStartBtn:not(:disabled):hover {
+            background: #1d4ed8;
+        }
+
+        @media (max-width: 600px) {
+            .instructions {
+                margin: 16px;
+                padding: 22px 18px;
+            }
+        }
+
+        /* =========================
            ERROR
         ========================= */
 
@@ -631,15 +762,57 @@ if (file_exists(dirname(__DIR__, 2) . '/core/bootstrap.php')) {
     class="loading"
 >
     <div>Loading assessment...</div>
+</div>
 
-    <button
-        id="fullscreenBtn"
-        class="btn-primary"
-        style="margin-top:20px;"
-        onclick="enterFullscreen()"
-    >
-        Enter Fullscreen & Start Assessment
-    </button>
+
+<!-- =============================================
+     ASSESSMENT INSTRUCTIONS GATE
+     Shown to fresh-start candidates only.
+     Hidden on resume (start_time already set).
+============================================== -->
+<div id="instructions" class="instructions" style="display:none;">
+    <h2>📋 Assessment Instructions</h2>
+    <p class="subtitle">Please read carefully before starting. Your timer begins only after you click <strong>Start Exam</strong>.</p>
+
+    <div class="instr-meta">
+        <span class="instr-meta-pill" id="instrQuestions">— Questions</span>
+        <span class="instr-meta-pill" id="instrDuration">— Minutes</span>
+        <span class="instr-meta-pill">Online · MCQ</span>
+    </div>
+
+    <ul class="instr-list">
+        <li>
+            <span class="instr-icon">🧭</span>
+            <span><strong>Free navigation:</strong> You can move between questions in any order using Previous / Next buttons or the Question Navigator panel. Your position is saved as you go.</span>
+        </li>
+        <li>
+            <span class="instr-icon">💾</span>
+            <span><strong>Auto-save:</strong> Every answer you select is saved automatically in real time. You do not need to click a separate save button.</span>
+        </li>
+        <li>
+            <span class="instr-icon">⏱️</span>
+            <span><strong>Timer:</strong> The countdown timer starts the moment you click <strong>Start Exam</strong> below. It runs continuously and cannot be paused.</span>
+        </li>
+        <li>
+            <span class="instr-icon">🔒</span>
+            <span><strong>Single attempt:</strong> This is a one-time attempt. You cannot restart or retake once the exam begins.</span>
+        </li>
+        <li>
+            <span class="instr-icon">🖥️</span>
+            <span><strong>Stay on screen:</strong> Switching tabs or moving focus away from the exam window is tracked as a violation. Exceeding <strong id="instrMaxViolations">3</strong> violations will automatically submit your attempt.</span>
+        </li>
+    </ul>
+
+    <div class="instr-warn">
+        ⚠️ <strong>Important:</strong> Once you click <em>Start Exam</em>, your assessment timer begins and cannot be paused. Ensure you have a stable internet connection and a quiet environment before proceeding.
+    </div>
+
+    <label class="instr-ack">
+        <input type="checkbox" id="instrAck">
+        <span>I have read and understood the instructions above, and I am ready to begin my assessment.</span>
+    </label>
+
+    <button id="instrStartBtn" disabled>Start Exam →</button>
 </div>
 
 
@@ -842,22 +1015,122 @@ if (!attemptId || attemptId <= 0) {
 }
 
 /* ==========================================
-   STATE
+   INSTRUCTIONS GATE — PRE-FLIGHT CHECK
+   Runs immediately on page load (before
+   start_exam.php is ever called).
+
+   Uses exam_status.php (GET, read-only) to
+   check if this attempt already has a
+   start_time set:
+
+   - start_time IS SET  → resume: skip
+     instructions, go straight to exam.
+   - start_time NOT SET → fresh start: show
+     instructions screen; block until the
+     candidate ticks the checkbox and clicks
+     "Start Exam".
+
+   NOTE: initializeExam() / start_exam.php
+   are NOT called here.  They are only called
+   from enterFullscreen(), which is now
+   triggered exclusively by #instrStartBtn.
 ========================================== */
+
+(async function initInstructionsGate() {
+
+    try {
+        const statusRes = await fetch(
+            getApiUrl(`exam_status.php?attempt_id=${attemptId}`),
+            { method: 'GET', headers: { Accept: 'application/json' } }
+        );
+        const statusRaw = await statusRes.json();
+        const statusData = statusRaw.data || {};
+
+        const isResuming = !!(statusData.start_time);
+
+        if (isResuming) {
+            /*
+             * Timer already running — skip instructions and
+             * go straight into the exam grid.
+             */
+            document.getElementById('loading').style.display = 'none';
+            await enterFullscreen();
+            return;
+        }
+
+        /*
+         * Fresh start — show instructions.
+         * Populate real metadata from the status response.
+         */
+        document.getElementById('loading').style.display = 'none';
+
+        const instrEl = document.getElementById('instructions');
+        instrEl.style.display = 'block';
+
+        const qEl = document.getElementById('instrQuestions');
+        const dEl = document.getElementById('instrDuration');
+        const vEl = document.getElementById('instrMaxViolations');
+
+        if (statusData.total_questions > 0) {
+            qEl.textContent = statusData.total_questions + ' Questions';
+        }
+        if (statusData.duration_minutes > 0) {
+            dEl.textContent = statusData.duration_minutes + ' Minutes';
+        }
+
+        /* Pull the violation threshold from the already-declared constant */
+        if (vEl) vEl.textContent = MAX_VIOLATIONS;
+
+        /* Checkbox gate */
+        const ackBox = document.getElementById('instrAck');
+        const startBtn = document.getElementById('instrStartBtn');
+
+        ackBox.addEventListener('change', function () {
+            startBtn.disabled = !this.checked;
+        });
+
+        startBtn.addEventListener('click', async function () {
+            if (!ackBox.checked) return;
+            startBtn.disabled = true;
+            startBtn.textContent = 'Starting…';
+            await enterFullscreen();
+        });
+
+    } catch (err) {
+        /*
+         * If the pre-flight check itself fails (network, auth, etc.)
+         * fall back to showing the loading error state.
+         */
+        document.getElementById('loading').style.display = 'none';
+        showError('Unable to load assessment. Please check your connection and try again.');
+        console.error('Instructions gate pre-flight error:', err);
+    }
+
+})();
+
+
 
 let questions = [];
 
 let currentQuestionIndex = 0;
 
 let remainingSeconds = 0;
+let deadlineTimestamp = 0;
 
 let timerInterval = null;
+let statusSyncInterval = null;
 
 let examSubmitted = false;
 let violationCount = 0;
 const MAX_VIOLATIONS = 3;
 
 let autosaveInterval = null;
+
+function setDeadlineToRemaining(seconds) {
+    const sec = Math.max(0, Math.floor(Number(seconds) || 0));
+    remainingSeconds = sec;
+    deadlineTimestamp = Date.now() + (sec * 1000);
+}
 
 
 /*
@@ -891,6 +1164,10 @@ async function enterFullscreen() {
     ).style.display = "none";
 
     document.getElementById(
+        "instructions"
+    ).style.display = "none";
+
+    document.getElementById(
         "exam"
     ).style.display = "grid";
 
@@ -912,8 +1189,18 @@ async function initializeExam() {
          * Step 1:
          * Start or resume attempt.
          */
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         const startResponse = await fetch(
-            getApiUrl(`start_exam.php?attempt_id=${attemptId}`)
+            getApiUrl(`start_exam.php`),
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ attempt_id: attemptId })
+            }
         );
 
         const startRaw = await startResponse.json();
@@ -925,8 +1212,7 @@ async function initializeExam() {
             return;
         }
 
-        remainingSeconds =
-            Number(startPayload.remaining_seconds);
+        setDeadlineToRemaining(startPayload.remaining_seconds);
 
         /*
          * Step 2:
@@ -995,37 +1281,121 @@ async function initializeExam() {
 
 function startTimer() {
 
-    if (timerInterval) {
-        clearInterval(timerInterval);
-    }
+    stopTimer();
 
+    if (deadlineTimestamp > 0) {
+        remainingSeconds = Math.max(0, Math.round((deadlineTimestamp - Date.now()) / 1000));
+    }
     updateTimerDisplay();
 
+    if (remainingSeconds <= 0) {
+        submitExam(true);
+        return;
+    }
 
-    timerInterval =
-        setInterval(async () => {
+    timerInterval = setInterval(async () => {
 
-            remainingSeconds--;
+        if (examSubmitted) {
+            return;
+        }
 
+        remainingSeconds = Math.max(0, Math.round((deadlineTimestamp - Date.now()) / 1000));
 
-            if (remainingSeconds <= 0) {
-
-                remainingSeconds = 0;
-
-                clearInterval(timerInterval);
-
-                await submitExam(true);
-
-                return;
-            }
-
-
+        if (remainingSeconds <= 0) {
+            remainingSeconds = 0;
+            stopTimer();
             updateTimerDisplay();
+            await submitExam(true);
+            return;
+        }
 
-        }, 1000);
+        updateTimerDisplay();
 
+    }, 1000);
+
+    startPeriodicStatusSync();
     startPeriodicAutosave();
 
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    if (statusSyncInterval) {
+        clearInterval(statusSyncInterval);
+        statusSyncInterval = null;
+    }
+}
+
+function startPeriodicStatusSync() {
+    if (statusSyncInterval) {
+        clearInterval(statusSyncInterval);
+        statusSyncInterval = null;
+    }
+
+    statusSyncInterval = setInterval(async () => {
+        if (examSubmitted) {
+            return;
+        }
+        await syncExamStatus(true);
+    }, 30000);
+}
+
+async function syncExamStatus(triggerSubmitIfExpired = true) {
+    if (examSubmitted) {
+        return null;
+    }
+
+    try {
+        const response = await fetch(getApiUrl(`exam_status.php?attempt_id=${attemptId}`));
+        if (!response.ok) {
+            console.warn("Status sync HTTP error:", response.status);
+            return null;
+        }
+
+        const raw = await response.json();
+        const payload = raw.data || raw;
+        const isSuccess = raw.status === 'success' || raw.success === true || payload.success === true;
+
+        if (!isSuccess) {
+            console.warn("Status sync unsuccessful:", raw.message);
+            return null;
+        }
+
+        const serverStatus = payload.status;
+        const serverRemaining = typeof payload.remaining_seconds === 'number'
+            ? payload.remaining_seconds
+            : parseInt(payload.remaining_seconds, 10);
+
+        // Check if server considers attempt already expired or closed
+        if (serverStatus !== 'in_progress' || (Number.isFinite(serverRemaining) && serverRemaining <= 0)) {
+            console.warn("Server reports attempt is closed or expired:", serverStatus);
+            remainingSeconds = 0;
+            updateTimerDisplay();
+            stopTimer();
+            if (autosaveInterval) {
+                clearInterval(autosaveInterval);
+                autosaveInterval = null;
+            }
+            if (triggerSubmitIfExpired && !examSubmitted) {
+                await submitExam(true);
+            }
+            return payload;
+        }
+
+        if (Number.isFinite(serverRemaining)) {
+            setDeadlineToRemaining(serverRemaining);
+            remainingSeconds = Math.max(0, Math.round((deadlineTimestamp - Date.now()) / 1000));
+            updateTimerDisplay();
+        }
+
+        return payload;
+    } catch (err) {
+        console.warn("Status sync network error:", err);
+        return null;
+    }
 }
 
 
@@ -1089,7 +1459,7 @@ document.addEventListener(
 
 document.addEventListener(
     "visibilitychange",
-    function () {
+    async function () {
 
         if (examSubmitted) {
             return;
@@ -1098,6 +1468,17 @@ document.addEventListener(
         if (document.visibilityState === "hidden") {
 
             violationCount++;
+            try {
+                const response = await fetch(getApiUrl("log_violation.php"), {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-CSRF-Token": getCsrfToken() },
+                    body: JSON.stringify({ attempt_id: attemptData.attempt_id })
+                });
+                const resData = await response.json();
+                if (resData.data && resData.data.violations) {
+                    violationCount = parseInt(resData.data.violations);
+                }
+            } catch(e) {}
 
             if (violationCount >= MAX_VIOLATIONS) {
 
@@ -1158,52 +1539,35 @@ function startPeriodicAutosave() {
 }
 
 async function syncCurrentAnswers() {
-
-    const entries = Object.entries(answerMap);
-
-    if (entries.length === 0) {
-        return;
-    }
+    if (dirtyAnswers.size === 0) return;
+    const entries = Array.from(dirtyAnswers).map(qid => [qid, answerMap[qid] || 0]);
 
     for (const [questionId, optionId] of entries) {
-
-        if (examSubmitted) {
-            return;
-        }
-
+        if (examSubmitted) return;
         try {
-
-            const response = await fetch(
-                getApiUrl("save_answer.php"),
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        attempt_id: attemptId,
-                        question_id: Number(questionId),
-                        selected_option_id: Number(optionId)
-                    })
+            const response = await fetch(getApiUrl("save_answer.php"), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": getCsrfToken()
+                },
+                body: JSON.stringify({
+                    attempt_id: attemptData.attempt_id,
+                    question_id: questionId,
+                    selected_option_id: optionId
+                })
+            });
+            if (!response.ok) {
+                if (response.status === 403) {
+                    examSubmitted = true;
+                    window.location.href = "/dashboard.html";
                 }
-            );
-
-            const data = await response.json();
-            const isAutosaveSuccess = data.status === 'success' || data.success === true;
-
-            if (!isAutosaveSuccess) {
-                console.warn(
-                    "Autosave failed:",
-                    data.message
-                );
+                console.error("Autosave failed for question", questionId);
+            } else {
+                dirtyAnswers.delete(questionId);
             }
-
-        } catch (error) {
-
-            console.warn(
-                "Autosave connection error:",
-                error
-            );
+        } catch (err) {
+            console.error("Autosave network error", err);
         }
     }
 }
@@ -1365,14 +1729,22 @@ function updateQuestionNavigator() {
 
 function updateNavigatorInfo() {
 
-    const answeredCount =
-        Object.keys(answerMap).length;
+    const answeredCount = Object.keys(answerMap).length;
+    const visitedCount = currentQuestionIndex + 1;
+    const notVisited = questions.length - visitedCount;
+    const skipped = visitedCount - answeredCount;
 
+    let infoText = `Answered: ${answeredCount} / ${questions.length}`;
+    if (notVisited > 0) {
+        infoText += ` | Not yet reached: ${notVisited}`;
+    }
+    if (skipped > 0) {
+        infoText += ` | Skipped: ${skipped}`;
+    }
 
     document.getElementById(
         "navigatorInfo"
-    ).textContent =
-        `Answered: ${answeredCount} / ${questions.length}`;
+    ).textContent = infoText;
 
 }
 
@@ -1647,8 +2019,8 @@ async function saveAnswer(
                     method: "POST",
 
                     headers: {
-                        "Content-Type":
-                            "application/json"
+                        "Content-Type": "application/json",
+                        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                     },
 
                     body: JSON.stringify({
@@ -1769,20 +2141,24 @@ async function submitExam(
      */
     if (!autoSubmit) {
 
-        const unanswered =
-            questions.length -
-            Object.keys(answerMap).length;
-
+        const answeredCount = Object.keys(answerMap).length;
+        const totalQuestions = questions.length;
+        const unanswered = totalQuestions - answeredCount;
+        const visitedCount = currentQuestionIndex + 1;
+        const notVisited = totalQuestions - visitedCount;
+        const skipped = visitedCount - answeredCount;
 
         let message =
             "Are you sure you want to submit the exam?";
 
-
         if (unanswered > 0) {
-
-            message +=
-                `\n\nYou have ${unanswered} unanswered question(s).`;
-
+            message += `\n\nYou have answered ${answeredCount} of ${totalQuestions} questions.`;
+            if (skipped > 0) {
+                message += `\n• ${skipped} question(s) visited but not answered (skipped).`;
+            }
+            if (notVisited > 0) {
+                message += `\n• ${notVisited} question(s) not yet reached.`;
+            }
         }
 
 
@@ -1801,15 +2177,11 @@ async function submitExam(
 
     examSubmitted = true;
 
-
-    clearInterval(
-        timerInterval
-    );
+    stopTimer();
     if (autosaveInterval) {
         clearInterval(autosaveInterval);
         autosaveInterval = null;
     }
-
 
     try {
 
@@ -1820,8 +2192,8 @@ async function submitExam(
                     method: "POST",
 
                     headers: {
-                        "Content-Type":
-                            "application/json"
+                        "Content-Type": "application/json",
+                        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                     },
 
                     body: JSON.stringify({
@@ -1867,29 +2239,31 @@ async function submitExam(
             ).textContent =
                 "Assessment submitted successfully.";
 
+            let resultHtml = "";
+            if (data.data && data.data.score !== undefined && data.data.score !== null) {
+                resultHtml = `<div style="text-align: center; margin-top: 20px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <h3 style="color: #17243a; font-size: 24px; margin-bottom: 10px;">Actual Score: ${data.data.score} %</h3>
+                    <h4 style="color: #18a56a; font-size: 20px; margin-bottom: 20px;">Level Assigned: Level ${data.data.level}</h4>
+                    <a href="results.html" style="background:#2563eb; color:#fff; padding:10px 20px; text-decoration:none; border-radius:5px; font-weight: bold; display: inline-block;">Go to Results Dashboard</a>
+                </div>`;
+            } else {
+                resultHtml = `<div style="text-align: center; margin-top: 20px;"><a href="results.html" style="background:#2563eb; color:#fff; padding:10px 20px; text-decoration:none; border-radius:5px; font-weight: bold; display: inline-block;">View Results</a></div>`;
+            }
 
             document.getElementById(
                 "options"
-            ).innerHTML = "";
-
+            ).innerHTML = resultHtml;
 
             document.getElementById(
                 "saveStatus"
             ).textContent =
-                "Your responses have been submitted for evaluation.";
+                "Your responses have been submitted and evaluated.";
 
         }
 
         else {
 
-            /*
-             * Allow another submission attempt
-             * if server rejected the request.
-             */
-            examSubmitted = false;
-
-
-            alert(
+            await handleFailedSubmission(
                 data.message ||
                 "Unable to submit the exam."
             );
@@ -1902,16 +2276,69 @@ async function submitExam(
 
         console.error(error);
 
-
-        examSubmitted = false;
-
-
-        alert(
+        await handleFailedSubmission(
             "Unable to submit the exam. Please check your connection."
         );
 
     }
 
+}
+
+async function handleFailedSubmission(errorMessage) {
+
+    examSubmitted = false;
+
+    alert(
+        errorMessage +
+        "\n\nResuming exam timer and autosave. You can continue answering or submit again."
+    );
+
+    // Refresh remaining time and attempt status from authoritative server endpoint
+    const statusData = await syncExamStatus(false);
+
+    if (
+        statusData &&
+        (statusData.status !== 'in_progress' ||
+         (typeof statusData.remaining_seconds === 'number' && statusData.remaining_seconds <= 0))
+    ) {
+        remainingSeconds = 0;
+        updateTimerDisplay();
+        examSubmitted = true;
+        alert("Your assessment time has expired.");
+
+        document
+            .querySelectorAll(
+                "button, input"
+            )
+            .forEach(element => {
+                element.disabled = true;
+            });
+
+        document.getElementById(
+            "questionText"
+        ).textContent =
+            "Assessment has closed.";
+
+        document.getElementById(
+            "options"
+        ).innerHTML = "";
+
+        document.getElementById(
+            "saveStatus"
+        ).textContent =
+            "Your attempt has expired and been submitted.";
+        return;
+    }
+
+    const currentRemaining = Math.max(0, Math.round((deadlineTimestamp - Date.now()) / 1000));
+    if (currentRemaining <= 0) {
+        remainingSeconds = 0;
+        updateTimerDisplay();
+        await submitExam(true);
+        return;
+    }
+
+    startTimer();
 }
 
 

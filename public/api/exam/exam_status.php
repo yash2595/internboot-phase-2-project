@@ -11,39 +11,46 @@ if (file_exists(dirname(__DIR__, 3) . '/src/core/bootstrap.php')) {
 
 try {
 
-    if (
-        (!isset($_SESSION['candidate_id']) || !is_numeric($_SESSION['candidate_id'])) &&
-        isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id']) &&
-        isset($conn)
-    ) {
-        $userStmt = $conn->prepare("SELECT id FROM candidates WHERE user_id = ? LIMIT 1");
-        if ($userStmt) {
-            $uId = (int)$_SESSION['user_id'];
-            $userStmt->bind_param("i", $uId);
-            $userStmt->execute();
-            $userRes = $userStmt->get_result()->fetch_assoc();
-            $userStmt->close();
-            if ($userRes) {
-                $_SESSION['candidate_id'] = (int)$userRes['id'];
-            }
-        }
-    }
-
-    if (
-        !isset($_SESSION['candidate_id']) ||
-        !is_numeric($_SESSION['candidate_id'])
-    ) {
-        send_json_response('error', 'Candidate authentication required', null, 401);
-    }
-
-    $candidateId = (int) $_SESSION['candidate_id'];
+    $candidateId = require_candidate_auth($conn);
 
     $attemptId = isset($_GET['attempt_id'])
         ? (int) $_GET['attempt_id']
         : 0;
 
-    if ($attemptId <= 0) {
-        send_json_response('error', 'Invalid attempt ID', null, 400);
+        if ($attemptId <= 0) {
+        $findLatestSql = "SELECT id FROM attempts WHERE candidate_id = ? ORDER BY id DESC LIMIT 1";
+        $stmtLatest = $conn->prepare($findLatestSql);
+        $stmtLatest->bind_param("i", $candidateId);
+        $stmtLatest->execute();
+        $latest = $stmtLatest->get_result()->fetch_assoc();
+        
+        if ($latest) {
+            $attemptId = (int)$latest['id'];
+        } else {
+            $prefSql = "SELECT e.preferred_date, e.preferred_time_slot, e.batch_id, 
+                               es.exam_date, sl.start_time, sl.end_time 
+                        FROM enrollments e 
+                        LEFT JOIN batches b ON e.batch_id = b.id 
+                        LEFT JOIN exam_schedules es ON es.batch_id = b.id
+                        LEFT JOIN exam_slots sl ON sl.exam_schedule_id = es.id
+                        WHERE e.candidate_id = ? ORDER BY e.id DESC LIMIT 1";
+            $prefStmt = $conn->prepare($prefSql);
+            $prefStmt->bind_param("i", $candidateId);
+            $prefStmt->execute();
+            $pref = $prefStmt->get_result()->fetch_assoc();
+            
+            if ($pref && !empty($pref['batch_id'])) {
+                send_json_response('error', 'Batch assigned, no attempt yet', [
+                    'exam_date' => $pref['exam_date'],
+                    'start_time' => $pref['start_time'],
+                    'end_time' => $pref['end_time']
+                ], 404);
+            } elseif ($pref && !empty($pref['preferred_date'])) {
+                send_json_response('error', 'Preference saved, awaiting batch formation', ['preferred_date' => $pref['preferred_date'], 'preferred_time_slot' => $pref['preferred_time_slot']], 404);
+            } else {
+                send_json_response('error', 'No attempt found for this candidate', null, 404);
+            }
+        }
     }
 
     /*
@@ -60,6 +67,7 @@ try {
             a.start_time,
             a.end_time,
             a.submitted_at,
+            a.violations,
 
             es.start_time AS slot_start_time,
             es.end_time AS slot_end_time,
@@ -116,13 +124,18 @@ try {
 
     /*
      * Automatically expire an in-progress attempt
-     * when server time reaches end_time (only if started).
+     * when server time reaches end_time (only if started),
+     * OR if the underlying exam schedule was cancelled/completed by an administrator.
      */
+    $validScheduleStatuses = ['scheduled', 'in_progress'];
+    $scheduleIsActive = empty($attempt['schedule_status']) || in_array($attempt['schedule_status'], $validScheduleStatuses, true);
+
     if (
         $attempt['status'] === 'in_progress' &&
-        !empty($attempt['start_time']) &&
-        !empty($attempt['end_time']) &&
-        $remainingSeconds <= 0
+        (
+            (!empty($attempt['start_time']) && !empty($attempt['end_time']) && $remainingSeconds <= 0) ||
+            (!$scheduleIsActive && !empty($attempt['start_time']))
+        )
     ) {
 
         $expireSql = "
@@ -140,7 +153,7 @@ try {
 
         require_once __DIR__ . '/../../../src/modules/m7_evaluation_admin/service.php';
         try {
-            evaluate_attempt($conn, $attemptId, false);
+            evaluate_attempt($conn, $attemptId, true);
         } catch (Throwable $evalError) {
             error_log('Auto-evaluation failed for attempt ' . $attemptId . ': ' . $evalError->getMessage());
         }
@@ -157,7 +170,12 @@ try {
     $canStart = false;
     $gateMessage = null;
 
-    if (!$isStarted && $attempt['status'] === 'in_progress') {
+    if (!$scheduleIsActive) {
+        $canStart = false;
+        $gateMessage = ($attempt['schedule_status'] === 'cancelled')
+            ? 'This exam schedule has been cancelled.'
+            : 'This exam schedule is no longer active.';
+    } elseif (!$isStarted && $attempt['status'] === 'in_progress') {
         $canStart = true;
         $now = new DateTime();
         $today = $now->format('Y-m-d');
@@ -166,28 +184,30 @@ try {
         $slotStartTime = !empty($attempt['slot_start_time']) ? $attempt['slot_start_time'] : null;
         $slotEndTime = !empty($attempt['slot_end_time']) ? $attempt['slot_end_time'] : null;
 
-        if ($examDate !== null) {
+        if ($examDate !== null && $slotStartTime !== null && $slotEndTime !== null) {
+            // Compare full datetimes  avoids timezone/date-string mismatch bugs
+            $slotStart = new DateTime($examDate . " " . $slotStartTime);
+            $slotEnd = new DateTime($examDate . " " . $slotEndTime);
+            if ($slotEndTime < $slotStartTime) { $slotEnd->modify("+1 day"); }
+
+            if ($now < $slotStart) {
+                $canStart = false;
+                $gateMessage = "Your exam is scheduled for {$examDate} at {$slotStartTime}. This assessment is not yet active.";
+            } elseif ($now > $slotEnd) {
+                $canStart = false;
+                $gateMessage = "Your scheduled exam window has passed.";
+            }
+        } elseif ($examDate !== null) {
             if ($examDate > $today) {
                 $canStart = false;
                 $gateMessage = "Your exam is scheduled for {$examDate}. This assessment is not yet active.";
             } elseif ($examDate < $today) {
                 $canStart = false;
                 $gateMessage = "Your scheduled exam window has passed.";
-            } elseif ($slotStartTime !== null && $slotEndTime !== null) {
-                $slotStart = new DateTime($examDate . ' ' . $slotStartTime);
-                $slotEnd = new DateTime($examDate . ' ' . $slotEndTime);
-
-                if ($now < $slotStart) {
-                    $canStart = false;
-                    $gateMessage = "Your exam slot opens at {$slotStartTime}.";
-                } elseif ($now > $slotEnd) {
-                    $canStart = false;
-                    $gateMessage = "Your exam slot has closed.";
-                }
             }
         }
-    }
 
+    }
     /*
      * Count answers already saved.
      */
@@ -208,11 +228,14 @@ try {
     $answeredCount = (int) $answerData['answered_count'];
 
     /*
-     * Get total number of questions for the assessment.
+     * Get total number of questions served for the attempt, falling back to assessment configuration if unassigned.
      */
-    $totalQuestions = isset($attempt['total_questions'])
-        ? (int) $attempt['total_questions']
+    $servedQuestions = function_exists('get_attempt_served_question_count')
+        ? get_attempt_served_question_count($conn, $attemptId)
         : 0;
+    $totalQuestions = ($servedQuestions > 0)
+        ? $servedQuestions
+        : (isset($attempt['total_questions']) ? (int) $attempt['total_questions'] : 0);
 
     send_json_response('success', 'Exam status retrieved', [
         'success' => true,
@@ -221,6 +244,7 @@ try {
         'assessment_id' => (int) $attempt['assessment_id'],
         'exam_slot_id' => (int) $attempt['exam_slot_id'],
         'status' => $attempt['status'],
+        'schedule_status' => $attempt['schedule_status'] ?? null,
         'start_time' => $attempt['start_time'],
         'end_time' => $attempt['end_time'],
         'submitted_at' => $attempt['submitted_at'],
@@ -240,3 +264,4 @@ try {
     error_log('exam_status error: ' . $e->getMessage());
     send_json_response('error', 'Internal server error', null, 500);
 }
+

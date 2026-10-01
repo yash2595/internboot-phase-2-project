@@ -74,8 +74,8 @@ function get_unbatched_eligible_enrollments(int $assessmentId, int $limit, mysql
  * Inserts a new batch record into the batches table.
  */
 function insert_batch(string $batchNumber, int $assessmentId, mysqli $conn): int {
-    $sql = "INSERT INTO batches (batch_number, assessment_id, creation_date, created_at) 
-            VALUES (?, ?, NOW(), NOW())";
+    $sql = "INSERT INTO batches (batch_number, assessment_id) 
+            VALUES (?, ?)";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         throw new Exception("Failed to prepare batch insert query: " . (@$conn->error ?: 'query error'));
@@ -156,7 +156,7 @@ function insert_exam_slot(int $scheduleId, string $startTime, string $endTime, i
  * Fetches candidate enrollment details for an assessment.
  */
 function get_candidate_enrollment(int $candidateId, int $assessmentId, mysqli $conn): ?array {
-    $sql = "SELECT id, candidate_id, assessment_id, batch_id, eligibility_status 
+    $sql = "SELECT id, candidate_id, assessment_id, batch_id, eligibility_status, preferred_date, preferred_time_slot, provisional_schedule_id 
             FROM enrollments 
             WHERE candidate_id = ? AND assessment_id = ? 
             LIMIT 1";
@@ -170,6 +170,34 @@ function get_candidate_enrollment(int $candidateId, int $assessmentId, mysqli $c
     $row = $result->fetch_assoc();
     $stmt->close();
 
+    if (!$row) {
+        // Self-heal: check if candidate has a successful payment for this assessment
+        $payStmt = $conn->prepare("SELECT id FROM payments WHERE candidate_id = ? AND assessment_id = ? AND status = 'success' LIMIT 1");
+        if ($payStmt) {
+            $payStmt->bind_param("ii", $candidateId, $assessmentId);
+            $payStmt->execute();
+            $payRes = $payStmt->get_result();
+            if ($payRow = $payRes->fetch_assoc()) {
+                // Auto-create enrollment
+                $insStmt = $conn->prepare("INSERT INTO enrollments (candidate_id, assessment_id, payment_id, eligibility_status) VALUES (?, ?, ?, 'eligible') ON DUPLICATE KEY UPDATE eligibility_status = 'eligible'");
+                if ($insStmt) {
+                    $insStmt->bind_param("iii", $candidateId, $assessmentId, $payRow['id']);
+                    $insStmt->execute();
+                    $insStmt->close();
+                    
+                    // Re-fetch enrollment
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ii", $candidateId, $assessmentId);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $row = $result->fetch_assoc();
+                    $stmt->close();
+                }
+            }
+            $payStmt->close();
+        }
+    }
+
     return $row ?: null;
 }
 
@@ -178,10 +206,11 @@ function get_candidate_enrollment(int $candidateId, int $assessmentId, mysqli $c
  */
 function get_candidate_booked_attempt(int $candidateId, int $assessmentId, mysqli $conn): ?array {
     $retakeAllowed = get_setting_value('retake_allowed', $conn) === '1';
-    $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted'";
-    $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status 
+    $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted','expired'";
+    $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status, start_time 
             FROM attempts 
             WHERE candidate_id = ? AND assessment_id = ? AND status IN ($statusFilter) 
+            ORDER BY id DESC
             LIMIT 1";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
@@ -201,7 +230,7 @@ function get_candidate_booked_attempt(int $candidateId, int $assessmentId, mysql
  * Serializes parallel booking requests for the same candidate and assessment.
  */
 function get_candidate_enrollment_for_update(int $candidateId, int $assessmentId, mysqli $conn): ?array {
-    $sql = "SELECT id, candidate_id, assessment_id, batch_id, eligibility_status 
+    $sql = "SELECT id, candidate_id, assessment_id, batch_id, eligibility_status, preferred_date, preferred_time_slot, provisional_schedule_id 
             FROM enrollments 
             WHERE candidate_id = ? AND assessment_id = ? 
             LIMIT 1 
@@ -216,6 +245,34 @@ function get_candidate_enrollment_for_update(int $candidateId, int $assessmentId
     $row = $result->fetch_assoc();
     $stmt->close();
 
+    if (!$row) {
+        // Self-heal: check if candidate has a successful payment for this assessment
+        $payStmt = $conn->prepare("SELECT id FROM payments WHERE candidate_id = ? AND assessment_id = ? AND status = 'success' LIMIT 1");
+        if ($payStmt) {
+            $payStmt->bind_param("ii", $candidateId, $assessmentId);
+            $payStmt->execute();
+            $payRes = $payStmt->get_result();
+            if ($payRow = $payRes->fetch_assoc()) {
+                // Auto-create enrollment
+                $insStmt = $conn->prepare("INSERT INTO enrollments (candidate_id, assessment_id, payment_id, eligibility_status) VALUES (?, ?, ?, 'eligible') ON DUPLICATE KEY UPDATE eligibility_status = 'eligible'");
+                if ($insStmt) {
+                    $insStmt->bind_param("iii", $candidateId, $assessmentId, $payRow['id']);
+                    $insStmt->execute();
+                    $insStmt->close();
+                    
+                    // Re-fetch enrollment with FOR UPDATE
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ii", $candidateId, $assessmentId);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $row = $result->fetch_assoc();
+                    $stmt->close();
+                }
+            }
+            $payStmt->close();
+        }
+    }
+
     return $row ?: null;
 }
 
@@ -225,10 +282,34 @@ function get_candidate_enrollment_for_update(int $candidateId, int $assessmentId
  */
 function get_candidate_booked_attempt_for_update(int $candidateId, int $assessmentId, mysqli $conn): ?array {
     $retakeAllowed = get_setting_value('retake_allowed', $conn) === '1';
-    $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted'";
-    $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status 
+    $statusFilter = $retakeAllowed ? "'in_progress'" : "'in_progress','submitted','expired'";
+    $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status, start_time 
             FROM attempts 
             WHERE candidate_id = ? AND assessment_id = ? AND status IN ($statusFilter) 
+            ORDER BY id DESC 
+            LIMIT 1 
+            FOR UPDATE";
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        throw new Exception("Failed to prepare attempt lock query: " . (@$conn->error ?: 'query error'));
+    }
+    $stmt->bind_param("ii", $candidateId, $assessmentId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+
+    return $row ?: null;
+}
+
+/**
+ * Fetches the candidate's latest attempt for an assessment with an exclusive row lock (FOR UPDATE).
+ */
+function get_candidate_latest_attempt_for_update(int $candidateId, int $assessmentId, mysqli $conn): ?array {
+    $sql = "SELECT id, candidate_id, assessment_id, exam_slot_id, status, start_time 
+            FROM attempts 
+            WHERE candidate_id = ? AND assessment_id = ? 
+            ORDER BY id DESC 
             LIMIT 1 
             FOR UPDATE";
     $stmt = $conn->prepare($sql);
@@ -287,7 +368,7 @@ function decrement_slot_capacity(int $slotId, mysqli $conn): int {
     $sql = "UPDATE exam_slots 
             SET seats_remaining = seats_remaining - 1, 
                 updated_at = NOW() 
-            WHERE id = ? AND seats_remaining > 0";
+            WHERE id = ?";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         throw new Exception("Failed to prepare slot decrement query: " . (@$conn->error ?: 'query error'));
@@ -335,7 +416,7 @@ function get_available_slots_by_batch(int $batchId, mysqli $conn): array {
             JOIN exam_schedules sch ON s.exam_schedule_id = sch.id
             WHERE sch.batch_id = ? 
               AND sch.status = 'scheduled' 
-              AND sch.exam_date >= CURDATE()
+              AND (sch.exam_date > CURDATE() OR (sch.exam_date = CURDATE() AND s.end_time > CURTIME()))
               AND s.seats_remaining > 0
             ORDER BY sch.exam_date ASC, s.start_time ASC";
     $stmt = $conn->prepare($sql);
@@ -369,7 +450,7 @@ function get_available_slots_by_assessment(int $assessmentId, mysqli $conn): arr
             JOIN batches b ON sch.batch_id = b.id
             WHERE b.assessment_id = ? 
               AND sch.status = 'scheduled' 
-              AND sch.exam_date >= CURDATE()
+              AND (sch.exam_date > CURDATE() OR (sch.exam_date = CURDATE() AND s.end_time > CURTIME()))
               AND s.seats_remaining > 0
             ORDER BY sch.exam_date ASC, s.start_time ASC";
     $stmt = $conn->prepare($sql);
@@ -384,4 +465,74 @@ function get_available_slots_by_assessment(int $assessmentId, mysqli $conn): arr
 
     return $rows;
 }
-?>
+
+
+
+/**
+ * Fetches preference groups that have reached the threshold.
+ */
+function get_preference_groups_meeting_threshold(int $assessmentId, int $threshold, mysqli $conn): array {
+    $sql = "SELECT preferred_date, preferred_time_slot, COUNT(*) as candidate_count, GROUP_CONCAT(id) as enrollment_ids 
+            FROM enrollments 
+            WHERE assessment_id = ? 
+              AND batch_id IS NULL 
+              AND eligibility_status = 'eligible' 
+              AND preferred_date IS NOT NULL 
+            GROUP BY preferred_date, preferred_time_slot 
+            HAVING COUNT(*) >= ?";
+            
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        throw new Exception("Database query preparation failed: " . (@$conn->error ?: 'query error'));
+    }
+    $stmt->bind_param("ii", $assessmentId, $threshold);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $rows = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    $groups = [];
+    foreach ($rows as $row) {
+        $groups[] = [
+            'preferred_date' => $row['preferred_date'],
+            'preferred_time_slot' => $row['preferred_time_slot'],
+            'candidate_count' => (int)$row['candidate_count'],
+            'enrollment_ids' => explode(',', $row['enrollment_ids'])
+        ];
+    }
+    
+    return $groups;
+}
+
+/**
+ * Sets a candidate's preference for an enrollment if they aren't batched yet.
+ */
+function set_candidate_preference(int $enrollmentId, string $preferredDate, string $preferredTimeSlot, mysqli $conn): void {
+    $sql = "UPDATE enrollments 
+            SET preferred_date = ?, preferred_time_slot = ?, updated_at = NOW() 
+            WHERE id = ? AND batch_id IS NULL";
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        throw new Exception("Failed to prepare set_candidate_preference query: " . (@$conn->error ?: 'query error'));
+    }
+    $stmt->bind_param("ssi", $preferredDate, $preferredTimeSlot, $enrollmentId);
+    $stmt->execute();
+    $affected = $stmt->affected_rows;
+    $stmt->close();
+    
+    if ($affected === 0) {
+        // We do a quick check to see if they're already batched or don't exist
+        $sqlCheck = "SELECT batch_id FROM enrollments WHERE id = ?";
+        $stmtCheck = $conn->prepare($sqlCheck);
+        if ($stmtCheck) {
+            $stmtCheck->bind_param("i", $enrollmentId);
+            $stmtCheck->execute();
+            $res = $stmtCheck->get_result();
+            if ($row = $res->fetch_assoc()) {
+                if ($row['batch_id'] !== null) {
+                    throw new Exception("Candidate is already assigned to a batch. Cannot change preference.");
+                }
+            }
+        }
+    }
+}

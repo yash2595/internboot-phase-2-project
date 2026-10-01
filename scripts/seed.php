@@ -139,6 +139,27 @@ if ($existingQbank) {
     seed_ok("Question bank created — name: \"{$qbankName}\", id: {$qbankId}, linked to assessment: {$assessmentId}");
 }
 
+
+// ── Step 4: Settings ──────────────────────────────────────────────────────────
+
+$defaultSettings = [
+    'question_ratio_easy' => '30',
+    'question_ratio_medium' => '40',
+    'question_ratio_hard' => '30',
+    'slot_grace_minutes' => '30',
+    'slot_capacity_floor' => '50',
+    'slot_start_time_1' => '10:00:00',
+    'slot_start_time_2' => '14:00:00'
+];
+
+$stmt = $conn->prepare('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)');
+foreach ($defaultSettings as $key => $val) {
+    $stmt->bind_param('ss', $key, $val);
+    $stmt->execute();
+}
+$stmt->close();
+seed_ok('Settings seeded.');
+
 // ── Summary ───────────────────────────────────────────────────────────────────
 
 echo "\n=================================================\n";
